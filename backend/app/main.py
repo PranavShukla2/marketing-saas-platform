@@ -12,7 +12,7 @@ app = FastAPI(title="Marketing SaaS API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"], # Your React URL
+    allow_origins=["*"], # In production, "*" allows any frontend to connect.
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
