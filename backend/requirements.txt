@@ -1,3 +1,4 @@
 fastapi
 uvicorn
 cryptography
+python-dotenv
