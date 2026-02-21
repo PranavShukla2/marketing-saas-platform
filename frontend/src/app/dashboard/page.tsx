@@ -120,7 +120,8 @@ export default function Dashboard() {
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-[#fafafa] font-light text-gray-400">Loading Workspace...</div>;
-
+  if (!data) return <div className="min-h-screen flex flex-col items-center justify-center bg-[#fafafa]"><p className="text-gray-500 mb-4">Session expired.</p><button onClick={() => { localStorage.removeItem("token"); window.location.href = "/"; }} className="px-6 py-2 bg-blue-600 text-white rounded-xl">Log In Again</button></div>;
+  if (data.status === "pending" || data.status === "pending_integration") return <div className="min-h-screen flex flex-col items-center justify-center bg-[#fafafa]"><p className="text-gray-500 mb-4">No data found.</p><a href="/integrations" className="px-6 py-2 bg-blue-600 text-white rounded-xl">Connect Google Analytics</a></div>;
   const combinedData = data?.post_level ? [...data.post_level, ...(data.forecast || [])] : [];
 
   return (

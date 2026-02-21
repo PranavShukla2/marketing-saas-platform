@@ -1,20 +1,18 @@
+import os
+from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-# For local development, we use SQLite. 
-# For production (AWS/GCP), you just change this string to your PostgreSQL URL.
-SQLALCHEMY_DATABASE_URL = "sqlite:///./saas.db"
+load_dotenv() # Loads the variables from the .env file
 
-# connect_args={"check_same_thread": False} is only needed for SQLite
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
-)
+# Grabs the URL securely without exposing the password in the code
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL")
 
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
 
-# Dependency to get the database session in our API routes
 def get_db():
     db = SessionLocal()
     try:
