@@ -81,3 +81,23 @@ def generate_roi_insights(post_level_data: list) -> dict:
         "reason": f"High engagement efficiency detected at {best['roi_score']:.2f} views/user.",
         "action_item": f"Increase content frequency on {best['source']} for better results."
     }
+
+def detect_traffic_anomalies(post_level_data: list) -> dict:
+    """Detects sudden traffic drops (>50%) comparing recent views to the historical average."""
+    if len(post_level_data) < 2:
+        return {"is_anomaly": False}
+
+    views = [item['views'] for item in post_level_data]
+    current_views = views[-1] 
+    historical_views = views[:-1] 
+    
+    historical_avg = sum(historical_views) / len(historical_views) if historical_views else 0
+
+    if historical_avg > 0 and current_views < (historical_avg * 0.5):
+        drop_percent = ((historical_avg - current_views) / historical_avg) * 100
+        return {
+            "is_anomaly": True,
+            "message": f"Urgent: Traffic dropped by {drop_percent:.1f}% compared to your recent average. Check active campaigns immediately."
+        }
+    
+    return {"is_anomaly": False}
