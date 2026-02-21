@@ -1,56 +1,151 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+import os
+import json
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from app.db.database import get_db
-from app.db.models import User, Integration
-from app.api.deps import get_current_user
-from app.core.security import decrypt_data
 
-from app.services.google_analytics import (
-    fetch_ga4_metrics, 
-    predict_future_views, 
-    generate_roi_insights,
-    detect_traffic_anomalies
-)
+# Official Google Libraries
+from google.oauth2.credentials import Credentials
+from google.analytics.data_v1beta import BetaAnalyticsDataClient
+from google.analytics.data_v1beta.types import DateRange, Dimension, Metric, RunReportRequest
+from google.analytics.admin import AnalyticsAdminServiceClient # <-- NEW Admin API!
+
+# Adjust these imports to match your project structure
+from app.api.deps import get_db, get_current_user 
+from app.db.models import Integration, User
 
 router = APIRouter()
 
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
+TOKEN_URI = "https://oauth2.googleapis.com/token"
+
 @router.get("/dashboard")
 def get_dashboard_data(
-    property_id: str = Query(None, description="Specific GA4 Property ID to fetch"),
-    current_user: User = Depends(get_current_user), 
-    db: Session = Depends(get_db)
+    property_id: str = None, 
+    db: Session = Depends(get_db), 
+    current_user: User = Depends(get_current_user)
 ):
-    # 1. Fetch all integrations for the dropdown menu
-    user_integrations = db.query(Integration).filter(
-        Integration.user_id == current_user.id, 
+    """Fetches live Google Analytics data for the logged-in user dynamically."""
+    
+    integration = db.query(Integration).filter(
+        Integration.user_id == current_user.id,
         Integration.provider == "google_analytics"
-    ).all()
+    ).first()
 
-    if not user_integrations:
-        return {"data": {"status": "pending", "company_name": current_user.company_name}}
+    if not integration:
+        return {"data": {"status": "pending_integration"}}
 
-    # Format the list of properties for the frontend dropdown
-    available_properties = [{"id": i.property_id, "name": getattr(i, 'client_name', f"Property {i.property_id}")} for i in user_integrations]
+    creds_data = json.loads(integration.encrypted_credentials)
+    
+    credentials = Credentials(
+        token=creds_data.get("access_token"),
+        refresh_token=creds_data.get("refresh_token"),
+        token_uri=TOKEN_URI,
+        client_id=GOOGLE_CLIENT_ID,
+        client_secret=GOOGLE_CLIENT_SECRET,
+    )
 
-    # 2. Select the specific integration to display (default to the first one if none provided)
-    active_integration = next((i for i in user_integrations if i.property_id == property_id), user_integrations[0])
+    # --- UPGRADE 1: DYNAMIC PROPERTY DISCOVERY ---
+    admin_client = AnalyticsAdminServiceClient(credentials=credentials)
+    properties_list = []
+    
+    try:
+        # Ask Google for every account and property this user owns
+        account_summaries = admin_client.list_account_summaries()
+        for account in account_summaries:
+            for prop in account.property_summaries:
+                properties_list.append({
+                    "id": prop.property, # Formatted perfectly as "properties/12345"
+                    "name": f"{account.display_name} - {prop.display_name}"
+                })
+    except Exception as e:
+        print(f"Admin API Error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch Google Analytics properties.")
+
+    # If the user has GA connected but no actual websites set up in GA
+    if not properties_list:
+        return {"data": {"status": "pending", "message": "No Google Analytics properties found on your account."}}
+
+    # If the frontend sent a specific ID (via dropdown), use it. Otherwise, use their first property!
+    target_property_id = property_id if property_id else properties_list[0]["id"]
+
+    # --- FETCH THE DATA ---
+    client = BetaAnalyticsDataClient(credentials=credentials)
 
     try:
-        decrypted_json = decrypt_data(active_integration.encrypted_credentials)
-        live_data = fetch_ga4_metrics(active_integration.property_id, decrypted_json)
+        # Summary Metrics
+        summary_request = RunReportRequest(
+            property=target_property_id,
+            dimensions=[],
+            metrics=[
+                Metric(name="activeUsers"),
+                Metric(name="screenPageViews"),
+                Metric(name="bounceRate"),
+                Metric(name="averageSessionDuration"),
+            ],
+            date_ranges=[DateRange(start_date="30daysAgo", end_date="today")],
+        )
+        summary_response = client.run_report(summary_request)
         
+        summary_data = {"active_users": "0", "page_views": "0", "bounce_rate": "0%", "avg_duration": "0s"}
+        if summary_response.rows:
+            row = summary_response.rows[0]
+            summary_data = {
+                "active_users": row.metric_values[0].value,
+                "page_views": row.metric_values[1].value,
+                "bounce_rate": f"{round(float(row.metric_values[2].value) * 100, 1)}%",
+                "avg_duration": f"{round(float(row.metric_values[3].value), 1)}s"
+            }
+
+        # Channel Metrics
+        source_request = RunReportRequest(
+            property=target_property_id,
+            dimensions=[Dimension(name="sessionSource")],
+            metrics=[Metric(name="activeUsers"), Metric(name="screenPageViews")],
+            date_ranges=[DateRange(start_date="30daysAgo", end_date="today")],
+        )
+        source_response = client.run_report(source_request)
+        
+        post_level_data = []
+        for row in source_response.rows:
+            post_level_data.append({
+                "source": row.dimension_values[0].value.capitalize(),
+                "users": int(row.metric_values[0].value),
+                "views": int(row.metric_values[1].value)
+            })
+
+        # --- UPGRADE 2: DYNAMIC INSIGHTS ENGINE ---
+        if post_level_data:
+            # Sort the channels by highest views first
+            top_channel = sorted(post_level_data, key=lambda x: x["views"], reverse=True)[0]
+            top_name = top_channel["source"]
+            
+            dynamic_insights = {
+                "primary_focus": f"Scale up {top_name}",
+                "reason": f"{top_name} is your absolute best acquisition channel, currently driving {top_channel['views']} views.",
+                "action_item": f"Reallocate 15% of your marketing budget or content resources to amplify {top_name}."
+            }
+        else:
+            dynamic_insights = {
+                "primary_focus": "Awaiting Data",
+                "reason": "Not enough traffic data recorded in the last 30 days.",
+                "action_item": "Ensure your GA4 tracking tag is installed on your website."
+            }
+
+        # --- SEND TO FRONTEND ---
         return {
             "data": {
-                "summary": live_data['summary'],
-                "post_level": live_data['post_level'],
-                "forecast": predict_future_views(live_data['post_level']),
-                "suggestions": generate_roi_insights(live_data['post_level']),
-                "anomaly": detect_traffic_anomalies(live_data['post_level']),
+                "status": "active",
                 "company_name": current_user.company_name,
-                "status": "connected",
-                "properties": available_properties,
-                "active_property_id": active_integration.property_id
+                "active_property_id": target_property_id,
+                "properties": properties_list, # <--- Populates your Next.js dropdown!
+                "summary": summary_data,
+                "post_level": post_level_data,
+                "anomaly": {"is_anomaly": False, "message": ""},
+                "suggestions": dynamic_insights # <--- Populates the dynamic text!
             }
         }
+
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        print(f"GA4 Data API Error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch live data from Google Analytics")

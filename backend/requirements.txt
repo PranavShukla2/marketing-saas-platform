@@ -10,3 +10,5 @@ google-analytics-data
 google-auth
 numpy
 PyJWT
+requests
+google-analytics-admin

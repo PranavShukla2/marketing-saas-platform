@@ -12,7 +12,9 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState<string>("");
-  const [agencyLogo, setAgencyLogo] = useState<string | null>(null); // New state for branding
+  const [agencyLogo, setAgencyLogo] = useState<string | null>(null);
+  const [showSuccessToast, setShowSuccessToast] = useState(false); // New state for OAuth success
+
   const COLORS = ['#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe', '#2563eb'];
 
   const fetchData = async (isManualSync = false, propId = selectedProperty) => {
@@ -39,8 +41,17 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
+    // 1. Catch the successful OAuth redirect from our FastAPI backend
+    if (typeof window !== "undefined" && window.location.search.includes("integration=success")) {
+      setShowSuccessToast(true);
+      // Clean up the URL so it looks nice and clean again
+      window.history.replaceState({}, document.title, window.location.pathname);
+      // Hide the toast after 5 seconds
+      setTimeout(() => setShowSuccessToast(false), 5000);
+    }
+
     fetchData();
-    // Load saved logo from browser storage on load
+    
     const savedLogo = localStorage.getItem("arbflow_agency_logo");
     if (savedLogo) setAgencyLogo(savedLogo);
   }, []);
@@ -52,7 +63,6 @@ export default function Dashboard() {
     fetchData(false, newPropertyId);
   };
 
-  // --- Handle Logo Upload (Base64 Conversion) ---
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -60,9 +70,34 @@ export default function Dashboard() {
       reader.onloadend = () => {
         const base64String = reader.result as string;
         setAgencyLogo(base64String);
-        localStorage.setItem("arbflow_agency_logo", base64String); // Persist across reloads
+        localStorage.setItem("arbflow_agency_logo", base64String);
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  // --- NEW: Google Connect Logic ---
+// --- UPDATED: Production-Ready Google Connect Logic ---
+const handleConnectGoogle = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      
+      // 1. Securely ask the backend for a personalized Google login URL
+      const res = await fetch(`${backendUrl}/api/v1/integrations/google/link`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      
+      const result = await res.json();
+      
+      // 2. Redirect the user's browser to the newly generated link
+      if (result.url) {
+        window.location.href = result.url;
+      } else {
+        console.error("No URL returned from backend:", result);
+      }
+    } catch (err) {
+      console.error("Failed to generate Google login link", err);
     }
   };
 
@@ -78,26 +113,23 @@ export default function Dashboard() {
     a.click();
   };
 
-  // --- The Personalized PDF Generator ---
   const downloadPDF = () => {
     if (!data?.post_level) return;
     const doc = new jsPDF();
     let currentY = 20;
 
-    // 1. Inject Agency Logo if uploaded
     if (agencyLogo) {
       try {
         const imgProps = doc.getImageProperties(agencyLogo);
-        const imgWidth = 40; // Fixed width for clean aesthetic
-        const imgHeight = (imgProps.height * imgWidth) / imgProps.width; // Maintain aspect ratio
+        const imgWidth = 40;
+        const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
         doc.addImage(agencyLogo, 14, 10, imgWidth, imgHeight);
-        currentY = 10 + imgHeight + 15; // Push text down below the logo
+        currentY = 10 + imgHeight + 15;
       } catch (e) {
         console.error("Error adding image to PDF", e);
       }
     }
     
-    // 2. Add Branding Text
     doc.setTextColor(59, 130, 246);
     doc.setFontSize(22);
     doc.text("Agency Performance Report", 14, currentY);
@@ -107,7 +139,6 @@ export default function Dashboard() {
     doc.text(`Client Workspace: ${data.company_name}`, 14, currentY + 8);
     doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, currentY + 14);
 
-    // 3. Add Data Table
     autoTable(doc, {
       head: [['Source', 'Users', 'Views']],
       body: data.post_level.map((r: any) => [r.source, r.users, r.views]),
@@ -121,22 +152,53 @@ export default function Dashboard() {
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-[#fafafa] font-light text-gray-400">Loading Workspace...</div>;
   if (!data) return <div className="min-h-screen flex flex-col items-center justify-center bg-[#fafafa]"><p className="text-gray-500 mb-4">Session expired.</p><button onClick={() => { localStorage.removeItem("token"); window.location.href = "/"; }} className="px-6 py-2 bg-blue-600 text-white rounded-xl">Log In Again</button></div>;
-  if (data.status === "pending" || data.status === "pending_integration") return <div className="min-h-screen flex flex-col items-center justify-center bg-[#fafafa]"><p className="text-gray-500 mb-4">No data found.</p><a href="/integrations" className="px-6 py-2 bg-blue-600 text-white rounded-xl">Connect Google Analytics</a></div>;
+  
+  // --- UPDATED: Beautiful Empty State for Disconnected Users ---
+  if (data.status === "pending" || data.status === "pending_integration") {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#fafafa] p-6">
+        <div className="bg-white p-10 rounded-[2rem] shadow-sm border border-gray-100 max-w-md text-center">
+          <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+          </div>
+          <h2 className="text-2xl font-semibold mb-3">Welcome to ArbFlow</h2>
+          <p className="text-gray-500 mb-8 font-light">To generate your dashboard, you need to connect your Google Analytics account securely.</p>
+          <button onClick={handleConnectGoogle} className="px-6 py-3 bg-blue-600 hover:bg-blue-700 transition-colors text-white font-medium rounded-xl w-full shadow-sm">
+            Sign in with Google
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const combinedData = data?.post_level ? [...data.post_level, ...(data.forecast || [])] : [];
 
   return (
-    <div className="min-h-screen bg-[#fafafa] p-8 md:p-12 font-sans text-gray-900 overflow-x-hidden">
+    <div className="min-h-screen bg-[#fafafa] p-8 md:p-12 font-sans text-gray-900 overflow-x-hidden relative">
       
+      {/* --- NEW: Success Toast Notification --- */}
+      <AnimatePresence>
+        {showSuccessToast && (
+          <motion.div 
+            initial={{ opacity: 0, y: -50 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            exit={{ opacity: 0, y: -50 }}
+            className="fixed top-8 left-1/2 transform -translate-x-1/2 z-50 bg-green-50 border border-green-200 text-green-700 px-6 py-3 rounded-full shadow-lg flex items-center space-x-3"
+          >
+            <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
+            <span className="font-medium text-sm">Google Analytics connected successfully!</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Header */}
       <header className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center mb-10 gap-6">
         <div className="flex items-center space-x-6">
-          {/* Logo Upload Box */}
           <div className="relative group cursor-pointer">
             <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" id="logo-upload" />
             <label htmlFor="logo-upload" className="cursor-pointer flex items-center justify-center w-12 h-12 bg-white border border-gray-200 rounded-2xl shadow-sm hover:border-blue-300 transition-all overflow-hidden">
                {agencyLogo ? <img src={agencyLogo} alt="Agency Logo" className="w-full h-full object-contain p-1" /> : <span className="text-gray-400 text-sm font-medium">Logo</span>}
             </label>
-            <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-[10px] bg-gray-800 text-white px-2 py-1 rounded whitespace-nowrap z-50">Upload Branding</div>
           </div>
 
           <div>
@@ -170,7 +232,6 @@ export default function Dashboard() {
       </header>
 
       <main className="max-w-7xl mx-auto pb-32">
-        {/* Anomaly Detection Banner */}
         <AnimatePresence>
           {data?.anomaly?.is_anomaly && (
             <motion.div initial={{ opacity: 0, y: -20, height: 0 }} animate={{ opacity: 1, y: 0, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="mb-8">
@@ -183,7 +244,6 @@ export default function Dashboard() {
         </AnimatePresence>
 
         <AnimatePresence mode="wait">
-          {/* OVERVIEW TAB */}
           {activeTab === "overview" && (
             <motion.div key="overview" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-16">
               
@@ -235,7 +295,6 @@ export default function Dashboard() {
             </motion.div>
           )}
 
-          {/* TRACKING TAB */}
           {activeTab === "tracking" && (
             <motion.div key="tracking" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
               <div className="flex justify-end space-x-4"><button onClick={downloadCSV} className="text-sm font-medium text-gray-500 hover:text-black">↓ Download CSV</button><button onClick={downloadPDF} className="text-sm font-medium text-blue-600 hover:underline">↓ Export PDF</button></div>
@@ -246,7 +305,6 @@ export default function Dashboard() {
             </motion.div>
           )}
 
-          {/* INSIGHTS TAB */}
           {activeTab === "insights" && (
             <motion.div key="insights" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex justify-center">
               <div className="w-full max-w-4xl bg-white p-16 rounded-[3rem] border border-gray-100 shadow-2xl relative overflow-hidden">
