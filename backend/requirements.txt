@@ -9,3 +9,4 @@ passlib[bcrypt]
 google-analytics-data
 google-auth
 numpy
+PyJWT
