@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: arbflow-backend
+    env: python
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        sync: false # We will set this in the Render Dashboard
+      - key: SECRET_KEY
+        generateValue: true
