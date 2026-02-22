@@ -19,7 +19,10 @@ export default function RegisterPage() {
     setError("");
 
     try {
-      const response = await fetch("http://localhost:8000/api/v1/auth/register", {
+      // THE FIX: Dynamically use your Render URL in production, or localhost for local testing
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      
+      const response = await fetch(`${backendUrl}/api/v1/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
@@ -34,7 +37,6 @@ export default function RegisterPage() {
         throw new Error(errorData.detail || "Failed to register");
       }
 
-      // If successful, send them to the login page
       router.push("/login");
       
     } catch (err: any) {
@@ -57,20 +59,17 @@ export default function RegisterPage() {
           <p className="text-gray-500 text-sm">Scale your agency's analytics today.</p>
         </div>
 
-        {/* 1. The Error Message Box (Only shows if there is an error) */}
         {error && (
           <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-xl border border-red-100 text-center">
             {error}
           </div>
         )}
 
-        {/* 2. Google OAuth Button (Always visible) */}
         <button 
           type="button" 
           onClick={() => alert("Google Sign-In is currently in beta and will be available in the next update!")}
           className="w-full flex items-center justify-center space-x-2 py-3 mb-6 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors"
         >
-          {/* NOTICE THE OPENING SVG TAG HERE! */}
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
             <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
@@ -80,14 +79,12 @@ export default function RegisterPage() {
           <span className="text-sm font-medium">Continue with Google</span>
         </button>
 
-        {/* 3. The "Or" Divider */}
         <div className="relative flex items-center mb-6">
           <div className="flex-grow border-t border-gray-200"></div>
           <span className="flex-shrink-0 mx-4 text-gray-400 text-xs uppercase tracking-wider">Or</span>
           <div className="flex-grow border-t border-gray-200"></div>
         </div>
 
-        {/* 4. The Registration Form */}
         <form onSubmit={handleRegister} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Company / Agency Name</label>

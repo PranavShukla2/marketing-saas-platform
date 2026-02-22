@@ -18,7 +18,10 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const response = await fetch("http://localhost:8000/api/v1/auth/login", {
+      // THE FIX: Dynamically use your Render URL in production, or localhost for local testing
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+      const response = await fetch(`${backendUrl}/api/v1/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
