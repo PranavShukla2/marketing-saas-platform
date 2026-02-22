@@ -12,3 +12,4 @@ numpy
 PyJWT
 requests
 google-analytics-admin
+bcrypt==3.2.2
