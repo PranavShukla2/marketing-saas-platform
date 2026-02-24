@@ -1,22 +1,25 @@
 import os
-import json # <-- Added to parse the credentials into a string
+import json 
 import requests
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from fastapi.responses import RedirectResponse
 
-# Import your database dependency and SQLAlchemy models
-# (Adjust these import paths slightly if your folder structure is different)
-from app.api.deps import get_db
-from app.db.models import Integration
-from app.api.deps import get_current_user
-from app.db.models import User
+from app.api.deps import get_db, get_current_user
+from app.db.models import Integration, User
 
 router = APIRouter()
 
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
-GOOGLE_REDIRECT_URI = "http://localhost:8000/api/v1/integrations/google/callback"
+
+# --- THE FIX 1: Dynamic Backend URL for Google's Callback ---
+# It defaults to your live Render URL, but you can override it in your local .env
+BACKEND_URL = os.getenv("BACKEND_URL", "https://arbflow-backend.onrender.com")
+GOOGLE_REDIRECT_URI = f"{BACKEND_URL}/api/v1/integrations/google/callback"
+
+# --- THE FIX 2: Dynamic Frontend URL for the final redirect ---
+FRONTEND_URL = os.getenv("FRONTEND_URL", "https://marketing-saas-platform-pi.vercel.app")
 
 @router.get("/google/link")
 def get_google_login_link(current_user: User = Depends(get_current_user)):
@@ -29,9 +32,10 @@ def get_google_login_link(current_user: User = Depends(get_current_user)):
         f"&scope=https://www.googleapis.com/auth/analytics.readonly"
         f"&access_type=offline"
         f"&prompt=consent"
-        f"&state={current_user.id}"  # <-- Injects their REAL database ID dynamically!
+        f"&state={current_user.id}"  
     )
     return {"url": auth_url}
+
 @router.get("/google/login")
 def google_login(user_id: str):
     """Generates the Google OAuth 2.0 URL and redirects the user."""
@@ -48,7 +52,7 @@ def google_login(user_id: str):
     return RedirectResponse(url=auth_url)
 
 @router.get("/google/callback")
-def google_callback(code: str, state: str, db: Session = Depends(get_db)): # <-- Added DB Session Injection
+def google_callback(code: str, state: str, db: Session = Depends(get_db)): 
     """Catches the auth code, exchanges for a token, and saves to PostgreSQL."""
     
     # 1. Convert state back to an integer user_id
@@ -85,26 +89,23 @@ def google_callback(code: str, state: str, db: Session = Depends(get_db)): # <--
     # 4. The Upsert Logic: Check if this user already connected Google Analytics
     existing_integration = db.query(Integration).filter(
         Integration.user_id == user_id,
-        Integration.provider == "google_analytics"  # <-- Changed to provider
+        Integration.provider == "google_analytics"  
     ).first()
     
     if existing_integration:
         # Update existing record
-        existing_integration.encrypted_credentials = credentials_json  # <-- Changed to encrypted_credentials
+        existing_integration.encrypted_credentials = credentials_json  
     else:
         # Create new record
         new_integration = Integration(
             user_id=user_id,
-            provider="google_analytics",  # <-- Changed to provider
-            encrypted_credentials=credentials_json  # <-- Changed to encrypted_credentials
+            provider="google_analytics",  
+            encrypted_credentials=credentials_json  
         )
         db.add(new_integration)
         
     # 5. Commit the transaction to Neon!
     db.commit()
     
-   # 6. Redirect the user back to your Next.js frontend
-    # (We add a query parameter so the frontend knows it was successful)
-    frontend_redirect_url = "http://localhost:3000/dashboard?integration=success"
-    return RedirectResponse(url=frontend_redirect_url)
-
+    # 6. Redirect the user back to your live Next.js frontend
+    return RedirectResponse(url=f"{FRONTEND_URL}/dashboard?integration=success")
