@@ -13,7 +13,7 @@ export default function Dashboard() {
   const [syncing, setSyncing] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState<string>("");
   const [agencyLogo, setAgencyLogo] = useState<string | null>(null);
-  const [showSuccessToast, setShowSuccessToast] = useState(false); // New state for OAuth success
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
 
   const COLORS = ['#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe', '#2563eb'];
 
@@ -21,7 +21,10 @@ export default function Dashboard() {
     if (isManualSync) setSyncing(true);
     const token = localStorage.getItem("token");
     try {
-      const url = new URL("http://localhost:8000/api/v1/analytics/dashboard");
+      // --- THE FIX: Dynamically fetching the backend URL for production ---
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const url = new URL(`${backendUrl}/api/v1/analytics/dashboard`);
+      
       if (propId) url.searchParams.append("property_id", propId);
 
       const res = await fetch(url.toString(), {
@@ -41,12 +44,9 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    // 1. Catch the successful OAuth redirect from our FastAPI backend
     if (typeof window !== "undefined" && window.location.search.includes("integration=success")) {
       setShowSuccessToast(true);
-      // Clean up the URL so it looks nice and clean again
       window.history.replaceState({}, document.title, window.location.pathname);
-      // Hide the toast after 5 seconds
       setTimeout(() => setShowSuccessToast(false), 5000);
     }
 
@@ -76,21 +76,17 @@ export default function Dashboard() {
     }
   };
 
-  // --- NEW: Google Connect Logic ---
-// --- UPDATED: Production-Ready Google Connect Logic ---
-const handleConnectGoogle = async () => {
+  const handleConnectGoogle = async () => {
     try {
       const token = localStorage.getItem("token");
       const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
       
-      // 1. Securely ask the backend for a personalized Google login URL
       const res = await fetch(`${backendUrl}/api/v1/integrations/google/link`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
       
       const result = await res.json();
       
-      // 2. Redirect the user's browser to the newly generated link
       if (result.url) {
         window.location.href = result.url;
       } else {
@@ -153,7 +149,6 @@ const handleConnectGoogle = async () => {
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-[#fafafa] font-light text-gray-400">Loading Workspace...</div>;
   if (!data) return <div className="min-h-screen flex flex-col items-center justify-center bg-[#fafafa]"><p className="text-gray-500 mb-4">Session expired.</p><button onClick={() => { localStorage.removeItem("token"); window.location.href = "/"; }} className="px-6 py-2 bg-blue-600 text-white rounded-xl">Log In Again</button></div>;
   
-  // --- UPDATED: Beautiful Empty State for Disconnected Users ---
   if (data.status === "pending" || data.status === "pending_integration") {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#fafafa] p-6">
@@ -175,8 +170,6 @@ const handleConnectGoogle = async () => {
 
   return (
     <div className="min-h-screen bg-[#fafafa] p-8 md:p-12 font-sans text-gray-900 overflow-x-hidden relative">
-      
-      {/* --- NEW: Success Toast Notification --- */}
       <AnimatePresence>
         {showSuccessToast && (
           <motion.div 
@@ -191,7 +184,6 @@ const handleConnectGoogle = async () => {
         )}
       </AnimatePresence>
 
-      {/* Header */}
       <header className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center mb-10 gap-6">
         <div className="flex items-center space-x-6">
           <div className="relative group cursor-pointer">
