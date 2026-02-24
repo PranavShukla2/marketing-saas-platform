@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from google.oauth2.credentials import Credentials
 from google.analytics.data_v1beta import BetaAnalyticsDataClient
 from google.analytics.data_v1beta.types import DateRange, Dimension, Metric, RunReportRequest
-from google.analytics.admin import AnalyticsAdminServiceClient # <-- NEW Admin API!
+from google.analytics.admin import AnalyticsAdminServiceClient 
 
 # Adjust these imports to match your project structure
 from app.api.deps import get_db, get_current_user 
@@ -32,10 +32,15 @@ def get_dashboard_data(
         Integration.provider == "google_analytics"
     ).first()
 
+    # 1. If they never connected
     if not integration:
         return {"data": {"status": "pending_integration"}}
 
     creds_data = json.loads(integration.encrypted_credentials)
+    
+    # 2. If the database row exists but is missing the token
+    if not creds_data.get("access_token"):
+         return {"data": {"status": "pending_integration"}}
     
     credentials = Credentials(
         token=creds_data.get("access_token"),
@@ -45,7 +50,6 @@ def get_dashboard_data(
         client_secret=GOOGLE_CLIENT_SECRET,
     )
 
-    # --- UPGRADE 1: DYNAMIC PROPERTY DISCOVERY ---
     admin_client = AnalyticsAdminServiceClient(credentials=credentials)
     properties_list = []
     
@@ -60,7 +64,10 @@ def get_dashboard_data(
                 })
     except Exception as e:
         print(f"Admin API Error: {e}")
-        raise HTTPException(status_code=500, detail="Failed to fetch Google Analytics properties.")
+        # --- THE FIX: Graceful Degradation ---
+        # If the token is expired or invalid, don't crash the server!
+        # Tell the frontend to show the 'Sign in with Google' button so they can reconnect.
+        return {"data": {"status": "pending_integration"}}
 
     # If the user has GA connected but no actual websites set up in GA
     if not properties_list:
@@ -114,9 +121,8 @@ def get_dashboard_data(
                 "views": int(row.metric_values[1].value)
             })
 
-        # --- UPGRADE 2: DYNAMIC INSIGHTS ENGINE ---
+        # --- DYNAMIC INSIGHTS ENGINE ---
         if post_level_data:
-            # Sort the channels by highest views first
             top_channel = sorted(post_level_data, key=lambda x: x["views"], reverse=True)[0]
             top_name = top_channel["source"]
             
@@ -138,14 +144,15 @@ def get_dashboard_data(
                 "status": "active",
                 "company_name": current_user.company_name,
                 "active_property_id": target_property_id,
-                "properties": properties_list, # <--- Populates your Next.js dropdown!
+                "properties": properties_list,
                 "summary": summary_data,
                 "post_level": post_level_data,
                 "anomaly": {"is_anomaly": False, "message": ""},
-                "suggestions": dynamic_insights # <--- Populates the dynamic text!
+                "suggestions": dynamic_insights
             }
         }
 
     except Exception as e:
         print(f"GA4 Data API Error: {e}")
-        raise HTTPException(status_code=500, detail="Failed to fetch live data from Google Analytics")
+        # Catch Data API token failures as well
+        return {"data": {"status": "pending_integration"}}
