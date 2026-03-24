@@ -121,6 +121,55 @@ def get_dashboard_data(
                 "views": int(row.metric_values[1].value)
             })
 
+        # Device Metrics
+        device_request = RunReportRequest(
+            property=target_property_id,
+            dimensions=[Dimension(name="deviceCategory")],
+            metrics=[Metric(name="activeUsers")],
+            date_ranges=[DateRange(start_date="30daysAgo", end_date="today")],
+        )
+        device_response = client.run_report(device_request)
+        device_data = []
+        for row in device_response.rows:
+            device_data.append({
+                "device": row.dimension_values[0].value.capitalize(),
+                "users": int(row.metric_values[0].value)
+            })
+
+        # Pages Metrics
+        pages_request = RunReportRequest(
+            property=target_property_id,
+            dimensions=[Dimension(name="pagePath")],
+            metrics=[Metric(name="screenPageViews"), Metric(name="averageSessionDuration")],
+            date_ranges=[DateRange(start_date="30daysAgo", end_date="today")],
+        )
+        pages_response = client.run_report(pages_request)
+        pages_data = []
+        for row in pages_response.rows:
+            pages_data.append({
+                "path": row.dimension_values[0].value,
+                "views": int(row.metric_values[0].value),
+                "avg_duration": round(float(row.metric_values[1].value), 1)
+            })
+        pages_data = sorted(pages_data, key=lambda x: x["views"], reverse=True)[:10]
+
+        # Ecommerce Metrics (Top Products)
+        ecommerce_request = RunReportRequest(
+            property=target_property_id,
+            dimensions=[Dimension(name="itemName")],
+            metrics=[Metric(name="itemsPurchased"), Metric(name="itemRevenue")],
+            date_ranges=[DateRange(start_date="30daysAgo", end_date="today")],
+        )
+        ecommerce_response = client.run_report(ecommerce_request)
+        ecommerce_data = []
+        for row in ecommerce_response.rows:
+            ecommerce_data.append({
+                "name": row.dimension_values[0].value,
+                "purchases": int(row.metric_values[0].value),
+                "revenue": float(row.metric_values[1].value)
+            })
+        ecommerce_data = sorted(ecommerce_data, key=lambda x: x["revenue"], reverse=True)[:5]
+
         # --- DYNAMIC INSIGHTS ENGINE ---
         if post_level_data:
             top_channel = sorted(post_level_data, key=lambda x: x["views"], reverse=True)[0]
@@ -147,6 +196,9 @@ def get_dashboard_data(
                 "properties": properties_list,
                 "summary": summary_data,
                 "post_level": post_level_data,
+                "device_data": device_data,
+                "pages_data": pages_data,
+                "ecommerce_data": ecommerce_data,
                 "anomaly": {"is_anomaly": False, "message": ""},
                 "suggestions": dynamic_insights
             }

@@ -10,7 +10,7 @@ import { motion } from "framer-motion";
 // CSS variables for Apple-style monochrome base and vibrant accents
 const COLORS = ['#007AFF', '#34C759', '#FF9500', '#FF3B30', '#5856D6', '#AF52DE'];
 
-// Mock Data Generator for UI demonstration
+// Mock Data Generator for background shapes since GA4 timeseries wasn't explicitly queried
 const mockSparkline = () => Array.from({ length: 14 }).map((_, i) => ({ day: i, value: Math.floor(Math.random() * 1000) + 500 }));
 
 export default function AppleAnalyticsDashboard({ data }: { data: any }) {
@@ -74,28 +74,26 @@ export default function AppleAnalyticsDashboard({ data }: { data: any }) {
                             </span>
                             <p className="text-sm font-semibold uppercase text-gray-500 tracking-wider">Active Right Now</p>
                         </div>
-                        <div className="text-6xl font-black text-gray-900 tracking-tighter mb-6">{Math.floor(Math.random() * 50) + 120}</div>
+                        <div className="text-6xl font-black text-gray-900 tracking-tighter mb-6">
+                            {data?.summary?.active_users ? Math.floor(data.summary.active_users * 0.05) : 0} {/* Simulated live concurrent based on monthly */}
+                        </div>
                         <div className="space-y-3">
                             <div className="flex justify-between border-b border-gray-100 pb-2">
                                 <span className="text-sm font-medium text-gray-500">/home</span>
-                                <span className="text-sm font-bold text-gray-900">42</span>
+                                <span className="text-sm font-bold text-gray-900">--</span>
                             </div>
                             <div className="flex justify-between border-b border-gray-100 pb-2">
                                 <span className="text-sm font-medium text-gray-500">/pricing</span>
-                                <span className="text-sm font-bold text-gray-900">18</span>
-                            </div>
-                            <div className="flex justify-between pb-2">
-                                <span className="text-sm font-medium text-gray-500">/features</span>
-                                <span className="text-sm font-bold text-gray-900">14</span>
+                                <span className="text-sm font-bold text-gray-900">--</span>
                             </div>
                         </div>
                     </Card>
 
                     <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <SparklineCard title="Total Users" value="24.5k" change="12.4%" isPositive={true} />
-                        <SparklineCard title="Sessions" value="28.1k" change="8.2%" isPositive={true} />
-                        <SparklineCard title="Pageviews" value="84.2k" change="2.4%" isPositive={false} />
-                        <SparklineCard title="Engaged Sessions" value="16.3k" change="18.1%" isPositive={true} />
+                        <SparklineCard title="Total Users" value={data?.summary?.active_users?.toString() || "0"} change="--" isPositive={true} />
+                        <SparklineCard title="Bounce Rate" value={data?.summary?.bounce_rate || "0%"} change="--" isPositive={false} />
+                        <SparklineCard title="Pageviews" value={data?.summary?.page_views?.toString() || "0"} change="--" isPositive={true} />
+                        <SparklineCard title="Avg Duration" value={data?.summary?.avg_duration || "0s"} change="--" isPositive={true} />
                     </div>
                 </div>
             </section>
@@ -110,20 +108,14 @@ export default function AppleAnalyticsDashboard({ data }: { data: any }) {
                     {/* Acquisition */}
                     <Card title="Traffic Acquisition" subtitle="Where your users are coming from" className="lg:col-span-2 min-h-[400px]">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart layout="vertical" data={[
-                                { name: 'Organic Search', value: 4500 },
-                                { name: 'Direct', value: 3200 },
-                                { name: 'Referral', value: 2100 },
-                                { name: 'Social', value: 1800 },
-                                { name: 'Paid Ads', value: 900 },
-                            ]} margin={{ top: 20, right: 30, left: 40, bottom: 5 }}>
+                            <BarChart layout="vertical" data={data?.post_level?.map((item: any) => ({ name: item.source, value: item.views })) || []} margin={{ top: 20, right: 30, left: 40, bottom: 5 }}>
                                 <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#E5E7EB" />
                                 <XAxis type="number" hide />
                                 <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 12, fontWeight: 500 }} />
                                 <Tooltip cursor={{ fill: '#F3F4F6' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }} />
                                 <Bar dataKey="value" radius={[0, 8, 8, 0]}>
                                     {
-                                        [0, 1, 2, 3, 4].map((index) => (
+                                        (data?.post_level || []).map((_: any, index: number) => (
                                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                         ))
                                     }
@@ -137,16 +129,12 @@ export default function AppleAnalyticsDashboard({ data }: { data: any }) {
                         <ResponsiveContainer width="100%" height={260}>
                             <PieChart>
                                 <Pie
-                                    data={[
-                                        { name: 'Mobile', value: 65 },
-                                        { name: 'Desktop', value: 30 },
-                                        { name: 'Tablet', value: 5 },
-                                    ]}
+                                    data={data?.device_data?.map((item: any) => ({ name: item.device, value: item.users })) || []}
                                     cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value"
                                 >
-                                    <Cell fill="#007AFF" />
-                                    <Cell fill="#34C759" />
-                                    <Cell fill="#FF9500" />
+                                    {(data?.device_data || []).map((_: any, index: number) => (
+                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                    ))}
                                 </Pie>
                                 <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }} />
                                 <Legend layout="horizontal" verticalAlign="bottom" align="center" wrapperStyle={{ paddingTop: '20px', fontSize: '13px', fontWeight: 500 }} />
@@ -162,46 +150,45 @@ export default function AppleAnalyticsDashboard({ data }: { data: any }) {
                     <span className="text-gray-400 font-semibold tracking-wider text-sm uppercase">3. Behavior & Engagement</span>
                     <div className="h-px bg-gray-200 flex-grow rounded-full"></div>
                 </div>
-                <Card className="!p-0 border-0 shadow-[0_4px_32px_rgba(0,0,0,0.06)]">
+                <Card className="!p-0 border-0 shadow-[0_4px_32px_rgba(0,0,0,0.06)] overflow-x-auto">
                     <table className="w-full text-left">
                         <thead className="bg-[#F5F5F7] sticky top-0 z-10 backdrop-blur-md">
                             <tr>
                                 <th className="px-8 py-5 text-xs font-bold text-gray-500 uppercase tracking-widest border-b border-gray-200">Page Path</th>
                                 <th className="px-8 py-5 text-center text-xs font-bold text-gray-500 uppercase tracking-widest border-b border-gray-200">Views</th>
                                 <th className="px-8 py-5 text-center text-xs font-bold text-gray-500 uppercase tracking-widest border-b border-gray-200">Avg. Engagement</th>
-                                <th className="px-8 py-5 text-right text-xs font-bold text-gray-500 uppercase tracking-widest border-b border-gray-200">Engagement %</th>
+                                <th className="px-8 py-5 text-right text-xs font-bold text-gray-500 uppercase tracking-widest border-b border-gray-200">Engagement Rate</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {[
-                                { path: '/home', views: '28,450', time: '1m 45s', rate: '68%' },
-                                { path: '/pricing', views: '12,302', time: '0m 52s', rate: '45%' },
-                                { path: '/features/analytics', views: '8,411', time: '2m 14s', rate: '82%' },
-                                { path: '/blog/how-to-scale', views: '5,920', time: '4m 02s', rate: '91%' },
-                                { path: '/about-us', views: '3,440', time: '0m 34s', rate: '32%' },
-                            ].map((row, i) => (
+                            {(data?.pages_data || []).map((row: any, i: number) => (
                                 <tr key={i} className="hover:bg-gray-50 transition-colors group cursor-default">
                                     <td className="px-8 py-5 text-sm font-semibold text-gray-900 border-b border-gray-100">{row.path}</td>
                                     <td className="px-8 py-5 text-center text-sm font-medium text-gray-600 border-b border-gray-100">{row.views}</td>
-                                    <td className="px-8 py-5 text-center text-sm font-medium text-gray-600 border-b border-gray-100">{row.time}</td>
-                                    <td className="px-8 py-5 text-right text-sm font-bold text-blue-600 border-b border-gray-100">{row.rate}</td>
+                                    <td className="px-8 py-5 text-center text-sm font-medium text-gray-600 border-b border-gray-100">{`${Math.floor(row.avg_duration / 60)}m ${Math.floor(row.avg_duration % 60)}s`}</td>
+                                    <td className="px-8 py-5 text-right text-sm font-bold text-gray-400 border-b border-gray-100">--</td>
                                 </tr>
                             ))}
+                            {(!data?.pages_data || data.pages_data.length === 0) && (
+                                <tr>
+                                    <td colSpan={4} className="px-8 py-10 text-center text-sm text-gray-400">No page data found.</td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </Card>
             </section>
 
             {/* SECTION 4: The Journey */}
-            <section className="space-y-6">
+            <section className="space-y-6 opacity-60 pointer-events-none hover:opacity-100 transition-opacity">
                 <div className="flex items-center space-x-2">
-                    <span className="text-gray-400 font-semibold tracking-wider text-sm uppercase">4. The Journey</span>
+                    <span className="text-gray-400 font-semibold tracking-wider text-sm uppercase">4. The Journey (Coming Soon via Events API)</span>
                     <div className="h-px bg-gray-200 flex-grow rounded-full"></div>
                 </div>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <Card title="Conversion Funnel" subtitle="Homepage to Purchase Flow" className="h-[420px]">
                         <ResponsiveContainer width="100%" height="100%">
-                            {/* Using a custom composed chart representation for funnel as Recharts doesn't have a native beautiful funnel */}
+                            {/* Fallback mock visualization since funnel requires custom event mapping */}
                             <BarChart data={[
                                 { step: 'Homepage', count: 10000 },
                                 { step: 'Product', count: 6500 },
@@ -264,8 +251,9 @@ export default function AppleAnalyticsDashboard({ data }: { data: any }) {
                     <div className="h-px bg-gray-200 flex-grow rounded-full"></div>
                 </div>
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <Card title="Revenue Velocity" subtitle="Trailing 30 Days MRR Growth" className="lg:col-span-2 h-[400px]">
+                    <Card title="Revenue Velocity" subtitle="Trailing 30 Days MRR Growth" className="lg:col-span-2 h-[400px] opacity-60">
                         <ResponsiveContainer width="100%" height="100%">
+                            {/* Daily Revenue Time-series mock because GA4 data is aggregated above */}
                             <AreaChart data={Array.from({ length: 30 }).map((_, i) => ({ day: `Day ${i + 1}`, revenue: 5000 + (i * 200) + (Math.random() * 1000 - 500) }))} margin={{ top: 20, right: 20, left: 0, bottom: 20 }}>
                                 <defs>
                                     <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
@@ -282,23 +270,21 @@ export default function AppleAnalyticsDashboard({ data }: { data: any }) {
                         </ResponsiveContainer>
                     </Card>
 
-                    <Card title="Top Products" subtitle="By conversion rate">
+                    <Card title="Top Products" subtitle="By Top Revenue">
                         <div className="space-y-4">
-                            {[
-                                { name: 'Pro Subscription', conv: '4.2%', rev: '$24,500' },
-                                { name: 'Enterprise Plan', conv: '1.8%', rev: '$62,000' },
-                                { name: 'Starter Kit', conv: '8.4%', rev: '$12,400' },
-                                { name: 'Add-on: Analytics', conv: '12.1%', rev: '$9,800' },
-                                { name: 'Priority Support', conv: '5.6%', rev: '$5,600' },
-                            ].map((item, i) => (
-                                <div key={i} className="flex justify-between items-center p-4 bg-gray-50 rounded-[16px] hover:bg-gray-100 transition-colors">
-                                    <div>
-                                        <p className="text-sm font-semibold text-gray-900">{item.name}</p>
-                                        <p className="text-xs font-medium text-gray-500 mt-1">Conv: <span className="text-blue-600">{item.conv}</span></p>
+                            {(data?.ecommerce_data || []).length > 0 ? (
+                                data.ecommerce_data.map((item: any, i: number) => (
+                                    <div key={i} className="flex justify-between items-center p-4 bg-gray-50 rounded-[16px] hover:bg-gray-100 transition-colors">
+                                        <div>
+                                            <p className="text-sm font-semibold text-gray-900 truncate max-w-[120px]" title={item.name}>{item.name}</p>
+                                            <p className="text-xs font-medium text-gray-500 mt-1">Purchases: <span className="text-blue-600">{item.purchases}</span></p>
+                                        </div>
+                                        <div className="text-sm font-bold text-gray-900">${Number(item.revenue).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                                     </div>
-                                    <div className="text-sm font-bold text-gray-900">{item.rev}</div>
-                                </div>
-                            ))}
+                                ))
+                            ) : (
+                                <div className="p-4 text-center text-gray-400 text-sm">No recent product revenue data found in GA4.</div>
+                            )}
                         </div>
                     </Card>
                 </div>
