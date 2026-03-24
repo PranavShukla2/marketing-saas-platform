@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: arbflow_frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      # Map local frontend source code exactly to the container for hot reloading.
+      - ./frontend:/app
+      # Exclude node_modules from the local override so the container uses its installed modules.
+      - /app/node_modules
+      - /app/.next
+    environment:
+      - NODE_ENV=development
+      # Tell frontend where to look for backend requests
+      - NEXT_PUBLIC_API_URL=http://localhost:8001
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: arbflow_backend
+    ports:
+      - "8001:8000"
+    volumes:
+      # Map local backend source code exactly to the container for hot reloading.
+      - ./backend:/app
+    environment:
+      # Pass database connection string to FastAPI 
+      # (Using internal hostname 'db' which resolves to the db container)
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/arbflow_local
+      # Override production defaults to keep Google OAuth redirecting to localhost
+      - BACKEND_URL=http://localhost:8001
+      - FRONTEND_URL=http://localhost:3000
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:15-alpine
+    container_name: arbflow_db
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=arbflow_local
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d arbflow_local" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, Legend } from 'recharts';
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import AppleAnalyticsDashboard from "../../components/AppleAnalyticsDashboard";
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("overview");
@@ -24,7 +25,7 @@ export default function Dashboard() {
       // --- THE FIX: Dynamically fetching the backend URL for production ---
       const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
       const url = new URL(`${backendUrl}/api/v1/analytics/dashboard`);
-      
+
       if (propId) url.searchParams.append("property_id", propId);
 
       const res = await fetch(url.toString(), {
@@ -35,9 +36,9 @@ export default function Dashboard() {
       if (result.data?.active_property_id) {
         setSelectedProperty(result.data.active_property_id);
       }
-    } catch (err) { 
-      console.error("Fetch error:", err); 
-    } finally { 
+    } catch (err) {
+      console.error("Fetch error:", err);
+    } finally {
       setLoading(false);
       if (isManualSync) setTimeout(() => setSyncing(false), 800);
     }
@@ -51,7 +52,7 @@ export default function Dashboard() {
     }
 
     fetchData();
-    
+
     const savedLogo = localStorage.getItem("arbflow_agency_logo");
     if (savedLogo) setAgencyLogo(savedLogo);
   }, []);
@@ -80,13 +81,13 @@ export default function Dashboard() {
     try {
       const token = localStorage.getItem("token");
       const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-      
+
       const res = await fetch(`${backendUrl}/api/v1/integrations/google/link`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
-      
+
       const result = await res.json();
-      
+
       if (result.url) {
         window.location.href = result.url;
       } else {
@@ -125,11 +126,11 @@ export default function Dashboard() {
         console.error("Error adding image to PDF", e);
       }
     }
-    
+
     doc.setTextColor(59, 130, 246);
     doc.setFontSize(22);
     doc.text("Agency Performance Report", 14, currentY);
-    
+
     doc.setTextColor(100, 100, 100);
     doc.setFontSize(12);
     doc.text(`Client Workspace: ${data.company_name}`, 14, currentY + 8);
@@ -148,7 +149,7 @@ export default function Dashboard() {
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-[#fafafa] font-light text-gray-400">Loading Workspace...</div>;
   if (!data) return <div className="min-h-screen flex flex-col items-center justify-center bg-[#fafafa]"><p className="text-gray-500 mb-4">Session expired.</p><button onClick={() => { localStorage.removeItem("token"); window.location.href = "/"; }} className="px-6 py-2 bg-blue-600 text-white rounded-xl">Log In Again</button></div>;
-  
+
   if (data.status === "pending" || data.status === "pending_integration") {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#fafafa] p-6">
@@ -172,9 +173,9 @@ export default function Dashboard() {
     <div className="min-h-screen bg-[#fafafa] p-8 md:p-12 font-sans text-gray-900 overflow-x-hidden relative">
       <AnimatePresence>
         {showSuccessToast && (
-          <motion.div 
-            initial={{ opacity: 0, y: -50 }} 
-            animate={{ opacity: 1, y: 0 }} 
+          <motion.div
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -50 }}
             className="fixed top-8 left-1/2 transform -translate-x-1/2 z-50 bg-green-50 border border-green-200 text-green-700 px-6 py-3 rounded-full shadow-lg flex items-center space-x-3"
           >
@@ -189,15 +190,15 @@ export default function Dashboard() {
           <div className="relative group cursor-pointer">
             <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" id="logo-upload" />
             <label htmlFor="logo-upload" className="cursor-pointer flex items-center justify-center w-12 h-12 bg-white border border-gray-200 rounded-2xl shadow-sm hover:border-blue-300 transition-all overflow-hidden">
-               {agencyLogo ? <img src={agencyLogo} alt="Agency Logo" className="w-full h-full object-contain p-1" /> : <span className="text-gray-400 text-sm font-medium">Logo</span>}
+              {agencyLogo ? <img src={agencyLogo} alt="Agency Logo" className="w-full h-full object-contain p-1" /> : <span className="text-gray-400 text-sm font-medium">Logo</span>}
             </label>
           </div>
 
           <div>
             <h1 className="text-4xl font-semibold tracking-tight">{data?.company_name} Workspace</h1>
             {data?.properties && data.properties.length > 0 && (
-              <select 
-                value={selectedProperty} 
+              <select
+                value={selectedProperty}
                 onChange={handlePropertyChange}
                 className="mt-2 bg-white border border-gray-200 text-gray-600 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 shadow-sm"
               >
@@ -207,7 +208,7 @@ export default function Dashboard() {
               </select>
             )}
           </div>
-          
+
           <button onClick={() => fetchData(true)} disabled={syncing} className={`flex items-center space-x-2 px-4 py-2 rounded-xl border transition-all ${syncing ? "bg-gray-50 text-gray-400" : "bg-white text-blue-600 border-gray-200 hover:shadow-sm"}`}>
             <motion.svg animate={syncing ? { rotate: 360 } : { rotate: 0 }} transition={syncing ? { repeat: Infinity, duration: 1, ease: "linear" } : {}} className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 11-9-9c2.52 0 4.85.83 6.72 2.24" strokeLinecap="round" /><path d="M21 3v5h-5" strokeLinecap="round" strokeLinejoin="round" /></motion.svg>
             <span className="text-xs font-medium">{syncing ? "Syncing..." : "Sync Now"}</span>
@@ -215,7 +216,7 @@ export default function Dashboard() {
         </div>
 
         <div className="flex bg-gray-100 p-1 rounded-2xl border border-gray-200">
-          {["overview", "tracking", "insights"].map(tab => (
+          {["overview", "tracking", "insights", "analytics"].map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)} className={`px-8 py-2 rounded-xl text-sm font-medium transition-all ${activeTab === tab ? "bg-white shadow-sm text-black" : "text-gray-500 hover:text-gray-800"}`}>
               {tab.toUpperCase()}
             </button>
@@ -238,7 +239,7 @@ export default function Dashboard() {
         <AnimatePresence mode="wait">
           {activeTab === "overview" && (
             <motion.div key="overview" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-16">
-              
+
               <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                 {[{ l: "Users", v: data.summary?.active_users }, { l: "Views", v: data.summary?.page_views }, { l: "Bounce", v: data.summary?.bounce_rate }, { l: "Duration", v: data.summary?.avg_duration }].map((k, i) => (
                   <div key={i} className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm"><p className="text-xs font-bold text-gray-400 mb-2 uppercase tracking-widest">{k.l}</p><p className="text-4xl font-semibold">{k.v || "0"}</p></div>
@@ -303,6 +304,12 @@ export default function Dashboard() {
                 <div className="absolute top-0 right-0 w-64 h-64 bg-blue-50/30 rounded-full blur-[80px]"></div>
                 <div className="relative z-10"><h2 className="text-gray-400 text-2xl font-light italic">Optimal Strategy:</h2><h3 className="text-6xl font-bold mt-4 mb-12 tracking-tighter">{data?.suggestions?.primary_focus}</h3><div className="grid md:grid-cols-2 gap-12 border-t pt-12"><div><p className="text-xs font-bold text-gray-400 uppercase mb-4">Logic</p><p className="text-xl text-gray-600 italic">"{data?.suggestions?.reason}"</p></div><div className="bg-blue-50 p-8 rounded-[2rem] border border-blue-100"><p className="text-blue-600 text-xs font-bold uppercase mb-4">Tactical Move</p><p className="text-xl font-medium">{data?.suggestions?.action_item}</p></div></div></div>
               </div>
+            </motion.div>
+          )}
+
+          {activeTab === "analytics" && (
+            <motion.div key="analytics" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="w-full">
+              <AppleAnalyticsDashboard data={data} />
             </motion.div>
           )}
         </AnimatePresence>

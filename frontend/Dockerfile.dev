@@ -1,0 +1,19 @@
+FROM node:20-bookworm-slim
+
+WORKDIR /app
+
+# Copy package files.
+# Using a wildcard ensures both package.json AND package-lock.json are copied if available.
+COPY package*.json ./
+
+# Install dependecies
+RUN npm install
+
+# Copying the rest of the code is necessary for the initial build, 
+# though the volume mount in docker-compose will override this for hot-reloading.
+COPY . .
+
+EXPOSE 3000
+
+# Start Next.js in development mode with watch/hot-reload
+CMD ["npm", "run", "dev"]
