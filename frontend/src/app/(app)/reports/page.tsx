@@ -7,40 +7,79 @@ import { useState } from "react";
 export default function ReportsPage() {
   const [generating, setGenerating] = useState(false);
 
-  const generatePDF = () => {
+  const generatePDF = async () => {
     setGenerating(true);
-    setTimeout(() => {
+    try {
+      const token = localStorage.getItem("token");
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+      // Fetch real dashboard data
+      const res = await fetch(`${backendUrl}/api/v1/analytics/dashboard`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      const result = await res.json();
+      const d = result.data;
+
+      // Fetch real campaign data
+      const campRes = await fetch(`${backendUrl}/api/v1/workspace/campaigns`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      const campResult = await campRes.json();
+      const campaigns = campResult.campaigns || [];
+
       const doc = new jsPDF();
       doc.setFont("helvetica");
-      
+
       // Header
       doc.setFontSize(22);
       doc.text("Workspace Analytics Report", 20, 30);
-      
+
       doc.setFontSize(12);
       doc.setTextColor(100);
       doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 20, 40);
+      if (d?.company_name) {
+        doc.text(`Workspace: ${d.company_name}`, 20, 47);
+      }
 
-      // Body Section
+      // Executive Summary with REAL values
       doc.setTextColor(0);
       doc.setFontSize(16);
-      doc.text("Executive Summary", 20, 60);
+      doc.text("Executive Summary", 20, 65);
 
       doc.setFontSize(12);
-      doc.text("Active Users: 1,240  (+12% YoY)", 20, 75);
-      doc.text("Page Views: 45,200  (+8% MoM)", 20, 85);
-      doc.text("Average Session Duration: 1m 45s", 20, 95);
-      doc.text("Overall Bounce Rate: 34%", 20, 105);
+      const users = d?.summary?.active_users || "0";
+      const views = d?.summary?.page_views || "0";
+      const duration = d?.summary?.avg_duration || "0s";
+      const bounce = d?.summary?.bounce_rate || "0%";
 
-      // Add a simple line for section split
+      doc.text(`Active Users: ${Number(users).toLocaleString()}`, 20, 80);
+      doc.text(`Page Views: ${Number(views).toLocaleString()}`, 20, 90);
+      doc.text(`Average Session Duration: ${duration}`, 20, 100);
+      doc.text(`Bounce Rate: ${bounce}`, 20, 110);
+
+      // Separator
       doc.setLineWidth(0.5);
-      doc.line(20, 120, 190, 120);
+      doc.line(20, 122, 190, 122);
 
+      // Top Campaigns from real data
       doc.setFontSize(16);
-      doc.text("Top Campaigns", 20, 135);
+      doc.text("Top Campaigns", 20, 137);
       doc.setFontSize(12);
-      doc.text("1. Q3 Growth (ROI: +18%)", 20, 150);
-      doc.text("2. Google Search Core (ROI: +310%)", 20, 160);
+      campaigns.slice(0, 5).forEach((camp: any, idx: number) => {
+        doc.text(`${idx + 1}. ${camp.name} (ROI: ${camp.roi})`, 20, 152 + idx * 10);
+      });
+
+      // Top Traffic Sources from real data
+      const postLevel = d?.post_level || [];
+      if (postLevel.length > 0) {
+        const startY = 152 + Math.min(campaigns.length, 5) * 10 + 15;
+        doc.setFontSize(16);
+        doc.text("Traffic Sources", 20, startY);
+        doc.setFontSize(12);
+        postLevel.slice(0, 5).forEach((src: any, idx: number) => {
+          doc.text(`${src.source}: ${src.views} views, ${src.users} users`, 20, startY + 15 + idx * 10);
+        });
+      }
 
       // Footer
       doc.setFontSize(10);
@@ -48,8 +87,11 @@ export default function ReportsPage() {
       doc.text("ArbFlow Intelligence Systems", 20, 280);
 
       doc.save(`ArbFlow_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+    } catch (err) {
+      console.error("Failed to generate report", err);
+    } finally {
       setGenerating(false);
-    }, 1000); // Simulate network/processing delay
+    }
   };
 
   const reports = [
