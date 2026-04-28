@@ -9,7 +9,7 @@ router = APIRouter()
 
 @router.get("/campaigns")
 def get_campaigns(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    """Returns dynamic campaign data mapped directly from GA4 post_level traffic sources."""
+    """Returns real traffic source channels from GA4 as campaign cards."""
     dash_info = get_dashboard_data(property_id=None, db=db, current_user=current_user)
     dash_data = dash_info.get("data", {})
     
@@ -20,28 +20,17 @@ def get_campaigns(db: Session = Depends(get_db), current_user: User = Depends(ge
         post_level = dash_data.get("post_level", [])
         for idx, channel in enumerate(post_level):
             views = channel.get("views", 0)
-            budget = views * 2.5 # Fake math for realistic budget based on views
-            spent = views * 1.8
-            roi_val = int((views / max(1, spent)) * 100) + (idx * 17) % 43
+            users = channel.get("users", 0)
             campaigns.append({
                 "id": idx + 1,
-                "name": f"{channel.get('source')} Acquisition",
-                "status": "Active" if views > 100 else "Paused",
-                "budget": f"${int(budget):,}",
-                "spent": f"${int(spent):,}",
-                "roi": f"+{roi_val}%" if spent > 0 else "-"
+                "name": f"{channel.get('source', 'Unknown')}",
+                "status": "Active" if views > 50 else "Low Traffic",
+                "views": views,
+                "users": users,
+                "ctr": f"{round((users / max(1, views)) * 100, 1)}%"
             })
-            
-        # Add a draft campaign to populate
-        if len(campaigns) < 4:
-            campaigns.append({ "id": len(campaigns)+1, "name": "LinkedIn B2B Retargeting", "status": "Draft", "budget": "$8,000", "spent": "$0", "roi": "-" })
-    else:
-        # Fallback to zeros if not connected yet
-        campaigns = [
-            { "id": 1, "name": f"{current_user.company_name} General", "status": "Draft", "budget": "$0", "spent": "$0", "roi": "-" }
-        ]
-        
-    return {"campaigns": campaigns}
+    
+    return {"campaigns": campaigns, "ga_status": status}
 
 @router.get("/team")
 def get_team(current_user: User = Depends(get_current_user)):

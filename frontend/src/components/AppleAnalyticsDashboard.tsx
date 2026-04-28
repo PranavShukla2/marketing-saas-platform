@@ -180,7 +180,7 @@ export default function AppleAnalyticsDashboard({ data }: { data: any }) {
             </section>
 
             {/* SECTION 4: The Journey */}
-            <section className="space-y-6 opacity-60 pointer-events-none hover:opacity-100 transition-opacity">
+            <section className="space-y-6">
                 <div className="flex items-center space-x-2">
                     <span className="text-gray-400 font-semibold tracking-wider text-sm uppercase">4. The Journey</span>
                     <div className="h-px bg-gray-200 flex-grow rounded-full"></div>

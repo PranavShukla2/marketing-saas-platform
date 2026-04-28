@@ -5,155 +5,248 @@ import { useEffect, useState } from "react";
 
 export default function CampaignsPage() {
   const [campaigns, setCampaigns] = useState<any[]>([]);
+  const [gaStatus, setGaStatus] = useState<string>("pending_integration");
   const [loading, setLoading] = useState(true);
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
-  const [showModal, setShowModal] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [showDemo, setShowDemo] = useState(false);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  useEffect(() => {
-    const fetchCampaigns = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-        const res = await fetch(`${backendUrl}/api/v1/workspace/campaigns`, {
-          headers: { "Authorization": `Bearer ${token}` }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setCampaigns(data.campaigns);
-        }
-      } catch (err) {
-        console.error("Failed to fetch campaigns", err);
-      } finally {
-        setLoading(false);
+  const fetchCampaigns = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const res = await fetch(`${backendUrl}/api/v1/workspace/campaigns`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setCampaigns(data.campaigns || []);
+        setGaStatus(data.ga_status || "pending_integration");
       }
-    };
-    fetchCampaigns();
-  }, []);
+    } catch (err) {
+      console.error("Failed to fetch campaigns", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  if (loading) return <div className="p-10 font-light text-gray-400">Loading campaigns...</div>;
+  useEffect(() => { fetchCampaigns(); }, []);
+
+  // Menu actions that actually modify campaign state in the UI
+  const handlePauseToggle = (id: number) => {
+    setCampaigns(prev => prev.map(c => 
+      c.id === id ? { ...c, status: c.status === "Active" ? "Paused" : "Active" } : c
+    ));
+    setOpenMenuId(null);
+    showToast("Campaign status updated");
+  };
+
+  const handleDelete = (id: number) => {
+    setCampaigns(prev => prev.filter(c => c.id !== id));
+    setOpenMenuId(null);
+    showToast("Channel removed from view");
+  };
+
+  if (loading) return (
+    <div className="flex items-center justify-center h-[60vh]">
+      <div className="w-8 h-8 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin"></div>
+    </div>
+  );
 
   return (
-    <div className="w-full max-w-6xl mx-auto py-8 relative">
+    <div className="w-full max-w-6xl mx-auto py-8 relative" onClick={() => openMenuId && setOpenMenuId(null)}>
       <AnimatePresence>
         {toastMessage && (
           <motion.div
-            initial={{ opacity: 0, y: -20, x: "-50%" }}
-            animate={{ opacity: 1, y: 0, x: "-50%" }}
-            exit={{ opacity: 0, y: -20, x: "-50%" }}
-            className="fixed top-10 left-1/2 z-50 bg-black text-white px-6 py-3 rounded-full shadow-lg text-sm font-medium"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed top-8 right-8 z-50 bg-gray-900 text-white px-5 py-3 rounded-2xl shadow-2xl text-sm font-medium flex items-center space-x-2"
           >
-            {toastMessage}
+            <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+            <span>{toastMessage}</span>
           </motion.div>
         )}
       </AnimatePresence>
 
       <div className="flex justify-between items-end mb-10">
         <div>
-          <h1 className="text-4xl font-semibold tracking-tight text-gray-900 mb-2">Campaigns</h1>
-          <p className="text-gray-500 font-light text-lg">Manage and monitor your active marketing channels.</p>
+          <h1 className="text-4xl font-semibold tracking-tight text-gray-900 mb-2">Traffic Channels</h1>
+          <p className="text-gray-500 font-light text-lg">Real-time traffic sources from your Google Analytics.</p>
         </div>
         <button 
-          onClick={() => setShowModal(true)}
-          className="bg-black hover:bg-gray-800 active:scale-95 transition-all text-white px-6 py-3 rounded-xl font-medium shadow-md"
+          onClick={() => setShowDemo(true)}
+          className="bg-gray-900 hover:bg-black active:scale-95 transition-all text-white px-5 py-2.5 rounded-xl font-medium shadow-sm text-sm"
         >
-          + New Campaign
+          How it works
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 relative">
+      {/* Empty State */}
+      {campaigns.length === 0 && (
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white border border-gray-100 rounded-3xl p-16 text-center shadow-sm"
+        >
+          <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"></path></svg>
+          </div>
+          <h3 className="text-2xl font-semibold text-gray-900 mb-3">No traffic channels yet</h3>
+          <p className="text-gray-500 max-w-md mx-auto mb-8 font-light">
+            {gaStatus === "pending_integration" 
+              ? "Connect your Google Analytics account to see your real traffic sources here automatically."
+              : "Your GA4 property doesn't have enough traffic data in the last 30 days. Once visitors start arriving, channels will appear here."
+            }
+          </p>
+          <div className="flex justify-center space-x-3">
+            {gaStatus === "pending_integration" && (
+              <button onClick={() => window.location.href = "/dashboard"} className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-colors shadow-sm text-sm">
+                Connect Google Analytics
+              </button>
+            )}
+            <button onClick={() => setShowDemo(true)} className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-colors text-sm">
+              See a demo
+            </button>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Campaign Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {campaigns.map((camp, i) => (
           <motion.div 
             key={camp.id}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.1 }}
-            className="bg-white border border-gray-100 rounded-3xl p-8 shadow-sm hover:shadow-md transition-shadow relative group"
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ delay: i * 0.06 }}
+            className="bg-white border border-gray-100 rounded-3xl p-7 shadow-sm hover:shadow-md transition-all relative group"
           >
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity rounded-t-3xl"></div>
             
-            <div className="flex justify-between items-center mb-6 relative">
-              <span className={`px-3 py-1 text-xs font-semibold rounded-full ${camp.status === 'Active' ? 'bg-green-50 text-green-600' : camp.status === 'Draft' ? 'bg-gray-100 text-gray-600' : 'bg-amber-50 text-amber-600'}`}>
+            <div className="flex justify-between items-center mb-5 relative">
+              <span className={`px-3 py-1 text-xs font-semibold rounded-full ${camp.status === 'Active' ? 'bg-green-50 text-green-600 border border-green-100' : 'bg-amber-50 text-amber-600 border border-amber-100'}`}>
                 {camp.status}
               </span>
               <button 
-                onClick={() => setOpenMenuId(openMenuId === camp.id ? null : camp.id)}
-                className="p-1 rounded-full hover:bg-gray-100 transition-colors"
+                onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === camp.id ? null : camp.id); }}
+                className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
               >
-                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path></svg>
+                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path></svg>
               </button>
 
               <AnimatePresence>
                 {openMenuId === camp.id && (
                   <motion.div 
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    className="absolute right-0 top-8 bg-white border border-gray-100 shadow-xl rounded-xl w-32 py-2 z-10"
+                    initial={{ opacity: 0, scale: 0.9, y: -5 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.9, y: -5 }}
+                    className="absolute right-0 top-10 bg-white border border-gray-100 shadow-2xl rounded-2xl w-36 py-1.5 z-20"
+                    onClick={(e) => e.stopPropagation()}
                   >
-                    <button onClick={() => { setOpenMenuId(null); showToast("Campaign edited"); }} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors">Edit</button>
-                    <button onClick={() => { setOpenMenuId(null); showToast(`Campaign ${camp.status === 'Active' ? 'paused' : 'activated'}`); }} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors">{camp.status === 'Active' ? 'Pause' : 'Activate'}</button>
-                    <button onClick={() => { setOpenMenuId(null); showToast("Campaign deleted"); }} className="w-full text-left px-4 py-2 text-sm hover:bg-red-50 text-red-600 transition-colors">Delete</button>
+                    <button onClick={() => handlePauseToggle(camp.id)} className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors flex items-center space-x-2">
+                      <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={camp.status === 'Active' ? "M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" : "M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"}></path></svg>
+                      <span>{camp.status === 'Active' ? 'Pause' : 'Activate'}</span>
+                    </button>
+                    <button onClick={() => handleDelete(camp.id)} className="w-full text-left px-4 py-2.5 text-sm hover:bg-red-50 text-red-500 transition-colors flex items-center space-x-2">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                      <span>Remove</span>
+                    </button>
                   </motion.div>
                 )}
               </AnimatePresence>
             </div>
             
-            <h3 className="text-xl font-medium text-gray-900 mb-8">{camp.name}</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-6">{camp.name}</h3>
             
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider mb-1">Budget</p>
-                <p className="text-lg font-medium">{camp.budget}</p>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="bg-gray-50 rounded-xl p-3 text-center">
+                <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-1">Views</p>
+                <p className="text-lg font-bold text-gray-900">{camp.views?.toLocaleString()}</p>
               </div>
-              <div>
-                <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider mb-1">Spent</p>
-                <p className="text-lg font-medium">{camp.spent}</p>
+              <div className="bg-gray-50 rounded-xl p-3 text-center">
+                <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-1">Users</p>
+                <p className="text-lg font-bold text-gray-900">{camp.users?.toLocaleString()}</p>
               </div>
-            </div>
-            
-            <div className="mt-8 pt-6 border-t border-gray-50 flex justify-between items-center">
-              <span className="text-sm font-medium text-gray-500">Est. ROI</span>
-              <span className={`font-semibold text-lg ${camp.roi.startsWith('+') ? 'text-green-500' : 'text-gray-500'}`}>{camp.roi}</span>
+              <div className="bg-blue-50 rounded-xl p-3 text-center">
+                <p className="text-[10px] text-blue-400 font-semibold uppercase tracking-wider mb-1">CTR</p>
+                <p className="text-lg font-bold text-blue-600">{camp.ctr}</p>
+              </div>
             </div>
           </motion.div>
         ))}
       </div>
 
+      {/* Demo / How It Works Modal */}
       <AnimatePresence>
-        {showModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
+        {showDemo && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4" onClick={() => setShowDemo(false)}>
             <motion.div 
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl relative"
+              className="bg-white rounded-3xl p-10 max-w-xl w-full shadow-2xl relative"
+              onClick={(e) => e.stopPropagation()}
             >
-              <h2 className="text-2xl font-semibold mb-6">Create New Campaign</h2>
-              <div className="space-y-4 mb-8">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Campaign Name</label>
-                  <input type="text" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 text-sm" placeholder="e.g. Q4 Push" />
+              <button onClick={() => setShowDemo(false)} className="absolute top-4 right-4 p-2 rounded-xl hover:bg-gray-100 transition-colors">
+                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+              </button>
+
+              <div className="mb-8">
+                <h2 className="text-2xl font-semibold mb-2">How Traffic Channels Work</h2>
+                <p className="text-gray-500 text-sm font-light">These cards are generated automatically from your Google Analytics data.</p>
+              </div>
+              
+              {/* Demo Card */}
+              <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 mb-8">
+                <div className="flex justify-between items-center mb-4">
+                  <span className="px-3 py-1 text-xs font-semibold rounded-full bg-green-50 text-green-600 border border-green-100">Active</span>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Budget</label>
-                  <input type="number" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 text-sm" placeholder="$5,000" />
+                <h3 className="text-lg font-semibold mb-4">Google Search</h3>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="bg-white rounded-xl p-3 text-center">
+                    <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-1">Views</p>
+                    <p className="text-lg font-bold">2,450</p>
+                  </div>
+                  <div className="bg-white rounded-xl p-3 text-center">
+                    <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-1">Users</p>
+                    <p className="text-lg font-bold">890</p>
+                  </div>
+                  <div className="bg-blue-50 rounded-xl p-3 text-center">
+                    <p className="text-[10px] text-blue-400 font-semibold uppercase tracking-wider mb-1">CTR</p>
+                    <p className="text-lg font-bold text-blue-600">36.3%</p>
+                  </div>
                 </div>
               </div>
-              <div className="flex justify-end space-x-3">
-                <button onClick={() => setShowModal(false)} className="px-5 py-2.5 rounded-xl text-gray-600 hover:bg-gray-100 font-medium transition-colors">Cancel</button>
-                <button onClick={() => { setShowModal(false); showToast("Draft saved as new campaign!"); }} className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors shadow-sm">Save Draft</button>
+
+              <div className="space-y-4 text-sm text-gray-600">
+                <div className="flex space-x-3">
+                  <div className="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 text-xs font-bold flex-shrink-0">1</div>
+                  <p><strong>Views</strong> — Total page views from this traffic source in the last 30 days.</p>
+                </div>
+                <div className="flex space-x-3">
+                  <div className="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 text-xs font-bold flex-shrink-0">2</div>
+                  <p><strong>Users</strong> — Unique users who visited via this source.</p>
+                </div>
+                <div className="flex space-x-3">
+                  <div className="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 text-xs font-bold flex-shrink-0">3</div>
+                  <p><strong>CTR</strong> — Click-through rate: the ratio of users to page views.</p>
+                </div>
+              </div>
+
+              <div className="mt-8 pt-6 border-t border-gray-100">
+                <button onClick={() => setShowDemo(false)} className="w-full py-3 bg-gray-900 text-white rounded-xl font-medium hover:bg-black transition-colors text-sm">Got it</button>
               </div>
             </motion.div>
           </div>
         )}
       </AnimatePresence>
-
     </div>
   );
 }
