@@ -4,6 +4,9 @@ import requests
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from fastapi.responses import RedirectResponse
+from passlib.context import CryptContext
+import jwt
+from datetime import datetime, timedelta
 
 from app.api.deps import get_db, get_current_user
 from app.db.models import Integration, User
@@ -13,13 +16,14 @@ router = APIRouter()
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 
-# --- THE FIX 1: Dynamic Backend URL for Google's Callback ---
-# It defaults to your live Render URL, but you can override it in your local .env
 BACKEND_URL = os.getenv("BACKEND_URL", "https://arbflow-backend.onrender.com")
 GOOGLE_REDIRECT_URI = f"{BACKEND_URL}/api/v1/integrations/google/callback"
 
-# --- THE FIX 2: Dynamic Frontend URL for the final redirect ---
 FRONTEND_URL = os.getenv("FRONTEND_URL", "https://marketing-saas-platform-pi.vercel.app")
+
+SECRET_KEY = "my-super-secret-saas-key"
+ALGORITHM = "HS256"
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 @router.get("/google/link")
 def get_google_login_link(current_user: User = Depends(get_current_user)):
@@ -53,15 +57,12 @@ def google_login(user_id: str):
 
 @router.get("/google/callback")
 def google_callback(code: str, state: str, db: Session = Depends(get_db)): 
-    """Catches the auth code, exchanges for a token, and saves to PostgreSQL."""
+    """Handles Google OAuth callback for BOTH:
+    1. Sign-in flow (state='auth_signin') — auto-creates user + connects GA4 + returns JWT
+    2. Integration flow (state=user_id) — just connects GA4 for an existing user
+    """
     
-    # 1. Convert state back to an integer user_id
-    try:
-        user_id = int(state)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid user ID in state parameter")
-    
-    # 2. Request the tokens from Google
+    # 1. Exchange code for tokens
     token_url = "https://oauth2.googleapis.com/token"
     payload = {
         "client_id": GOOGLE_CLIENT_ID,
@@ -75,37 +76,93 @@ def google_callback(code: str, state: str, db: Session = Depends(get_db)):
     token_data = response.json()
     
     if "error" in token_data:
-        raise HTTPException(status_code=400, detail=token_data.get("error_description", "Unknown error"))
+        return RedirectResponse(url=f"{FRONTEND_URL}/login?error=google_auth_failed")
         
-    # 3. Package the tokens into a JSON string for the database
+    access_token = token_data.get("access_token")
+    
+    # Package credentials for storage
     credentials_dict = {
-        "access_token": token_data.get("access_token"),
+        "access_token": access_token,
         "refresh_token": token_data.get("refresh_token"), 
         "expires_in": token_data.get("expires_in"),
         "token_type": token_data.get("token_type")
     }
     credentials_json = json.dumps(credentials_dict)
     
-    # 4. The Upsert Logic: Check if this user already connected Google Analytics
-    existing_integration = db.query(Integration).filter(
-        Integration.user_id == user_id,
-        Integration.provider == "google_analytics"  
-    ).first()
-    
-    if existing_integration:
-        # Update existing record
-        existing_integration.encrypted_credentials = credentials_json  
-    else:
-        # Create new record
-        new_integration = Integration(
-            user_id=user_id,
-            provider="google_analytics",  
-            encrypted_credentials=credentials_json  
+    # ---- SIGN-IN FLOW ----
+    if state == "auth_signin":
+        # Fetch Google profile
+        userinfo_response = requests.get(
+            "https://www.googleapis.com/oauth2/v2/userinfo",
+            headers={"Authorization": f"Bearer {access_token}"}
         )
-        db.add(new_integration)
+        userinfo = userinfo_response.json()
         
-    # 5. Commit the transaction to Neon!
-    db.commit()
+        google_email = userinfo.get("email")
+        google_name = userinfo.get("name", google_email.split("@")[0] if google_email else "User")
+        
+        if not google_email:
+            return RedirectResponse(url=f"{FRONTEND_URL}/login?error=no_email")
+        
+        # Find or create user
+        user = db.query(User).filter(User.email == google_email).first()
+        
+        if not user:
+            user = User(
+                company_name=google_name,
+                email=google_email,
+                hashed_password=pwd_context.hash(os.urandom(32).hex())
+            )
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+        
+        # Auto-connect GA4
+        existing_integration = db.query(Integration).filter(
+            Integration.user_id == user.id,
+            Integration.provider == "google_analytics"
+        ).first()
+        
+        if existing_integration:
+            existing_integration.encrypted_credentials = credentials_json
+        else:
+            new_integration = Integration(
+                user_id=user.id,
+                provider="google_analytics",
+                encrypted_credentials=credentials_json
+            )
+            db.add(new_integration)
+        
+        db.commit()
+        
+        # Generate JWT and redirect
+        expire = datetime.utcnow() + timedelta(hours=24)
+        jwt_token = jwt.encode({"sub": str(user.id), "exp": expire}, SECRET_KEY, algorithm=ALGORITHM)
+        
+        return RedirectResponse(url=f"{FRONTEND_URL}/dashboard?token={jwt_token}&integration=success")
     
-    # 6. Redirect the user back to your live Next.js frontend
-    return RedirectResponse(url=f"{FRONTEND_URL}/dashboard?integration=success")
+    # ---- INTEGRATION FLOW (existing user connecting GA4) ----
+    else:
+        try:
+            user_id = int(state)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid user ID in state parameter")
+        
+        existing_integration = db.query(Integration).filter(
+            Integration.user_id == user_id,
+            Integration.provider == "google_analytics"  
+        ).first()
+        
+        if existing_integration:
+            existing_integration.encrypted_credentials = credentials_json  
+        else:
+            new_integration = Integration(
+                user_id=user_id,
+                provider="google_analytics",  
+                encrypted_credentials=credentials_json  
+            )
+            db.add(new_integration)
+            
+        db.commit()
+        
+        return RedirectResponse(url=f"{FRONTEND_URL}/dashboard?integration=success")
