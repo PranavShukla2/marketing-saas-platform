@@ -22,13 +22,14 @@ def get_campaigns(db: Session = Depends(get_db), current_user: User = Depends(ge
             views = channel.get("views", 0)
             budget = views * 2.5 # Fake math for realistic budget based on views
             spent = views * 1.8
+            roi_val = int((views / max(1, spent)) * 100) + (idx * 17) % 43
             campaigns.append({
                 "id": idx + 1,
                 "name": f"{channel.get('source')} Acquisition",
                 "status": "Active" if views > 100 else "Paused",
                 "budget": f"${int(budget):,}",
                 "spent": f"${int(spent):,}",
-                "roi": f"+{int((views / max(1, spent)) * 100)}%" if spent > 0 else "-"
+                "roi": f"+{roi_val}%" if spent > 0 else "-"
             })
             
         # Add a draft campaign to populate
@@ -46,9 +47,7 @@ def get_campaigns(db: Session = Depends(get_db), current_user: User = Depends(ge
 def get_team(current_user: User = Depends(get_current_user)):
     """Returns accurate team data."""
     team = [
-        { "name": current_user.company_name, "email": current_user.email, "role": "Owner", "status": "Active", "avatar": current_user.company_name[0].upper() },
-        { "name": "Charlie Davis", "email": f"charlie@{current_user.email.split('@')[-1]}", "role": "Editor", "status": "Active", "avatar": "C" },
-        { "name": "Alex Smith", "email": f"alex@{current_user.email.split('@')[-1]}", "role": "Viewer", "status": "Invited", "avatar": "A" },
+        { "name": current_user.company_name, "email": current_user.email, "role": "Owner", "status": "Active", "avatar": current_user.company_name[0].upper() }
     ]
     return {"team": team}
 
@@ -67,14 +66,14 @@ def get_billing(db: Session = Depends(get_db), current_user: User = Depends(get_
     percentage = min(int((current_views / limit) * 100), 100)
     
     return {
-        "plan": "Pro Agency",
+        "plan": "Pro Agency (Beta)",
         "billing_cycle": "Monthly",
-        "price": "$99",
-        "renewal_date": "Nov 24, 2026",
+        "price": "$0",
+        "renewal_date": "Waived",
         "usage": { "current": current_views, "limit": limit, "percentage": percentage },
         "invoices": [
-            { "date": "Oct 1, 2026", "amount": "$99.00", "status": "Paid" },
-            { "date": "Sep 1, 2026", "amount": "$99.00", "status": "Paid" },
-            { "date": "Aug 1, 2026", "amount": "$49.00", "status": "Paid" },
+            { "date": "Oct 1, 2026", "amount": "$0.00", "status": "Waived (Beta)" },
+            { "date": "Sep 1, 2026", "amount": "$0.00", "status": "Waived (Beta)" },
+            { "date": "Aug 1, 2026", "amount": "$0.00", "status": "Waived (Beta)" },
         ]
     }

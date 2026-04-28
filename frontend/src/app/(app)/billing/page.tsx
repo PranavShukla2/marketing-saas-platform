@@ -46,14 +46,15 @@ export default function BillingPage() {
             <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-sm font-medium border border-blue-100">{billing.billing_cycle}</span>
           </div>
           
-          <div className="flex items-end space-x-2 mb-8">
-            <span className="text-5xl font-bold tracking-tighter">{billing.price}</span>
+          <div className="flex items-end space-x-2 mb-2">
+            <span className="text-5xl font-bold tracking-tighter text-gray-900">{billing.price}</span>
             <span className="text-gray-500 mb-1">/ mo</span>
           </div>
+          <p className="text-sm font-medium text-blue-600 mb-8 bg-blue-50 w-fit px-3 py-1 rounded-md">Normally $99/mo — Waived for Beta Users</p>
 
           <div className="flex space-x-4">
-            <button className="bg-black text-white px-6 py-3 rounded-xl font-medium shadow-md hover:scale-105 transition-transform">Upgrade Plan</button>
-            <button className="bg-gray-50 text-gray-700 px-6 py-3 rounded-xl font-medium border border-gray-200 hover:bg-gray-100 transition-colors">Cancel</button>
+            <button className="bg-black text-white px-6 py-3 rounded-xl font-medium shadow-md hover:scale-105 transition-transform active:scale-95">Upgrade Plan</button>
+            <button className="bg-gray-50 text-gray-700 px-6 py-3 rounded-xl font-medium border border-gray-200 hover:bg-gray-100 transition-colors active:bg-gray-200">Cancel</button>
           </div>
         </div>
 
@@ -87,7 +88,7 @@ export default function BillingPage() {
                 <td className="px-6 py-4 text-sm font-medium">{invoice.date}</td>
                 <td className="px-6 py-4 text-sm text-gray-600">{invoice.amount}</td>
                 <td className="px-6 py-4">
-                  <span className="bg-green-50 text-green-700 px-2.5 py-1 rounded-md text-xs font-medium">
+                  <span className={`px-2.5 py-1 rounded-md text-xs font-medium ${invoice.status.includes('Waived') ? 'bg-indigo-50 text-indigo-600' : 'bg-green-50 text-green-700'}`}>
                     {invoice.status}
                   </span>
                 </td>
