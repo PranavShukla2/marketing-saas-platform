@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 
 const navItems = [
   { name: "Dashboard", href: "/dashboard", icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" },
@@ -16,6 +17,24 @@ const navItems = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const [usage, setUsage] = useState({ current: 0, limit: 100000, percentage: 0 });
+
+  useEffect(() => {
+    const fetchBilling = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+        const res = await fetch(`${backendUrl}/api/v1/workspace/billing`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setUsage(data.usage);
+        }
+      } catch (err) {}
+    };
+    fetchBilling();
+  }, [pathname]); // Refresh when path changes to sync with dashboard
 
   return (
     <div className="w-64 h-screen bg-white/80 backdrop-blur-md border-r border-gray-100/80 fixed left-0 top-0 flex flex-col py-6 px-4 z-40">
@@ -49,18 +68,18 @@ export default function Sidebar() {
       </nav>
 
       <div className="mt-auto px-4">
-        <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 mb-4 block cursor-pointer transition-transform hover:scale-[1.02]">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Workspace limit</p>
-          <div className="w-full bg-gray-200 rounded-full h-1.5 mb-2"><div className="bg-blue-500 h-1.5 rounded-full" style={{ width: '45%' }}></div></div>
-          <p className="text-xs text-gray-500">45,000 / 100,000 views</p>
-        </div>
-        
-        <Link href="/">
-          <div className="flex items-center space-x-3 text-sm font-medium text-gray-500 hover:text-gray-800 transition-colors px-3 py-2 cursor-pointer">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-            <span>Log out</span>
+        <Link href="/billing">
+          <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 mb-4 block cursor-pointer transition-transform hover:scale-[1.02]">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Workspace limit</p>
+            <div className="w-full bg-gray-200 rounded-full h-1.5 mb-2"><div className="bg-blue-500 h-1.5 rounded-full" style={{ width: `${usage.percentage}%` }}></div></div>
+            <p className="text-xs text-gray-500">{Math.floor(usage.current).toLocaleString()} / {Math.floor(usage.limit / 1000)}k views</p>
           </div>
         </Link>
+        
+        <div onClick={() => { localStorage.removeItem("token"); window.location.href = "/login"; }} className="flex items-center space-x-3 text-sm font-medium text-gray-500 hover:text-gray-800 transition-colors px-3 py-2 cursor-pointer">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+          <span>Log out</span>
+        </div>
       </div>
     </div>
   );
