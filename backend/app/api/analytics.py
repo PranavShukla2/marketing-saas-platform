@@ -170,6 +170,53 @@ def get_dashboard_data(
             })
         ecommerce_data = sorted(ecommerce_data, key=lambda x: x["revenue"], reverse=True)[:5]
 
+        # Funnel Events (page_view -> add_to_cart -> begin_checkout -> purchase)
+        funnel_data = []
+        try:
+            funnel_request = RunReportRequest(
+                property=target_property_id,
+                dimensions=[Dimension(name="eventName")],
+                metrics=[Metric(name="eventCount")],
+                date_ranges=[DateRange(start_date="30daysAgo", end_date="today")],
+            )
+            funnel_response = client.run_report(funnel_request)
+            event_counts = {}
+            for row in funnel_response.rows:
+                event_counts[row.dimension_values[0].value] = int(row.metric_values[0].value)
+            
+            # Build funnel from standard GA4 event names
+            funnel_steps = [
+                ("Page View", event_counts.get("page_view", 0)),
+                ("Add to Cart", event_counts.get("add_to_cart", 0)),
+                ("Begin Checkout", event_counts.get("begin_checkout", 0)),
+                ("Purchase", event_counts.get("purchase", 0)),
+            ]
+            funnel_data = [{"step": s, "count": c} for s, c in funnel_steps if c > 0]
+        except Exception as e:
+            print(f"Funnel query error: {e}")
+
+        # Weekly New vs Returning Users (for retention cohort)
+        cohort_data = []
+        try:
+            cohort_request = RunReportRequest(
+                property=target_property_id,
+                dimensions=[Dimension(name="newVsReturning"), Dimension(name="week")],
+                metrics=[Metric(name="activeUsers")],
+                date_ranges=[DateRange(start_date="30daysAgo", end_date="today")],
+            )
+            cohort_response = client.run_report(cohort_request)
+            weeks = {}
+            for row in cohort_response.rows:
+                user_type = row.dimension_values[0].value  # "new" or "returning"
+                week = row.dimension_values[1].value
+                users = int(row.metric_values[0].value)
+                if week not in weeks:
+                    weeks[week] = {"week": week, "new": 0, "returning": 0}
+                weeks[week][user_type] = users
+            cohort_data = sorted(weeks.values(), key=lambda x: x["week"])
+        except Exception as e:
+            print(f"Cohort query error: {e}")
+
         # --- DYNAMIC INSIGHTS ENGINE ---
         if post_level_data:
             top_channel = sorted(post_level_data, key=lambda x: x["views"], reverse=True)[0]
@@ -199,6 +246,8 @@ def get_dashboard_data(
                 "device_data": device_data,
                 "pages_data": pages_data,
                 "ecommerce_data": ecommerce_data,
+                "funnel_data": funnel_data,
+                "cohort_data": cohort_data,
                 "anomaly": {"is_anomaly": False, "message": ""},
                 "suggestions": dynamic_insights
             }

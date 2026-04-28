@@ -179,67 +179,76 @@ export default function AppleAnalyticsDashboard({ data }: { data: any }) {
                 </Card>
             </section>
 
-            {/* SECTION 4: The Journey */}
             <section className="space-y-6">
                 <div className="flex items-center space-x-2">
                     <span className="text-gray-400 font-semibold tracking-wider text-sm uppercase">4. The Journey</span>
                     <div className="h-px bg-gray-200 flex-grow rounded-full"></div>
                 </div>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <Card title="Conversion Funnel" subtitle="Homepage to Purchase Flow" className="h-[420px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                            {/* Fallback mockup visualization based tightly on real page views */}
-                            <BarChart data={[
-                                { step: 'Homepage', count: data?.summary?.page_views ? Math.floor(data.summary.page_views) : 10000 },
-                                { step: 'Product', count: data?.summary?.page_views ? Math.floor(data.summary.page_views * 0.65) : 6500 },
-                                { step: 'Cart', count: data?.summary?.page_views ? Math.floor(data.summary.page_views * 0.32) : 3200 },
-                                { step: 'Checkout', count: data?.summary?.page_views ? Math.floor(data.summary.page_views * 0.18) : 1800 },
-                                { step: 'Purchase', count: data?.summary?.page_views ? Math.floor(data.summary.page_views * 0.095) : 950 },
-                            ]} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                                <XAxis dataKey="step" axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 13, fontWeight: 500 }} />
-                                <Tooltip cursor={{ fill: '#F3F4F6' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }} />
-                                <Bar dataKey="count" fill="#5856D6" radius={[8, 8, 0, 0]} label={{ position: 'top', fill: '#111827', fontSize: 12, fontWeight: 700 }} />
-                            </BarChart>
-                        </ResponsiveContainer>
+                    <Card title="Conversion Funnel" subtitle="Real GA4 event tracking" className="min-h-[380px]">
+                        {data?.funnel_data && data.funnel_data.length > 1 ? (
+                            <ResponsiveContainer width="100%" height={300}>
+                                <BarChart data={data.funnel_data} margin={{ top: 20, right: 20, left: 0, bottom: 20 }}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                                    <XAxis dataKey="step" axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 11, fontWeight: 500 }} />
+                                    <Tooltip cursor={{ fill: '#F3F4F6' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }} />
+                                    <Bar dataKey="count" fill="#5856D6" radius={[8, 8, 0, 0]} label={{ position: 'top', fill: '#111827', fontSize: 11, fontWeight: 700 }} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        ) : (
+                            <div className="flex-grow flex flex-col items-center justify-center text-center p-6">
+                                <div className="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center mb-4">
+                                    <svg className="w-7 h-7 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                                </div>
+                                <h4 className="text-base font-semibold text-gray-800 mb-2">Set up e-commerce events</h4>
+                                <p className="text-gray-500 text-sm mb-4 max-w-xs">Enable <code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs">add_to_cart</code>, <code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs">begin_checkout</code>, and <code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs">purchase</code> events in GA4 to see your real funnel.</p>
+                                <a href="https://support.google.com/analytics/answer/9267735" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center space-x-1">
+                                    <span>GA4 Setup Guide</span>
+                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                                </a>
+                            </div>
+                        )}
                     </Card>
 
-                    <Card title="Retention Heatmap" subtitle="Cohort analysis over 30 days">
-                        <div className="overflow-x-auto">
-                            <div className="grid grid-cols-5 gap-2 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
-                                <div className="text-left pl-2">Cohort</div>
-                                <div>Day 1</div>
-                                <div>Day 7</div>
-                                <div>Day 14</div>
-                                <div>Day 30</div>
-                            </div>
-                            <div className="space-y-2">
-                                {[
-                                    { cohort: 'Sep 1 - 7', data: [100, 42, 28, 14] },
-                                    { cohort: 'Sep 8 - 14', data: [100, 38, 25, 12] },
-                                    { cohort: 'Sep 15 - 21', data: [100, 45, 32, 18] },
-                                    { cohort: 'Sep 22 - 28', data: [100, 48, 35, 21] },
-                                    { cohort: 'Sep 29 - Oct 5', data: [100, 52, 38, '—'] },
-                                ].map((row, i) => (
-                                    <div key={i} className="grid grid-cols-5 gap-2 items-center text-sm">
-                                        <div className="text-gray-600 font-medium pl-2">{row.cohort}</div>
-                                        {row.data.map((val, j) => {
-                                            // Calculate opacity based on value for monochromatic blue scale
-                                            const opacity = typeof val === 'number' ? (val / 100).toFixed(2) : 0;
+                    <Card title="User Retention" subtitle="New vs returning users by week">
+                        {data?.cohort_data && data.cohort_data.length > 0 ? (
+                            <div className="overflow-x-auto -mx-2">
+                                <div className="min-w-[320px]">
+                                    <div className="grid grid-cols-4 gap-2 text-center text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-3 px-2">
+                                        <div className="text-left">Week</div>
+                                        <div>New Users</div>
+                                        <div>Returning</div>
+                                        <div>Retention</div>
+                                    </div>
+                                    <div className="space-y-2 px-2">
+                                        {data.cohort_data.map((row: any, i: number) => {
+                                            const total = (row.new || 0) + (row.returning || 0);
+                                            const retention = total > 0 ? Math.round((row.returning / total) * 100) : 0;
+                                            const opacity = (retention / 100).toFixed(2);
                                             return (
-                                                <div key={j} className="h-10 rounded-lg flex items-center justify-center font-bold"
-                                                    style={{
-                                                        backgroundColor: typeof val === 'number' ? `rgba(0, 122, 255, ${opacity})` : '#F3F4F6',
-                                                        color: typeof val === 'number' && val > 40 ? '#FFFFFF' : '#4B5563'
-                                                    }}>
-                                                    {typeof val === 'number' ? `${val}%` : val}
+                                                <div key={i} className="grid grid-cols-4 gap-2 items-center text-sm">
+                                                    <div className="text-gray-600 font-medium text-xs">W{row.week}</div>
+                                                    <div className="h-10 rounded-lg flex items-center justify-center font-bold bg-blue-50 text-blue-700 text-xs">{row.new?.toLocaleString()}</div>
+                                                    <div className="h-10 rounded-lg flex items-center justify-center font-bold bg-green-50 text-green-700 text-xs">{row.returning?.toLocaleString()}</div>
+                                                    <div className="h-10 rounded-lg flex items-center justify-center font-bold text-xs"
+                                                        style={{ backgroundColor: `rgba(0, 122, 255, ${opacity})`, color: retention > 40 ? '#FFFFFF' : '#4B5563' }}>
+                                                        {retention}%
+                                                    </div>
                                                 </div>
                                             );
                                         })}
                                     </div>
-                                ))}
+                                </div>
                             </div>
-                        </div>
+                        ) : (
+                            <div className="flex-grow flex flex-col items-center justify-center text-center p-6">
+                                <div className="w-14 h-14 bg-green-50 rounded-2xl flex items-center justify-center mb-4">
+                                    <svg className="w-7 h-7 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                </div>
+                                <h4 className="text-base font-semibold text-gray-800 mb-2">Retention data loading</h4>
+                                <p className="text-gray-500 text-sm max-w-xs">Once your site has at least 2 weeks of GA4 traffic, retention cohorts will appear here automatically.</p>
+                            </div>
+                        )}
                     </Card>
                 </div>
             </section>
