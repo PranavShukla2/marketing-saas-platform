@@ -9,7 +9,17 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
-    // Check local storage for the token
+    // Check URL params first (Google OAuth may pass token via URL)
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const urlToken = params.get("token");
+      if (urlToken) {
+        localStorage.setItem("token", urlToken);
+        setIsAuthenticated(true);
+        return;
+      }
+    }
+
     const token = localStorage.getItem("token");
     if (!token) {
       if (pathname !== "/login" && pathname !== "/register") {
@@ -20,7 +30,6 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     }
   }, [pathname, router]);
 
-  // If we haven't determined auth state yet, show nothing to prevent flashes of content
   if (isAuthenticated === null) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#fafafa]">
