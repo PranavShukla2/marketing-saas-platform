@@ -2,12 +2,13 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import FaqSection from "../components/FaqSection";
-import Footer from "../components/Footer";
-import BentoBox from "../components/BentoBox";
+import FaqSection from "../../components/FaqSection";
+import Footer from "../../components/Footer";
+import BentoBox from "../../components/BentoBox";
+import AppleAnalyticsDashboard from "../../components/AppleAnalyticsDashboard";
 
 export default function HomePage() {
-  const fadeUp = {
+  const fadeUp: any = {
     hidden: { opacity: 0, y: 40 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } }
   };
@@ -39,6 +40,31 @@ export default function HomePage() {
             </Link>
           </div>
         </motion.div>
+      </section>
+
+      {/* --- DASHBOARD PREVIEW SECTION --- */}
+      <section className="w-full bg-[#fafafa] py-16 relative overflow-hidden flex flex-col items-center px-4">
+        <div className="max-w-6xl w-full relative">
+          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/40 backdrop-blur-[6px] rounded-[3rem] border border-white/50 shadow-2xl">
+            <h2 className="text-3xl font-semibold tracking-tight text-gray-900 mb-4 text-center px-4">Unlock your unified workspace</h2>
+            <p className="text-gray-600 mb-8 max-w-md text-center">Connect your data sources in seconds and experience real-time sync with deep analytics.</p>
+            <Link href="/register">
+              <button className="px-8 py-4 bg-black text-white rounded-full font-medium text-lg hover:scale-105 transition-transform duration-300 shadow-xl">
+                Create Free Workspace
+              </button>
+            </Link>
+          </div>
+          
+          <div className="w-full opacity-60 pointer-events-none transform scale-[0.98] select-none rounded-[3rem] overflow-hidden">
+            <AppleAnalyticsDashboard data={{
+              summary: { active_users: 1240, bounce_rate: '34%', page_views: 45200, avg_duration: '45s' },
+              post_level: [{source: 'organic', views: 24000}, {source: 'direct', views: 15000}, {source: 'social', views: 6200}],
+              device_data: [{device: 'mobile', users: 8000}, {device: 'desktop', users: 4000}],
+              pages_data: [{path: '/home', views: 12000, avg_duration: 120}, {path: '/pricing', views: 4000, avg_duration: 80}],
+              ecommerce_data: [{name: 'Premium Plan', purchases: 45, revenue: 12500}]
+            }} />
+          </div>
+        </div>
       </section>
 
       {/* --- BENTO GRID SECTION --- */}

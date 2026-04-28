@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, Legend } from 'recharts';
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import AppleAnalyticsDashboard from "../../components/AppleAnalyticsDashboard";
+import AppleAnalyticsDashboard from "../../../components/AppleAnalyticsDashboard";
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("overview");
@@ -170,7 +170,7 @@ export default function Dashboard() {
   const combinedData = data?.post_level ? [...data.post_level, ...(data.forecast || [])] : [];
 
   return (
-    <div className="min-h-screen bg-[#fafafa] p-8 md:p-12 font-sans text-gray-900 overflow-x-hidden relative">
+    <div className="w-full font-sans text-gray-900 relative">
       <AnimatePresence>
         {showSuccessToast && (
           <motion.div

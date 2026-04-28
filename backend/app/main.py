@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.db.database import engine
 from app.db import models
-from app.api import analytics, auth, integrations 
+from app.api import analytics, auth, integrations, workspace
 
 # Create database tables
 models.Base.metadata.create_all(bind=engine)
@@ -29,6 +29,7 @@ app.add_middleware(
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
 app.include_router(integrations.router, prefix="/api/v1/integrations", tags=["Integrations"]) 
 app.include_router(analytics.router, prefix="/api/v1/analytics", tags=["Analytics"])
+app.include_router(workspace.router, prefix="/api/v1/workspace", tags=["Workspace"])
 
 @app.get("/")
 def read_root():
