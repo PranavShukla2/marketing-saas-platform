@@ -213,6 +213,69 @@ export default function LinkedInDashboard() {
                     </Card>
                 </div>
             </section>
+
+            {/* LinkedIn Deep Dive Metrics */}
+            <section className="space-y-6">
+                <div className="flex items-center space-x-2">
+                    <span className="text-gray-400 font-semibold tracking-wider text-sm uppercase">5. Network & Lead Generation</span>
+                    <div className="h-px bg-gray-200 flex-grow rounded-full"></div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <Card title="Lead Forms" subtitle="Conversion Metrics">
+                        <div className="flex items-end justify-between mt-4">
+                            <div className="text-4xl font-bold text-gray-900">14.2%</div>
+                            <div className="text-sm font-medium text-green-600 bg-green-50 px-2 py-1 rounded-md">+2.1%</div>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-2 font-medium">Avg Completion Rate</p>
+                        
+                        <div className="mt-8 space-y-4">
+                            <div>
+                                <div className="flex justify-between text-xs text-gray-500 mb-1"><span>Form Opens</span><span className="font-bold text-gray-900">1,021</span></div>
+                                <div className="w-full h-2 bg-gray-100 rounded-full"><div className="w-[100%] h-full bg-[#0A66C2] rounded-full"></div></div>
+                            </div>
+                            <div>
+                                <div className="flex justify-between text-xs text-gray-500 mb-1"><span>Submissions</span><span className="font-bold text-gray-900">145</span></div>
+                                <div className="w-full h-2 bg-gray-100 rounded-full"><div className="w-[14%] h-full bg-[#34C759] rounded-full"></div></div>
+                            </div>
+                        </div>
+                    </Card>
+
+                    <Card title="Brand Mentions" subtitle="Across LinkedIn Network">
+                        <div className="flex items-end justify-between mt-4">
+                            <div className="text-4xl font-bold text-gray-900">84</div>
+                            <div className="text-sm font-medium text-gray-600 bg-gray-100 px-2 py-1 rounded-md">Last 30 days</div>
+                        </div>
+                        <div className="h-32 mt-6">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={Array.from({length: 10}).map((_,i) => ({name: `W${i}`, mentions: Math.floor(Math.random() * 20) + 2}))}>
+                                    <Bar dataKey="mentions" fill="#0A66C2" radius={[4,4,0,0]} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </Card>
+
+                    <Card title="Profile Views" subtitle="By Top Titles">
+                        <div className="space-y-4 mt-4">
+                            {[
+                                { title: "Software Engineer", views: "340", pct: "85%" },
+                                { title: "Product Manager", views: "210", pct: "60%" },
+                                { title: "Founder / CEO", views: "145", pct: "40%" },
+                                { title: "Marketing Director", views: "90", pct: "25%" }
+                            ].map((job, i) => (
+                                <div key={i}>
+                                    <div className="flex justify-between text-xs mb-1">
+                                        <span className="font-medium text-gray-700">{job.title}</span>
+                                        <span className="font-bold">{job.views}</span>
+                                    </div>
+                                    <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                                        <div className="bg-[#0A66C2] h-full rounded-full" style={{ width: job.pct }}></div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </Card>
+                </div>
+            </section>
         </div>
     );
 }

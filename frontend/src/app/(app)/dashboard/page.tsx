@@ -20,13 +20,16 @@ export default function Dashboard() {
   const [agencyLogo, setAgencyLogo] = useState<string | null>(null);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [isPlatformLoading, setIsPlatformLoading] = useState(false);
+  const [targetPlatform, setTargetPlatform] = useState<string | null>(null);
 
   const handlePlatformChange = (platformId: string) => {
     if (platformId === activePlatform) return;
+    setTargetPlatform(platformId);
     setIsPlatformLoading(true);
     setTimeout(() => {
       setActivePlatform(platformId);
       setIsPlatformLoading(false);
+      setTargetPlatform(null);
     }, 1200); // 1.2s loading animation
   };
 
@@ -198,7 +201,7 @@ export default function Dashboard() {
   return (
     <div className="w-full font-sans text-gray-900 relative">
       <AnimatePresence>
-        {isPlatformLoading && <PlatformLoader platform={activePlatform} />}
+        {isPlatformLoading && targetPlatform && <PlatformLoader platform={targetPlatform} />}
       </AnimatePresence>
 
       <AnimatePresence>
@@ -264,7 +267,7 @@ export default function Dashboard() {
               { id: "meta", label: "Meta Business", color: "text-[#1877F2]", bg: "bg-blue-50", icon: "M12 2.04C6.5 2.04 2 6.53 2 12.06C2 17.06 5.66 21.21 10.44 21.96V14.96H7.9V12.06H10.44V9.85C10.44 7.34 11.93 5.96 14.22 5.96C15.31 5.96 16.45 6.15 16.45 6.15V8.62H15.19C13.95 8.62 13.56 9.39 13.56 10.18V12.06H16.34L15.89 14.96H13.56V21.96A10 10 0 0 0 22 12.06C22 6.53 17.5 2.04 12 2.04Z" },
               { id: "linkedin", label: "LinkedIn Analytics", color: "text-[#0A66C2]", bg: "bg-sky-50", icon: "M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.16-3.51c-1.2 0-1.8.66-2.11 1.16v-1h-2.3v8.65h2.3v-4.83c0-1.27.24-2.5 1.82-2.5 1.55 0 1.58 1.45 1.58 2.58v4.75h2.37zM6.9 8.24A1.33 1.33 0 1 0 5.57 6.9 1.33 1.33 0 0 0 6.9 8.24M5.7 18.5h2.37V9.85H5.7v8.65z" }
             ].map(platform => {
-              const isActive = activePlatform === platform.id || (isPlatformLoading && activePlatform === platform.id); // highlight during load too
+              const isActive = (targetPlatform || activePlatform) === platform.id;
               return (
                 <button 
                   key={platform.id} 

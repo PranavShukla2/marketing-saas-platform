@@ -240,6 +240,61 @@ export default function MetaDashboard() {
                                 </Card>
                             </div>
                         </section>
+
+                        {/* FB Deep Dive Metrics */}
+                        <section className="space-y-6">
+                            <div className="flex items-center space-x-2">
+                                <span className="text-gray-400 font-semibold tracking-wider text-sm uppercase">5. Engagement & Video Metrics</span>
+                                <div className="h-px bg-gray-200 flex-grow rounded-full"></div>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <Card title="Video Retention" subtitle="Average View Time">
+                                    <div className="flex items-end justify-between mt-4">
+                                        <div className="text-4xl font-bold text-gray-900">0:14</div>
+                                        <div className="text-sm font-medium text-green-600 bg-green-50 px-2 py-1 rounded-md">+2s vs last week</div>
+                                    </div>
+                                    <div className="mt-8 space-y-4">
+                                        <div>
+                                            <div className="flex justify-between text-xs text-gray-500 mb-1"><span>3-Second Views</span><span className="font-bold text-gray-900">45,210</span></div>
+                                            <div className="w-full h-2 bg-gray-100 rounded-full"><div className="w-[80%] h-full bg-[#1877F2] rounded-full"></div></div>
+                                        </div>
+                                        <div>
+                                            <div className="flex justify-between text-xs text-gray-500 mb-1"><span>1-Minute Views</span><span className="font-bold text-gray-900">8,430</span></div>
+                                            <div className="w-full h-2 bg-gray-100 rounded-full"><div className="w-[30%] h-full bg-[#1877F2] rounded-full"></div></div>
+                                        </div>
+                                    </div>
+                                </Card>
+                                <Card title="Link Clicks" subtitle="Traffic to Website">
+                                    <div className="flex items-end justify-between mt-4">
+                                        <div className="text-4xl font-bold text-gray-900">3,420</div>
+                                        <div className="text-sm font-medium text-green-600 bg-green-50 px-2 py-1 rounded-md">+15%</div>
+                                    </div>
+                                    <div className="h-32 mt-6">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <BarChart data={Array.from({length: 7}).map((_,i) => ({name: `D${i}`, clicks: Math.floor(Math.random() * 500) + 100}))}>
+                                                <Bar dataKey="clicks" fill="#1877F2" radius={[4,4,0,0]} />
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </Card>
+                                <Card title="Inbox Activity" subtitle="Messages & Responsiveness">
+                                    <div className="grid grid-cols-2 gap-4 mt-4">
+                                        <div className="bg-gray-50 p-4 rounded-xl text-center">
+                                            <p className="text-xs text-gray-500 font-semibold uppercase">New Msgs</p>
+                                            <p className="text-2xl font-bold mt-1">142</p>
+                                        </div>
+                                        <div className="bg-gray-50 p-4 rounded-xl text-center">
+                                            <p className="text-xs text-gray-500 font-semibold uppercase">Reply Rate</p>
+                                            <p className="text-2xl font-bold mt-1 text-green-600">94%</p>
+                                        </div>
+                                        <div className="bg-gray-50 p-4 rounded-xl text-center col-span-2 flex items-center justify-between">
+                                            <span className="text-sm text-gray-500 font-semibold">Avg Response Time</span>
+                                            <span className="text-lg font-bold">1h 15m</span>
+                                        </div>
+                                    </div>
+                                </Card>
+                            </div>
+                        </section>
                     </motion.div>
                 )}
 
@@ -328,6 +383,44 @@ export default function MetaDashboard() {
                                                 <div className="text-sm font-bold text-[#E1306C]">{reel.likes} ♡</div>
                                             </div>
                                         ))}
+                                    </div>
+                                </Card>
+                            </div>
+                        </section>
+
+                        {/* IG Profile Activity & Demographics */}
+                        <section className="space-y-6">
+                            <div className="flex items-center space-x-2">
+                                <span className="text-gray-400 font-semibold tracking-wider text-sm uppercase">4. Profile Activity & Deep Dive</span>
+                                <div className="h-px bg-gray-200 flex-grow rounded-full"></div>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <Card title="Profile Actions" subtitle="Link taps and interactions">
+                                    <div className="space-y-4 mt-4">
+                                        <div className="flex justify-between items-center p-3 bg-gray-50 rounded-xl">
+                                            <span className="text-sm font-medium">Website Taps</span>
+                                            <span className="font-bold text-[#E1306C]">1,240</span>
+                                        </div>
+                                        <div className="flex justify-between items-center p-3 bg-gray-50 rounded-xl">
+                                            <span className="text-sm font-medium">Email Button Taps</span>
+                                            <span className="font-bold text-[#E1306C]">85</span>
+                                        </div>
+                                        <div className="flex justify-between items-center p-3 bg-gray-50 rounded-xl">
+                                            <span className="text-sm font-medium">Call Button Taps</span>
+                                            <span className="font-bold text-[#E1306C]">12</span>
+                                        </div>
+                                    </div>
+                                </Card>
+                                <Card className="md:col-span-2" title="Follower Activity Heatmap" subtitle="When your followers are most active">
+                                    <div className="h-40 flex items-center justify-center bg-gray-50 rounded-xl mt-4 border border-gray-100 overflow-hidden relative">
+                                        <div className="absolute inset-0 p-4 grid grid-cols-7 gap-1">
+                                            {Array.from({length: 28}).map((_, i) => (
+                                                <div key={i} className="rounded-md" style={{ backgroundColor: `rgba(225, 48, 108, ${Math.random() * 0.8 + 0.1})` }}></div>
+                                            ))}
+                                        </div>
+                                        <div className="relative z-10 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg font-semibold text-sm shadow-sm text-gray-800">
+                                            Peak: Thursdays at 6:00 PM
+                                        </div>
                                     </div>
                                 </Card>
                             </div>
