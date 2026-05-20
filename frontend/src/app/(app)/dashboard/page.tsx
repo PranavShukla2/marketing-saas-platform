@@ -8,6 +8,7 @@ import autoTable from "jspdf-autotable";
 import AppleAnalyticsDashboard from "../../../components/AppleAnalyticsDashboard";
 import MetaDashboard from "../../../components/MetaDashboard";
 import LinkedInDashboard from "../../../components/LinkedInDashboard";
+import PlatformLoader from "../../../components/PlatformLoader";
 
 export default function Dashboard() {
   const [activePlatform, setActivePlatform] = useState("google");
@@ -18,6 +19,16 @@ export default function Dashboard() {
   const [selectedProperty, setSelectedProperty] = useState<string>("");
   const [agencyLogo, setAgencyLogo] = useState<string | null>(null);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [isPlatformLoading, setIsPlatformLoading] = useState(false);
+
+  const handlePlatformChange = (platformId: string) => {
+    if (platformId === activePlatform) return;
+    setIsPlatformLoading(true);
+    setTimeout(() => {
+      setActivePlatform(platformId);
+      setIsPlatformLoading(false);
+    }, 1200); // 1.2s loading animation
+  };
 
   const COLORS = ['#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe', '#2563eb'];
 
@@ -187,6 +198,10 @@ export default function Dashboard() {
   return (
     <div className="w-full font-sans text-gray-900 relative">
       <AnimatePresence>
+        {isPlatformLoading && <PlatformLoader platform={activePlatform} />}
+      </AnimatePresence>
+
+      <AnimatePresence>
         {showSuccessToast && (
           <motion.div
             initial={{ opacity: 0, y: -50 }}
@@ -236,34 +251,55 @@ export default function Dashboard() {
         </div>
       </header>
 
-      {/* Platform Selector */}
-      <div className="max-w-7xl mx-auto mb-8 flex justify-center">
-        <div className="flex bg-white/50 backdrop-blur-md p-1.5 rounded-2xl border border-gray-200/50 shadow-sm">
-          {[
-            { id: "google", label: "Google Analytics", icon: "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-6h2v6zm4 0h-2V7h2v10z" },
-            { id: "meta", label: "Meta (FB/IG)", icon: "M12 2.04C6.5 2.04 2 6.53 2 12.06C2 17.06 5.66 21.21 10.44 21.96V14.96H7.9V12.06H10.44V9.85C10.44 7.34 11.93 5.96 14.22 5.96C15.31 5.96 16.45 6.15 16.45 6.15V8.62H15.19C13.95 8.62 13.56 9.39 13.56 10.18V12.06H16.34L15.89 14.96H13.56V21.96A10 10 0 0 0 22 12.06C22 6.53 17.5 2.04 12 2.04Z" },
-            { id: "linkedin", label: "LinkedIn", icon: "M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.16-3.51c-1.2 0-1.8.66-2.11 1.16v-1h-2.3v8.65h2.3v-4.83c0-1.27.24-2.5 1.82-2.5 1.55 0 1.58 1.45 1.58 2.58v4.75h2.37zM6.9 8.24A1.33 1.33 0 1 0 5.57 6.9 1.33 1.33 0 0 0 6.9 8.24M5.7 18.5h2.37V9.85H5.7v8.65z" }
-          ].map(platform => (
-            <button 
-              key={platform.id} 
-              onClick={() => setActivePlatform(platform.id)} 
-              className={`flex items-center space-x-2 px-6 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 ${activePlatform === platform.id ? "bg-white shadow-md text-black border border-gray-100" : "text-gray-500 hover:text-gray-800 hover:bg-white/40"}`}
-            >
-              <svg className={`w-4 h-4 ${activePlatform === platform.id ? 'text-blue-600' : 'text-gray-400'}`} fill="currentColor" viewBox="0 0 24 24"><path d={platform.icon} /></svg>
-              <span>{platform.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
+      {/* Platform Selector & Header */}
+      <div className="max-w-7xl mx-auto mb-8">
+        <div className="flex flex-col md:flex-row gap-6">
+          {/* Vertical Platform Selector */}
+          <div className="flex md:flex-col gap-2 bg-white/60 backdrop-blur-xl p-2 rounded-2xl border border-gray-200/60 shadow-sm md:w-56 h-max">
+            <div className="px-3 py-2 text-xs font-bold text-gray-400 uppercase tracking-widest mb-1 hidden md:block">
+              Data Sources
+            </div>
+            {[
+              { id: "google", label: "Google Analytics", color: "text-blue-600", bg: "bg-blue-50", icon: "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-6h2v6zm4 0h-2V7h2v10z" },
+              { id: "meta", label: "Meta Business", color: "text-[#1877F2]", bg: "bg-blue-50", icon: "M12 2.04C6.5 2.04 2 6.53 2 12.06C2 17.06 5.66 21.21 10.44 21.96V14.96H7.9V12.06H10.44V9.85C10.44 7.34 11.93 5.96 14.22 5.96C15.31 5.96 16.45 6.15 16.45 6.15V8.62H15.19C13.95 8.62 13.56 9.39 13.56 10.18V12.06H16.34L15.89 14.96H13.56V21.96A10 10 0 0 0 22 12.06C22 6.53 17.5 2.04 12 2.04Z" },
+              { id: "linkedin", label: "LinkedIn Analytics", color: "text-[#0A66C2]", bg: "bg-sky-50", icon: "M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.16-3.51c-1.2 0-1.8.66-2.11 1.16v-1h-2.3v8.65h2.3v-4.83c0-1.27.24-2.5 1.82-2.5 1.55 0 1.58 1.45 1.58 2.58v4.75h2.37zM6.9 8.24A1.33 1.33 0 1 0 5.57 6.9 1.33 1.33 0 0 0 6.9 8.24M5.7 18.5h2.37V9.85H5.7v8.65z" }
+            ].map(platform => {
+              const isActive = activePlatform === platform.id || (isPlatformLoading && activePlatform === platform.id); // highlight during load too
+              return (
+                <button 
+                  key={platform.id} 
+                  onClick={() => handlePlatformChange(platform.id)} 
+                  className={`relative flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 w-full text-left overflow-hidden group ${isActive ? "text-gray-900 shadow-sm bg-white" : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"}`}
+                >
+                  {isActive && (
+                    <motion.div layoutId="active-platform" className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 to-indigo-500 rounded-r-full" />
+                  )}
+                  <div className={`p-1.5 rounded-lg transition-colors ${isActive ? platform.bg : 'bg-gray-100 group-hover:bg-gray-200'}`}>
+                    <svg className={`w-4 h-4 ${isActive ? platform.color : 'text-gray-400 group-hover:text-gray-600'}`} fill="currentColor" viewBox="0 0 24 24"><path d={platform.icon} /></svg>
+                  </div>
+                  <span className="flex-grow">{platform.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Main Content Area */}
+          <div className="flex-1">
 
       {/* Google Analytics Sub-Tabs */}
       <AnimatePresence>
         {activePlatform === "google" && (
-          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="max-w-7xl mx-auto flex justify-center mb-8 overflow-hidden">
-            <div className="flex bg-gray-100 p-1 rounded-2xl border border-gray-200">
-              {["overview", "tracking", "insights", "analytics"].map(tab => (
-                <button key={tab} onClick={() => setActiveTab(tab)} className={`px-8 py-2 rounded-xl text-sm font-medium transition-all ${activeTab === tab ? "bg-white shadow-sm text-black" : "text-gray-500 hover:text-gray-800"}`}>
-                  {tab.toUpperCase()}
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="mb-8 overflow-hidden">
+            <div className="flex bg-gray-100 p-1 rounded-2xl border border-gray-200 w-max">
+              {[
+                { id: "overview", icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" },
+                { id: "tracking", icon: "M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" },
+                { id: "insights", icon: "M13 10V3L4 14h7v7l9-11h-7z" },
+                { id: "analytics", icon: "M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" }
+              ].map(tab => (
+                <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center space-x-2 px-6 py-2 rounded-xl text-sm font-medium transition-all ${activeTab === tab.id ? "bg-white shadow-sm text-black" : "text-gray-500 hover:text-gray-800"}`}>
+                  <svg className="w-4 h-4 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={tab.icon}></path></svg>
+                  <span>{tab.id.charAt(0).toUpperCase() + tab.id.slice(1)}</span>
                 </button>
               ))}
             </div>
@@ -271,7 +307,7 @@ export default function Dashboard() {
         )}
       </AnimatePresence>
 
-      <main className="max-w-7xl mx-auto pb-32">
+      <main className="pb-32">
         <AnimatePresence>
           {data?.anomaly?.is_anomaly && (
             <motion.div initial={{ opacity: 0, y: -20, height: 0 }} animate={{ opacity: 1, y: 0, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="mb-8">
@@ -376,6 +412,10 @@ export default function Dashboard() {
           )}
         </AnimatePresence>
       </main>
+
+      </div>
+      </div>
+      </div>
     </div>
   );
 }
