@@ -43,10 +43,18 @@ export default function Navbar() {
       {/* Logo */}
       <div className="flex items-center space-x-2 cursor-pointer group" onClick={() => router.push("/")}>
         <motion.div whileHover={{ rotate: 8, scale: 1.1 }} transition={{ type: "spring", stiffness: 400 }}>
-          <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect width="32" height="32" rx="8" fill="#111827" />
-            <path d="M9 20L15 13L21 20" stroke="#3B82F6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-            <circle cx="15" cy="13" r="2.5" fill="#3B82F6" />
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="drop-shadow-sm">
+            <rect width="32" height="32" rx="10" fill="url(#arbflow-gradient)" />
+            <path d="M9 21V16" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
+            <path d="M16 21V10" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
+            <path d="M23 21V13" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
+            <circle cx="16" cy="10" r="2.5" fill="white" />
+            <defs>
+              <linearGradient id="arbflow-gradient" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+                <stop stopColor="#2563EB" />
+                <stop offset="1" stopColor="#8B5CF6" />
+              </linearGradient>
+            </defs>
           </svg>
         </motion.div>
         <span className="text-xl font-bold tracking-tight text-gray-900 group-hover:text-gray-700 transition-colors">

@@ -39,9 +39,19 @@ export default function Sidebar() {
   return (
     <div className="w-64 h-screen bg-white/80 backdrop-blur-md border-r border-gray-100/80 fixed left-0 top-0 flex flex-col py-6 px-4 z-40">
       <Link href="/" className="flex items-center space-x-3 px-3 mb-12 hover:opacity-80 transition-opacity">
-        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-sm flex items-center justify-center text-white font-bold text-xl">
-          A
-        </div>
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="drop-shadow-sm">
+          <rect width="32" height="32" rx="10" fill="url(#arbflow-sidebar-gradient)" />
+          <path d="M9 21V16" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
+          <path d="M16 21V10" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
+          <path d="M23 21V13" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
+          <circle cx="16" cy="10" r="2.5" fill="white" />
+          <defs>
+            <linearGradient id="arbflow-sidebar-gradient" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+              <stop stopColor="#2563EB" />
+              <stop offset="1" stopColor="#8B5CF6" />
+            </linearGradient>
+          </defs>
+        </svg>
         <span className="text-xl font-semibold tracking-tight text-gray-900">ArbFlow</span>
       </Link>
 
