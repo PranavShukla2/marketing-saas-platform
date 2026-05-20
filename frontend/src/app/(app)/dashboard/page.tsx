@@ -6,8 +6,11 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import AppleAnalyticsDashboard from "../../../components/AppleAnalyticsDashboard";
+import MetaDashboard from "../../../components/MetaDashboard";
+import LinkedInDashboard from "../../../components/LinkedInDashboard";
 
 export default function Dashboard() {
+  const [activePlatform, setActivePlatform] = useState("google");
   const [activeTab, setActiveTab] = useState("overview");
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -160,9 +163,9 @@ export default function Dashboard() {
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-[#fafafa] font-light text-gray-400">Loading Workspace...</div>;
-  if (!data) return <div className="min-h-screen flex flex-col items-center justify-center bg-[#fafafa]"><p className="text-gray-500 mb-4">Session expired.</p><button onClick={() => { localStorage.removeItem("token"); window.location.href = "/"; }} className="px-6 py-2 bg-blue-600 text-white rounded-xl">Log In Again</button></div>;
+  if (!data && activePlatform === "google") return <div className="min-h-screen flex flex-col items-center justify-center bg-[#fafafa]"><p className="text-gray-500 mb-4">Session expired.</p><button onClick={() => { localStorage.removeItem("token"); window.location.href = "/"; }} className="px-6 py-2 bg-blue-600 text-white rounded-xl">Log In Again</button></div>;
 
-  if (data.status === "pending" || data.status === "pending_integration") {
+  if (activePlatform === "google" && (data?.status === "pending" || data?.status === "pending_integration")) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#fafafa] p-6">
         <div className="bg-white p-10 rounded-[2rem] shadow-sm border border-gray-100 max-w-md text-center">
@@ -207,8 +210,8 @@ export default function Dashboard() {
           </div>
 
           <div>
-            <h1 className="text-4xl font-semibold tracking-tight">{data?.company_name} Workspace</h1>
-            {data?.properties && data.properties.length > 0 && (
+            <h1 className="text-4xl font-semibold tracking-tight">{data?.company_name || 'My'} Workspace</h1>
+            {activePlatform === "google" && data?.properties && data.properties.length > 0 && (
               <select
                 value={selectedProperty}
                 onChange={handlePropertyChange}
@@ -231,15 +234,42 @@ export default function Dashboard() {
             <span className="text-xs font-medium">Switch Account</span>
           </button>
         </div>
+      </header>
 
-        <div className="flex bg-gray-100 p-1 rounded-2xl border border-gray-200">
-          {["overview", "tracking", "insights", "analytics"].map(tab => (
-            <button key={tab} onClick={() => setActiveTab(tab)} className={`px-8 py-2 rounded-xl text-sm font-medium transition-all ${activeTab === tab ? "bg-white shadow-sm text-black" : "text-gray-500 hover:text-gray-800"}`}>
-              {tab.toUpperCase()}
+      {/* Platform Selector */}
+      <div className="max-w-7xl mx-auto mb-8 flex justify-center">
+        <div className="flex bg-white/50 backdrop-blur-md p-1.5 rounded-2xl border border-gray-200/50 shadow-sm">
+          {[
+            { id: "google", label: "Google Analytics", icon: "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-6h2v6zm4 0h-2V7h2v10z" },
+            { id: "meta", label: "Meta (FB/IG)", icon: "M12 2.04C6.5 2.04 2 6.53 2 12.06C2 17.06 5.66 21.21 10.44 21.96V14.96H7.9V12.06H10.44V9.85C10.44 7.34 11.93 5.96 14.22 5.96C15.31 5.96 16.45 6.15 16.45 6.15V8.62H15.19C13.95 8.62 13.56 9.39 13.56 10.18V12.06H16.34L15.89 14.96H13.56V21.96A10 10 0 0 0 22 12.06C22 6.53 17.5 2.04 12 2.04Z" },
+            { id: "linkedin", label: "LinkedIn", icon: "M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.16-3.51c-1.2 0-1.8.66-2.11 1.16v-1h-2.3v8.65h2.3v-4.83c0-1.27.24-2.5 1.82-2.5 1.55 0 1.58 1.45 1.58 2.58v4.75h2.37zM6.9 8.24A1.33 1.33 0 1 0 5.57 6.9 1.33 1.33 0 0 0 6.9 8.24M5.7 18.5h2.37V9.85H5.7v8.65z" }
+          ].map(platform => (
+            <button 
+              key={platform.id} 
+              onClick={() => setActivePlatform(platform.id)} 
+              className={`flex items-center space-x-2 px-6 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 ${activePlatform === platform.id ? "bg-white shadow-md text-black border border-gray-100" : "text-gray-500 hover:text-gray-800 hover:bg-white/40"}`}
+            >
+              <svg className={`w-4 h-4 ${activePlatform === platform.id ? 'text-blue-600' : 'text-gray-400'}`} fill="currentColor" viewBox="0 0 24 24"><path d={platform.icon} /></svg>
+              <span>{platform.label}</span>
             </button>
           ))}
         </div>
-      </header>
+      </div>
+
+      {/* Google Analytics Sub-Tabs */}
+      <AnimatePresence>
+        {activePlatform === "google" && (
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="max-w-7xl mx-auto flex justify-center mb-8 overflow-hidden">
+            <div className="flex bg-gray-100 p-1 rounded-2xl border border-gray-200">
+              {["overview", "tracking", "insights", "analytics"].map(tab => (
+                <button key={tab} onClick={() => setActiveTab(tab)} className={`px-8 py-2 rounded-xl text-sm font-medium transition-all ${activeTab === tab ? "bg-white shadow-sm text-black" : "text-gray-500 hover:text-gray-800"}`}>
+                  {tab.toUpperCase()}
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <main className="max-w-7xl mx-auto pb-32">
         <AnimatePresence>
@@ -254,7 +284,22 @@ export default function Dashboard() {
         </AnimatePresence>
 
         <AnimatePresence mode="wait">
-          {activeTab === "overview" && (
+          {/* META DASHBOARD */}
+          {activePlatform === "meta" && (
+             <motion.div key="meta" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+               <MetaDashboard />
+             </motion.div>
+          )}
+
+          {/* LINKEDIN DASHBOARD */}
+          {activePlatform === "linkedin" && (
+             <motion.div key="linkedin" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+               <LinkedInDashboard />
+             </motion.div>
+          )}
+
+          {/* GOOGLE ANALYTICS DASHBOARD */}
+          {activePlatform === "google" && activeTab === "overview" && (
             <motion.div key="overview" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-16">
 
               <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
@@ -305,7 +350,7 @@ export default function Dashboard() {
             </motion.div>
           )}
 
-          {activeTab === "tracking" && (
+          {activePlatform === "google" && activeTab === "tracking" && (
             <motion.div key="tracking" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
               <div className="flex justify-end space-x-4"><button onClick={downloadCSV} className="text-sm font-medium text-gray-500 hover:text-black">↓ Download CSV</button><button onClick={downloadPDF} className="text-sm font-medium text-blue-600 hover:underline">↓ Export PDF</button></div>
               <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden"><table className="w-full text-left">
@@ -315,7 +360,7 @@ export default function Dashboard() {
             </motion.div>
           )}
 
-          {activeTab === "insights" && (
+          {activePlatform === "google" && activeTab === "insights" && (
             <motion.div key="insights" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex justify-center">
               <div className="w-full max-w-4xl bg-white p-16 rounded-[3rem] border border-gray-100 shadow-2xl relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-blue-50/30 rounded-full blur-[80px]"></div>
@@ -324,7 +369,7 @@ export default function Dashboard() {
             </motion.div>
           )}
 
-          {activeTab === "analytics" && (
+          {activePlatform === "google" && activeTab === "analytics" && (
             <motion.div key="analytics" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="w-full">
               <AppleAnalyticsDashboard data={data} />
             </motion.div>

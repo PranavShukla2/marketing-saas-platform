@@ -21,6 +21,14 @@ GOOGLE_REDIRECT_URI = f"{BACKEND_URL}/api/v1/integrations/google/callback"
 
 FRONTEND_URL = os.getenv("FRONTEND_URL", "https://marketing-saas-platform-pi.vercel.app")
 
+META_APP_ID = os.getenv("META_APP_ID")
+META_APP_SECRET = os.getenv("META_APP_SECRET")
+META_REDIRECT_URI = f"{BACKEND_URL}/api/v1/integrations/meta/callback"
+
+LINKEDIN_CLIENT_ID = os.getenv("LINKEDIN_CLIENT_ID")
+LINKEDIN_CLIENT_SECRET = os.getenv("LINKEDIN_CLIENT_SECRET")
+LINKEDIN_REDIRECT_URI = f"{BACKEND_URL}/api/v1/integrations/linkedin/callback"
+
 SECRET_KEY = "my-super-secret-saas-key"
 ALGORITHM = "HS256"
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -166,3 +174,73 @@ def google_callback(code: str, state: str, db: Session = Depends(get_db)):
         db.commit()
         
         return RedirectResponse(url=f"{FRONTEND_URL}/dashboard?integration=success")
+
+# ---- META OAUTH SCAFFOLDING ----
+
+@router.get("/meta/link")
+def get_meta_login_link(current_user: User = Depends(get_current_user)):
+    """Generates Meta OAuth URL"""
+    auth_url = (
+        f"https://www.facebook.com/v18.0/dialog/oauth"
+        f"?client_id={META_APP_ID}"
+        f"&redirect_uri={META_REDIRECT_URI}"
+        f"&state={current_user.id}"
+        f"&scope=ads_management,ads_read,business_management,pages_read_engagement,pages_show_list,instagram_basic,instagram_manage_insights"
+    )
+    return {"url": auth_url}
+
+@router.get("/meta/callback")
+def meta_callback(code: str, state: str, db: Session = Depends(get_db)):
+    """Handles Meta OAuth callback (Scaffold)"""
+    try:
+        user_id = int(state)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid state")
+        
+    # Scaffold: Exchange code for token (would use META_APP_SECRET here)
+    mock_token = {"access_token": "mock_meta_token_123", "type": "meta"}
+    
+    existing = db.query(Integration).filter(Integration.user_id == user_id, Integration.provider == "meta_ads").first()
+    if existing:
+        existing.encrypted_credentials = json.dumps(mock_token)
+    else:
+        db.add(Integration(user_id=user_id, provider="meta_ads", encrypted_credentials=json.dumps(mock_token)))
+    
+    db.commit()
+    return RedirectResponse(url=f"{FRONTEND_URL}/dashboard?platform=meta&integration=success")
+
+
+# ---- LINKEDIN OAUTH SCAFFOLDING ----
+
+@router.get("/linkedin/link")
+def get_linkedin_login_link(current_user: User = Depends(get_current_user)):
+    """Generates LinkedIn OAuth URL"""
+    auth_url = (
+        f"https://www.linkedin.com/oauth/v2/authorization"
+        f"?response_type=code"
+        f"&client_id={LINKEDIN_CLIENT_ID}"
+        f"&redirect_uri={LINKEDIN_REDIRECT_URI}"
+        f"&state={current_user.id}"
+        f"&scope=r_organization_social,r_basicprofile"
+    )
+    return {"url": auth_url}
+
+@router.get("/linkedin/callback")
+def linkedin_callback(code: str, state: str, db: Session = Depends(get_db)):
+    """Handles LinkedIn OAuth callback (Scaffold)"""
+    try:
+        user_id = int(state)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid state")
+        
+    # Scaffold: Exchange code for token (would use LINKEDIN_CLIENT_SECRET here)
+    mock_token = {"access_token": "mock_linkedin_token_123", "type": "linkedin"}
+    
+    existing = db.query(Integration).filter(Integration.user_id == user_id, Integration.provider == "linkedin").first()
+    if existing:
+        existing.encrypted_credentials = json.dumps(mock_token)
+    else:
+        db.add(Integration(user_id=user_id, provider="linkedin", encrypted_credentials=json.dumps(mock_token)))
+    
+    db.commit()
+    return RedirectResponse(url=f"{FRONTEND_URL}/dashboard?platform=linkedin&integration=success")
