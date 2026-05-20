@@ -27,10 +27,15 @@ export default function Footer() {
                 <div className="w-full h-px bg-gray-800 mb-10"></div>
 
                 {/* --- Bottom Credits Section --- */}
-                <div className="flex flex-col md:flex-row items-center justify-between text-sm text-gray-500 font-medium">
-                    <p className="mb-4 md:mb-0">
-                        &copy; {new Date().getFullYear()} ArbFlow Systems. All rights reserved.
-                    </p>
+                <div className="flex flex-col sm:flex-row items-center justify-between text-sm text-gray-500 font-medium">
+                    <div className="flex items-center space-x-6 mb-4 sm:mb-0">
+                        <p>
+                            &copy; {new Date().getFullYear()} ArbFlow Systems. All rights reserved.
+                        </p>
+                        <Link href="/about" className="text-gray-400 hover:text-white transition-colors">
+                            About
+                        </Link>
+                    </div>
 
                     <div className="flex items-center space-x-1">
                         <span>Built with</span>
@@ -45,9 +50,7 @@ export default function Footer() {
                         </svg>
                         <span>by</span>
                         <a
-                            href="https://github.com/pranavshukla"
-                            target="_blank"
-                            rel="noopener noreferrer"
+                            href="mailto:pranavmshukla"
                             className="ml-1 relative text-gray-300 hover:text-white transition-colors group"
                         >
                             Pranav Shukla

@@ -278,7 +278,7 @@ export default function HomePage() {
             <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-gray-900 mb-4">
               {isLoggedIn ? "Your live workspace" : "See what you'll get"}
             </h2>
-            <p className="text-gray-500 max-w-lg mx-auto">
+            <p className="text-gray-500 max-w-lg mx-auto text-sm sm:text-base">
               {isLoggedIn
                 ? "Here's a quick snapshot from your connected analytics."
                 : "A unified analytics workspace powered by real-time data from every platform."
@@ -286,32 +286,32 @@ export default function HomePage() {
             </p>
           </motion.div>
 
-          {isLoggedIn && userData ? (
+          {isLoggedIn && userData && userData.summary ? (
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-8">
                 {[
                   { label: "Active Users", value: Number(userData.summary?.active_users || 0).toLocaleString(), color: "blue" },
                   { label: "Page Views", value: Number(userData.summary?.page_views || 0).toLocaleString(), color: "green" },
                   { label: "Bounce Rate", value: userData.summary?.bounce_rate || "–", color: "amber" },
                   { label: "Avg Duration", value: userData.summary?.avg_duration || "–", color: "purple" },
                 ].map((stat, i) => (
-                  <motion.div key={i} variants={fadeScale} className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm text-center hover:shadow-md transition-shadow duration-300">
+                  <motion.div key={i} variants={fadeScale} className="bg-white rounded-2xl p-4 sm:p-5 border border-gray-100 shadow-sm text-center hover:shadow-md transition-shadow duration-300">
                     <p className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">{stat.label}</p>
-                    <p className="text-xl sm:text-2xl font-bold text-gray-900">{stat.value}</p>
+                    <p className="text-lg sm:text-2xl font-bold text-gray-900">{stat.value}</p>
                   </motion.div>
                 ))}
               </div>
 
               {userData.post_level && userData.post_level.length > 0 && (
-                <motion.div variants={fadeUp} className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm mb-8">
+                <motion.div variants={fadeUp} className="bg-white rounded-2xl p-4 sm:p-6 border border-gray-100 shadow-sm mb-8">
                   <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Top Traffic Sources</h3>
                   <div className="space-y-3">
                     {userData.post_level.slice(0, 4).map((src: any, i: number) => (
                       <div key={i} className="flex items-center justify-between">
                         <span className="text-sm font-medium text-gray-700">{src.source}</span>
-                        <div className="flex items-center space-x-4">
-                          <span className="text-sm text-gray-500">{src.views} views</span>
-                          <span className="text-sm text-blue-600 font-semibold">{src.users} users</span>
+                        <div className="flex items-center space-x-3 sm:space-x-4">
+                          <span className="text-xs sm:text-sm text-gray-500">{src.views} views</span>
+                          <span className="text-xs sm:text-sm text-blue-600 font-semibold">{src.users} users</span>
                         </div>
                       </div>
                     ))}
@@ -324,7 +324,7 @@ export default function HomePage() {
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="px-8 py-4 bg-black text-white rounded-full font-medium text-lg shadow-xl"
+                    className="px-6 sm:px-8 py-3 sm:py-4 bg-black text-white rounded-full font-medium text-base sm:text-lg shadow-xl"
                   >
                     Open Full Workspace →
                   </motion.button>
@@ -332,49 +332,95 @@ export default function HomePage() {
               </div>
             </motion.div>
           ) : (
-            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="relative">
-              <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/50 backdrop-blur-md rounded-3xl border border-white/60 shadow-2xl">
-                <motion.div
-                  animate={{ y: [0, -5, 0] }}
-                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                  className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center mb-4"
-                >
-                  <svg className="w-7 h-7 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-                </motion.div>
-                <h3 className="text-xl sm:text-2xl font-semibold tracking-tight text-gray-900 mb-2 text-center px-4">Sign in to see your data</h3>
-                <p className="text-gray-500 mb-6 max-w-sm text-center text-sm sm:text-base px-4">Connect your analytics platforms and watch your dashboard come alive.</p>
-                <Link href="/register">
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="px-8 py-3.5 bg-black text-white rounded-full font-medium shadow-xl"
-                  >
-                    Create Free Workspace
-                  </motion.button>
-                </Link>
+            /* Always-visible rich mock preview */
+            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
+              {/* Mock KPI cards */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
+                {[
+                  { label: "Active Users", value: "2,847", change: "+12.4%", positive: true },
+                  { label: "Page Views", value: "18,392", change: "+8.7%", positive: true },
+                  { label: "Bounce Rate", value: "34.2%", change: "-2.1%", positive: true },
+                  { label: "Avg Duration", value: "3m 42s", change: "+15s", positive: true },
+                ].map((stat, i) => (
+                  <motion.div key={i} variants={fadeScale} className="bg-white rounded-2xl p-4 sm:p-5 border border-gray-100 shadow-sm text-center hover:shadow-md transition-shadow duration-300">
+                    <p className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">{stat.label}</p>
+                    <p className="text-lg sm:text-2xl font-bold text-gray-900">{stat.value}</p>
+                    <p className={`text-[10px] sm:text-xs font-semibold mt-1 ${stat.positive ? 'text-green-600' : 'text-red-500'}`}>{stat.change}</p>
+                  </motion.div>
+                ))}
               </div>
 
-              {/* Mock preview cards */}
-              <div className="opacity-40 pointer-events-none select-none rounded-3xl overflow-hidden p-6 sm:p-8 space-y-4">
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  {["Active Users", "Page Views", "Bounce Rate", "Avg Duration"].map((label, i) => (
+              {/* Mock chart area */}
+              <motion.div variants={fadeUp} className="bg-white rounded-2xl p-4 sm:p-6 border border-gray-100 shadow-sm mb-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Traffic Trend (7 days)</h3>
+                  <div className="flex space-x-2">
+                    <span className="px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-bold rounded-full">Google</span>
+                    <span className="px-2 py-0.5 bg-indigo-50 text-indigo-600 text-[10px] font-bold rounded-full">Meta</span>
+                    <span className="px-2 py-0.5 bg-sky-50 text-sky-600 text-[10px] font-bold rounded-full">LinkedIn</span>
+                  </div>
+                </div>
+                {/* Mock chart bars */}
+                <div className="flex items-end justify-between gap-1 sm:gap-2 h-32 sm:h-40">
+                  {[65, 48, 72, 58, 85, 92, 78].map((h, i) => (
                     <motion.div
                       key={i}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 0.4, y: 0 }}
-                      transition={{ delay: i * 0.1 }}
-                      className="bg-white rounded-2xl p-5 border border-gray-200 text-center"
+                      initial={{ height: 0 }}
+                      whileInView={{ height: `${h}%` }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 0.3 + i * 0.08, duration: 0.6, ease: "easeOut" }}
+                      className="flex-1 bg-gradient-to-t from-blue-500 to-blue-300 rounded-t-lg relative group cursor-default"
                     >
-                      <p className="text-xs text-gray-400 mb-1">{label}</p>
-                      <p className="text-2xl font-bold text-gray-300">•••</p>
+                      <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-[9px] sm:text-[10px] font-bold text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][i]}
+                      </div>
                     </motion.div>
                   ))}
                 </div>
-                <div className="bg-white rounded-2xl p-6 border border-gray-200 h-48"></div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-white rounded-2xl p-6 border border-gray-200 h-32"></div>
-                  <div className="bg-white rounded-2xl p-6 border border-gray-200 h-32"></div>
+              </motion.div>
+
+              {/* Mock sources table */}
+              <motion.div variants={fadeUp} className="bg-white rounded-2xl p-4 sm:p-6 border border-gray-100 shadow-sm mb-8">
+                <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Top Traffic Sources</h3>
+                <div className="space-y-3">
+                  {[
+                    { source: "google / organic", users: "1,240", views: "4,820" },
+                    { source: "facebook / paid", users: "890", views: "3,210" },
+                    { source: "linkedin / social", users: "420", views: "1,580" },
+                    { source: "direct / none", users: "297", views: "782" },
+                  ].map((src, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, x: -10 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 0.4 + i * 0.1 }}
+                      className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0"
+                    >
+                      <span className="text-xs sm:text-sm font-medium text-gray-700">{src.source}</span>
+                      <div className="flex items-center space-x-3 sm:space-x-4">
+                        <span className="text-xs sm:text-sm text-gray-500">{src.views} views</span>
+                        <span className="text-xs sm:text-sm text-blue-600 font-semibold">{src.users} users</span>
+                      </div>
+                    </motion.div>
+                  ))}
                 </div>
+              </motion.div>
+
+              {/* CTA */}
+              <div className="text-center">
+                <Link href={isLoggedIn ? "/dashboard" : "/register"}>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="px-6 sm:px-8 py-3 sm:py-4 bg-black text-white rounded-full font-medium text-base sm:text-lg shadow-xl"
+                  >
+                    {isLoggedIn ? "Open Full Workspace →" : "Start Your Free Trial →"}
+                  </motion.button>
+                </Link>
+                {!isLoggedIn && (
+                  <p className="text-xs text-gray-400 mt-3 font-medium">No credit card required • Free forever plan</p>
+                )}
               </div>
             </motion.div>
           )}

@@ -61,7 +61,7 @@ export default function Navbar() {
           { label: "Pricing", href: "/pricing" },
           { label: "Workspace", href: "/dashboard" },
           { label: "Integrations", href: "/integrations" },
-          { label: "Settings", href: "/settings" },
+          { label: "About", href: "/about" },
         ].map((link) => (
           <Link key={link.href} href={link.href} className="relative hover:text-black transition-colors py-1 group">
             {link.label}
