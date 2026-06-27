@@ -30,5 +30,5 @@ The application separates concerns into three distinct layers:
 
 ### 1. Clone the repository
 ```bash
-git clone [https://github.com/your-username/marketing-saas-platform.git](https://github.com/your-username/marketing-saas-platform.git)
+git clone https://github.com/PranavShukla2/marketing-saas-platform.git
 cd marketing-saas-platform
