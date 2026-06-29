@@ -2,6 +2,12 @@
 backend/venv/
 backend/__pycache__/
 backend/.env
+__pycache__/
+*.pyc
+
+# Local notes / scratch prompts (not part of the project)
+Arbflow landing redesign prompt · MD
+*redesign prompt*
 
 # Node.js
 frontend/node_modules/

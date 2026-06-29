@@ -11,6 +11,10 @@ class UserLogin(BaseModel):
     email: str
     password: str
 
+# Single-use code exchanged for a JWT after Google OAuth sign-in
+class AuthCodeExchange(BaseModel):
+    code: str
+
 # What we send back to the frontend (notice we NEVER send the password back!)
 class UserResponse(BaseModel):
     id: int

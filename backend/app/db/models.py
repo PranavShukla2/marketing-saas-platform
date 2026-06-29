@@ -23,7 +23,21 @@ class Integration(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     provider = Column(String) # e.g., "google_analytics", "meta_ads"
     property_id = Column(String, nullable=True) # e.g., GA4 Property ID
-    encrypted_credentials = Column(String) # The AES-256 encrypted JSON string
+    encrypted_credentials = Column(String) # Fernet-encrypted JSON credentials blob
     created_at = Column(DateTime, default=datetime.utcnow)
 
     owner = relationship("User", back_populates="integrations")
+
+
+class AuthCode(Base):
+    """Single-use, short-lived code exchanged for a JWT after OAuth sign-in.
+
+    Lets the OAuth callback hand the browser an opaque code in the URL instead
+    of the long-lived JWT itself. The frontend POSTs the code to /auth/exchange
+    to obtain the token, and the row is deleted on first use.
+    """
+    __tablename__ = "auth_codes"
+
+    code = Column(String, primary_key=True, index=True)
+    token = Column(String, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)

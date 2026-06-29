@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import { consumeAuthCode } from "../lib/auth";
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -9,25 +10,33 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
-    // Check URL params first (Google OAuth may pass token via URL)
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      const urlToken = params.get("token");
-      if (urlToken) {
-        localStorage.setItem("token", urlToken);
-        setIsAuthenticated(true);
+    let cancelled = false;
+
+    (async () => {
+      // Google OAuth sign-in lands here with a one-time ?auth_code=. Exchange
+      // it before rendering children so the protected page never mounts (and
+      // wipes the URL) until we have a token.
+      if (await consumeAuthCode()) {
+        if (!cancelled) setIsAuthenticated(true);
         return;
       }
-    }
 
-    const token = localStorage.getItem("token");
-    if (!token) {
-      if (pathname !== "/login" && pathname !== "/register") {
-        router.push("/login");
+      const token = localStorage.getItem("token");
+      if (cancelled) return;
+
+      if (!token) {
+        setIsAuthenticated(false);
+        if (pathname !== "/login" && pathname !== "/register") {
+          router.push("/login");
+        }
+      } else {
+        setIsAuthenticated(true);
       }
-    } else {
-      setIsAuthenticated(true);
-    }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [pathname, router]);
 
   if (isAuthenticated === null) {

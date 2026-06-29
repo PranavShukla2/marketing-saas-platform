@@ -64,13 +64,9 @@ export default function Dashboard() {
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
-      
-      // Handle token from Google OAuth redirect
-      const urlToken = params.get("token");
-      if (urlToken) {
-        localStorage.setItem("token", urlToken);
-      }
 
+      // The session token is established by AuthGuard (via the one-time
+      // ?auth_code= exchange) before this page mounts.
       if (params.get("integration") === "success") {
         setShowSuccessToast(true);
         setTimeout(() => setShowSuccessToast(false), 5000);

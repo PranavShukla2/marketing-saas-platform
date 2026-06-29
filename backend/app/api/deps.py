@@ -5,7 +5,7 @@ import jwt
 
 from app.db.database import get_db
 from app.db.models import User
-from app.api.auth import SECRET_KEY, ALGORITHM
+from app.core.config import SECRET_KEY, ALGORITHM
 
 # This tells FastAPI to look for the token in the "Authorization" header
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/login")

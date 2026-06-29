@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { consumeAuthCode, getApiUrl } from "../../../lib/auth";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -13,22 +14,27 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  // Check for Google OAuth callback token in URL
+  // Handle the Google OAuth redirect: trade the one-time ?auth_code= for a JWT,
+  // or surface an error. The long-lived token is never read from the URL.
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      const token = params.get("token");
-      const googleError = params.get("error");
-
-      if (token) {
-        localStorage.setItem("token", token);
+    (async () => {
+      if (await consumeAuthCode()) {
         router.push("/dashboard?integration=success");
         return;
       }
-      if (googleError) {
-        setError("Google sign-in failed. Please try again.");
+      const params = new URLSearchParams(window.location.search);
+      const errParam = params.get("error");
+      if (errParam) {
+        const messages: Record<string, string> = {
+          email_unverified:
+            "Your Google email isn't verified, so we can't sign you in. Verify it with Google and try again.",
+          invalid_state: "Your sign-in session expired. Please try again.",
+          no_email: "We couldn't read your Google email. Please try again.",
+          google_auth_failed: "Google sign-in failed. Please try again.",
+        };
+        setError(messages[errParam] || "Google sign-in failed. Please try again.");
       }
-    }
+    })();
   }, [router]);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -37,7 +43,7 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const backendUrl = getApiUrl();
 
       const response = await fetch(`${backendUrl}/api/v1/auth/login`, {
         method: "POST",
@@ -64,7 +70,7 @@ export default function LoginPage() {
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
     try {
-      const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const backendUrl = getApiUrl();
       const res = await fetch(`${backendUrl}/api/v1/auth/google/login`);
       const data = await res.json();
       if (data.url) {

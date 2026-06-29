@@ -10,8 +10,9 @@ from google.analytics.data_v1beta.types import DateRange, Dimension, Metric, Run
 from google.analytics.admin import AnalyticsAdminServiceClient 
 
 # Adjust these imports to match your project structure
-from app.api.deps import get_db, get_current_user 
+from app.api.deps import get_db, get_current_user
 from app.db.models import Integration, User
+from app.core.security import decrypt_credentials
 
 router = APIRouter()
 
@@ -36,7 +37,7 @@ def get_dashboard_data(
     if not integration:
         return {"data": {"status": "pending_integration"}}
 
-    creds_data = json.loads(integration.encrypted_credentials)
+    creds_data = decrypt_credentials(integration.encrypted_credentials)
     
     # 2. If the database row exists but is missing the token
     if not creds_data.get("access_token"):

@@ -33,17 +33,17 @@ const faqs: FAQItem[] = [
 
 const FaqItem = ({ item, isOpen, toggleOpen }: { item: FAQItem; isOpen: boolean; toggleOpen: () => void }) => {
     return (
-        <div className="border border-gray-200 rounded-lg bg-white overflow-hidden">
+        <div className="border border-[#E5E5E5] rounded-2xl bg-white overflow-hidden">
             <button
                 onClick={toggleOpen}
                 className="flex justify-between items-center w-full px-5 py-4 text-left focus:outline-none"
                 aria-expanded={isOpen}
             >
-                <span className="font-medium text-gray-900 text-base sm:text-lg">{item.question}</span>
+                <span className="font-medium text-[#1D1D1F] text-base sm:text-lg">{item.question}</span>
                 <motion.div
                     animate={{ rotate: isOpen ? 180 : 0 }}
                     transition={{ duration: 0.3, ease: 'easeInOut' }}
-                    className="ml-4 flex-shrink-0 text-gray-400"
+                    className="ml-4 flex-shrink-0 text-[#6E6E73]"
                 >
                     <svg
                         className="w-5 h-5"
@@ -67,7 +67,7 @@ const FaqItem = ({ item, isOpen, toggleOpen }: { item: FAQItem; isOpen: boolean;
                         exit={{ height: 0, opacity: 0 }}
                         transition={{ duration: 0.3, ease: 'easeInOut' }}
                     >
-                        <div className="px-5 pb-4 text-gray-600 sm:text-base text-sm">
+                        <div className="px-5 pb-4 text-[#6E6E73] sm:text-base text-sm">
                             {item.answer}
                         </div>
                     </motion.div>
@@ -85,13 +85,13 @@ export default function FaqSection() {
     };
 
     return (
-        <section id="faq" className="py-20 bg-gray-50">
+        <section id="faq" className="py-20 bg-[#F5F5F7]">
             <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center mb-12">
-                    <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
+                    <h2 className="text-3xl font-bold tracking-[-0.02em] text-[#1D1D1F] sm:text-4xl">
                         Frequently Asked Questions
                     </h2>
-                    <p className="mt-4 text-lg text-gray-600">
+                    <p className="mt-4 text-lg text-[#6E6E73]">
                         Everything you need to know about the product and billing.
                     </p>
                 </div>

@@ -1,0 +1,77 @@
+"""OAuth helpers: signed CSRF `state` tokens and one-time auth codes.
+
+These two mechanisms harden the Google sign-in / integration-linking flow:
+
+* `state` is a short-lived signed JWT instead of a raw user id, so an attacker
+  can't forge a callback that binds their Google account to someone else's id
+  (CSRF). The flow's intent ("signin" vs "link") and the target user id are
+  carried *inside* the signed token, never read from attacker-controlled input.
+
+* After a successful sign-in the callback stores the session JWT server-side and
+  redirects with a single-use `auth_code`, so the long-lived token never appears
+  in a URL / browser history / referer header.
+"""
+import secrets
+from datetime import datetime, timedelta
+
+import jwt
+from sqlalchemy.orm import Session
+
+from app.core.config import SECRET_KEY, ALGORITHM
+from app.db.models import AuthCode
+
+STATE_TTL_MINUTES = 10
+AUTH_CODE_TTL_SECONDS = 120
+
+VALID_PURPOSES = {"signin", "link"}
+
+
+def create_oauth_state(purpose: str, user_id: int | None = None) -> str:
+    """Create a signed, short-lived OAuth `state` value."""
+    if purpose not in VALID_PURPOSES:
+        raise ValueError(f"Invalid OAuth state purpose: {purpose!r}")
+    payload = {
+        "purpose": purpose,
+        "uid": user_id,
+        "nonce": secrets.token_urlsafe(8),
+        "exp": datetime.utcnow() + timedelta(minutes=STATE_TTL_MINUTES),
+    }
+    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+
+
+def verify_oauth_state(state: str) -> dict:
+    """Decode and validate a `state` token. Raises on tampering/expiry."""
+    payload = jwt.decode(state, SECRET_KEY, algorithms=[ALGORITHM])
+    if payload.get("purpose") not in VALID_PURPOSES:
+        raise jwt.InvalidTokenError("Unknown OAuth state purpose")
+    return payload
+
+
+def create_auth_code(db: Session, token: str) -> str:
+    """Persist a JWT behind a fresh single-use code and return the code."""
+    code = secrets.token_urlsafe(32)
+    db.add(AuthCode(code=code, token=token))
+    db.commit()
+    return code
+
+
+def consume_auth_code(db: Session, code: str) -> str | None:
+    """Return the JWT for a valid, unexpired code, deleting it (single use).
+
+    Returns None if the code is unknown or expired. Also opportunistically
+    purges expired codes so the table doesn't grow unbounded.
+    """
+    cutoff = datetime.utcnow() - timedelta(seconds=AUTH_CODE_TTL_SECONDS)
+    # Best-effort cleanup of stale codes.
+    db.query(AuthCode).filter(AuthCode.created_at < cutoff).delete()
+
+    row = db.query(AuthCode).filter(AuthCode.code == code).first()
+    if row is None:
+        db.commit()
+        return None
+
+    token = row.token
+    expired = row.created_at < cutoff
+    db.delete(row)  # single-use: remove regardless of validity
+    db.commit()
+    return None if expired else token

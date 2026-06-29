@@ -1,65 +1,150 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Link from "next/link";
+import { useState } from "react";
+
+const plans = [
+  {
+    name: "Starter",
+    desc: "Perfect for solo agencies.",
+    price: 49,
+    popular: false,
+    cta: "Get Started",
+    features: ["5 Client Dashboards", "Manual API Key Entry", "Standard Support"],
+  },
+  {
+    name: "Pro",
+    desc: "For growing agencies.",
+    price: 99,
+    popular: true,
+    cta: "Start Free Trial",
+    features: ["25 Client Dashboards", "OAuth 2.0 Integration", "Priority Support", "White-Labeled Reports"],
+  },
+  {
+    name: "Enterprise",
+    desc: "For scaling SaaS platforms.",
+    price: 199,
+    popular: false,
+    cta: "Scale Now",
+    features: ["Unlimited Dashboards", "Custom Database Vault", "Dedicated Account Manager", "SLA Guarantee"],
+  },
+];
 
 export default function PricingPage() {
+  const [annual, setAnnual] = useState(false);
+
+  const fadeUp = {
+    hidden: { opacity: 0, y: 24 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
+  };
+
+  const stagger = {
+    visible: { transition: { staggerChildren: 0.12 } },
+  };
+
   return (
-    <div className="min-h-screen bg-white text-gray-900 flex flex-col items-center justify-center p-10 font-sans">
-      
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
-        className="text-center mb-16"
+    <div className="min-h-screen bg-white text-[#1D1D1F] flex flex-col items-center px-6 py-20 sm:py-28">
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        variants={stagger}
+        className="text-center mb-12 max-w-2xl"
       >
-        <h1 className="text-5xl md:text-6xl font-semibold tracking-tighter mb-4">Simple, transparent pricing.</h1>
-        <p className="text-xl text-gray-500 max-w-2xl mx-auto font-light">
+        <motion.h1 variants={fadeUp} className="text-5xl md:text-6xl font-bold tracking-[-0.02em] mb-4">
+          Simple, transparent pricing.
+        </motion.h1>
+        <motion.p variants={fadeUp} className="text-xl text-[#6E6E73] font-light">
           Scale your marketing agency with secure, multi-tenant analytics.
-        </p>
+        </motion.p>
       </motion.div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl w-full">
-        {/* Starter Plan */}
-        <motion.div 
-          initial={{ opacity: 0, x: -30 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="p-10 rounded-3xl border border-gray-200 bg-gray-50 flex flex-col"
+      {/* Monthly / Annual toggle */}
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        variants={fadeUp}
+        className="flex items-center gap-3 mb-16 px-1.5 py-1.5 rounded-full border border-[#E5E5E5] bg-[#F5F5F7]"
+      >
+        <button
+          onClick={() => setAnnual(false)}
+          className={`px-5 py-2 rounded-full text-sm font-medium transition-colors duration-300 ${
+            !annual ? "bg-white text-[#1D1D1F] shadow-sm" : "text-[#6E6E73]"
+          }`}
         >
-          <h2 className="text-2xl font-medium mb-2">Starter</h2>
-          <p className="text-gray-500 mb-6">Perfect for solo agencies.</p>
-          <div className="text-5xl font-light tracking-tight mb-8">$49<span className="text-lg text-gray-400 tracking-normal">/mo</span></div>
-          <ul className="space-y-4 mb-10 flex-grow text-gray-600">
-            <li className="flex items-center">✓ 5 Client Dashboards</li>
-            <li className="flex items-center">✓ Manual API Key Entry</li>
-            <li className="flex items-center">✓ Standard Support</li>
-          </ul>
-          <button className="w-full py-3 rounded-full bg-white text-black border border-gray-200 font-medium hover:bg-gray-100 transition-colors">
-            Get Started
-          </button>
-        </motion.div>
+          Monthly
+        </button>
+        <button
+          onClick={() => setAnnual(true)}
+          className={`flex items-center gap-2 px-5 py-2 rounded-full text-sm font-medium transition-colors duration-300 ${
+            annual ? "bg-white text-[#1D1D1F] shadow-sm" : "text-[#6E6E73]"
+          }`}
+        >
+          Annual
+          <span className="px-2 py-0.5 rounded-full bg-[#0071E3]/10 text-[#0071E3] text-xs font-semibold">
+            Save 20%
+          </span>
+        </button>
+      </motion.div>
 
-        {/* Pro Plan (Highlighted) */}
-        <motion.div 
-          initial={{ opacity: 0, x: 30 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-          className="p-10 rounded-3xl bg-black text-white shadow-2xl flex flex-col relative overflow-hidden"
-        >
-          <div className="absolute top-0 right-0 bg-blue-500 text-white text-xs font-bold px-4 py-1 rounded-bl-lg">POPULAR</div>
-          <h2 className="text-2xl font-medium mb-2">Enterprise</h2>
-          <p className="text-gray-400 mb-6">For scaling SaaS platforms.</p>
-          <div className="text-5xl font-light tracking-tight mb-8">$199<span className="text-lg text-gray-500 tracking-normal">/mo</span></div>
-          <ul className="space-y-4 mb-10 flex-grow text-gray-300">
-            <li className="flex items-center">✓ Unlimited Dashboards</li>
-            <li className="flex items-center">✓ OAuth 2.0 Integration</li>
-            <li className="flex items-center">✓ Custom Database Vault</li>
-          </ul>
-          <button className="w-full py-3 rounded-full bg-white text-black font-medium hover:bg-gray-200 transition-colors">
-            Scale Now
-          </button>
-        </motion.div>
-      </div>
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        variants={stagger}
+        className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl w-full"
+      >
+        {plans.map((plan) => {
+          const monthlyPrice = annual ? Math.round(plan.price * 0.8) : plan.price;
+          return (
+            <motion.div
+              key={plan.name}
+              variants={fadeUp}
+              className={`p-10 rounded-3xl flex flex-col relative ${
+                plan.popular
+                  ? "border-2 border-[#0071E3] bg-[#EEF2FF] shadow-xl md:-translate-y-2"
+                  : "border border-[#E5E5E5] bg-white"
+              }`}
+            >
+              {plan.popular && (
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#0071E3] text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-md">
+                  MOST POPULAR
+                </div>
+              )}
+              <h2 className="text-2xl font-medium mb-2 mt-2">{plan.name}</h2>
+              <p className="text-[#6E6E73] mb-6">{plan.desc}</p>
+              <div className="flex items-baseline gap-1 mb-1">
+                <span className="text-5xl font-bold tracking-[-0.02em]">${monthlyPrice}</span>
+                <span className="text-lg text-[#6E6E73]">/mo</span>
+              </div>
+              {annual && (
+                <p className="text-xs text-[#6E6E73] mb-8">Billed annually at ${monthlyPrice * 12}/yr</p>
+              )}
+              {!annual && <div className="mb-8" />}
+              <ul className="space-y-4 mb-10 flex-grow">
+                {plan.features.map((feature) => (
+                  <li key={feature} className="flex items-center text-[#1D1D1F] text-sm">
+                    <svg className="w-4 h-4 text-[#0071E3] mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/register">
+                <button
+                  className={`w-full py-3 rounded-full font-medium transition-colors duration-300 ${
+                    plan.popular
+                      ? "bg-[#0071E3] text-white hover:bg-[#0061c3]"
+                      : "bg-white text-[#1D1D1F] border border-[#E5E5E5] hover:bg-[#F5F5F7]"
+                  }`}
+                >
+                  {plan.cta}
+                </button>
+              </Link>
+            </motion.div>
+          );
+        })}
+      </motion.div>
     </div>
   );
 }

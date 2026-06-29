@@ -9,16 +9,14 @@ from datetime import datetime, timedelta
 
 from app.db.database import get_db
 from app.db.models import User, Integration
-from app.schemas import UserCreate, UserLogin, UserResponse
+from app.schemas import UserCreate, UserLogin, UserResponse, AuthCodeExchange
+from app.core.config import SECRET_KEY, ALGORITHM
+from app.core.oauth import create_oauth_state, consume_auth_code
 
 router = APIRouter()
 
 # 1. Setup Password Hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-# 2. Setup JWT configuration
-SECRET_KEY = "my-super-secret-saas-key"
-ALGORITHM = "HS256"
 
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
@@ -81,6 +79,9 @@ def google_auth_redirect():
         "profile",
         "https://www.googleapis.com/auth/analytics.readonly"
     ])
+    # Signed, short-lived CSRF state. The callback reads the flow's intent from
+    # the verified token, never from a raw/guessable value.
+    state = create_oauth_state(purpose="signin")
     auth_url = (
         f"https://accounts.google.com/o/oauth2/v2/auth"
         f"?client_id={GOOGLE_CLIENT_ID}"
@@ -89,11 +90,24 @@ def google_auth_redirect():
         f"&scope={scopes}"
         f"&access_type=offline"
         f"&prompt=consent"
-        f"&state=auth_signin"
+        f"&state={state}"
     )
     return {"url": auth_url}
 
+
+@router.post("/exchange")
+def exchange_auth_code(payload: AuthCodeExchange, db: Session = Depends(get_db)):
+    """Exchange a single-use OAuth `auth_code` for the session JWT.
+
+    Keeps the long-lived token out of the redirect URL: the callback hands the
+    browser an opaque code, and the frontend trades it here for the real token.
+    """
+    token = consume_auth_code(db, payload.code)
+    if not token:
+        raise HTTPException(status_code=400, detail="Invalid or expired code")
+    return {"access_token": token, "token_type": "bearer"}
+
 # The actual Google OAuth callback is handled by integrations.py
 # (/api/v1/integrations/google/callback) which is already registered
-# in Google Cloud Console. The state="auth_signin" parameter tells it
-# to create/find the user and return a JWT.
+# in Google Cloud Console. The signed state token (purpose="signin") tells
+# it to create/find the user and issue a single-use auth code.
