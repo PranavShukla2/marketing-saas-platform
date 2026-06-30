@@ -81,29 +81,79 @@ def get_dashboard_data(
     client = BetaAnalyticsDataClient(credentials=credentials)
 
     try:
-        # Summary Metrics
-        summary_request = RunReportRequest(
-            property=target_property_id,
-            dimensions=[],
-            metrics=[
-                Metric(name="activeUsers"),
-                Metric(name="screenPageViews"),
-                Metric(name="bounceRate"),
-                Metric(name="averageSessionDuration"),
-            ],
-            date_ranges=[DateRange(start_date="30daysAgo", end_date="today")],
-        )
-        summary_response = client.run_report(summary_request)
-        
-        summary_data = {"active_users": "0", "page_views": "0", "bounce_rate": "0%", "avg_duration": "0s"}
-        if summary_response.rows:
-            row = summary_response.rows[0]
-            summary_data = {
-                "active_users": row.metric_values[0].value,
-                "page_views": row.metric_values[1].value,
-                "bounce_rate": f"{round(float(row.metric_values[2].value) * 100, 1)}%",
-                "avg_duration": f"{round(float(row.metric_values[3].value), 1)}s"
-            }
+        def _fmt_duration(seconds: float) -> str:
+            seconds = int(round(seconds))
+            m, s = divmod(seconds, 60)
+            return f"{m}m {s}s" if m else f"{s}s"
+
+        # Summary Metrics — the core KPI band (GA4 allows up to 10 metrics/request).
+        # Keep the original four keys (active_users/page_views/bounce_rate/avg_duration)
+        # for backwards compatibility and add the rest of the headline numbers.
+        summary_data = {
+            "active_users": "0", "new_users": "0", "sessions": "0", "engaged_sessions": "0",
+            "page_views": "0", "engagement_rate": "0%", "bounce_rate": "0%",
+            "avg_duration": "0s", "events": "0", "views_per_session": "0",
+            "total_revenue": "0", "transactions": "0", "conversions": "0",
+        }
+        try:
+            summary_request = RunReportRequest(
+                property=target_property_id,
+                dimensions=[],
+                metrics=[
+                    Metric(name="activeUsers"),
+                    Metric(name="newUsers"),
+                    Metric(name="sessions"),
+                    Metric(name="engagedSessions"),
+                    Metric(name="screenPageViews"),
+                    Metric(name="engagementRate"),
+                    Metric(name="bounceRate"),
+                    Metric(name="averageSessionDuration"),
+                    Metric(name="eventCount"),
+                    Metric(name="screenPageViewsPerSession"),
+                ],
+                date_ranges=[DateRange(start_date="30daysAgo", end_date="today")],
+            )
+            summary_response = client.run_report(summary_request)
+            if summary_response.rows:
+                v = summary_response.rows[0].metric_values
+                summary_data.update({
+                    "active_users": v[0].value,
+                    "new_users": v[1].value,
+                    "sessions": v[2].value,
+                    "engaged_sessions": v[3].value,
+                    "page_views": v[4].value,
+                    "engagement_rate": f"{round(float(v[5].value) * 100, 1)}%",
+                    "bounce_rate": f"{round(float(v[6].value) * 100, 1)}%",
+                    "avg_duration": _fmt_duration(float(v[7].value)),
+                    "events": v[8].value,
+                    "views_per_session": str(round(float(v[9].value), 1)),
+                })
+        except Exception as e:
+            print(f"Summary query error: {e}")
+
+        # Revenue / conversions live in a second request (often zero for non-ecommerce
+        # properties, and a bad metric here shouldn't blank the whole KPI band).
+        try:
+            revenue_request = RunReportRequest(
+                property=target_property_id,
+                dimensions=[],
+                metrics=[
+                    Metric(name="totalRevenue"),
+                    Metric(name="transactions"),
+                    Metric(name="conversions"),
+                ],
+                date_ranges=[DateRange(start_date="30daysAgo", end_date="today")],
+            )
+            revenue_response = client.run_report(revenue_request)
+            if revenue_response.rows:
+                v = revenue_response.rows[0].metric_values
+                summary_data.update({
+                    "total_revenue": str(round(float(v[0].value), 2)),
+                    "transactions": v[1].value,
+                    "conversions": str(int(round(float(v[2].value)))),
+                })
+        except Exception as e:
+            print(f"Revenue query error: {e}")
 
         # Channel Metrics
         source_request = RunReportRequest(
@@ -218,6 +268,131 @@ def get_dashboard_data(
         except Exception as e:
             print(f"Cohort query error: {e}")
 
+        # Daily time series (last 30 days) — powers the trend chart.
+        time_series = []
+        try:
+            ts_request = RunReportRequest(
+                property=target_property_id,
+                dimensions=[Dimension(name="date")],
+                metrics=[
+                    Metric(name="activeUsers"),
+                    Metric(name="sessions"),
+                    Metric(name="screenPageViews"),
+                ],
+                date_ranges=[DateRange(start_date="30daysAgo", end_date="today")],
+            )
+            ts_response = client.run_report(ts_request)
+            for row in ts_response.rows:
+                raw = row.dimension_values[0].value  # YYYYMMDD
+                label = f"{raw[4:6]}/{raw[6:8]}" if len(raw) == 8 else raw
+                time_series.append({
+                    "date": label,
+                    "raw": raw,
+                    "users": int(row.metric_values[0].value),
+                    "sessions": int(row.metric_values[1].value),
+                    "views": int(row.metric_values[2].value),
+                })
+            time_series = sorted(time_series, key=lambda x: x["raw"])
+        except Exception as e:
+            print(f"Time series query error: {e}")
+
+        # Default channel grouping (Organic Search, Direct, Paid, Social, ...).
+        channel_data = []
+        try:
+            ch_request = RunReportRequest(
+                property=target_property_id,
+                dimensions=[Dimension(name="sessionDefaultChannelGroup")],
+                metrics=[Metric(name="activeUsers"), Metric(name="sessions")],
+                date_ranges=[DateRange(start_date="30daysAgo", end_date="today")],
+            )
+            ch_response = client.run_report(ch_request)
+            for row in ch_response.rows:
+                channel_data.append({
+                    "channel": row.dimension_values[0].value or "Unassigned",
+                    "users": int(row.metric_values[0].value),
+                    "sessions": int(row.metric_values[1].value),
+                })
+            channel_data = sorted(channel_data, key=lambda x: x["users"], reverse=True)
+        except Exception as e:
+            print(f"Channel query error: {e}")
+
+        # Geography — top countries by users.
+        geo_data = []
+        try:
+            geo_request = RunReportRequest(
+                property=target_property_id,
+                dimensions=[Dimension(name="country")],
+                metrics=[Metric(name="activeUsers"), Metric(name="sessions")],
+                date_ranges=[DateRange(start_date="30daysAgo", end_date="today")],
+            )
+            geo_response = client.run_report(geo_request)
+            for row in geo_response.rows:
+                geo_data.append({
+                    "country": row.dimension_values[0].value or "(not set)",
+                    "users": int(row.metric_values[0].value),
+                    "sessions": int(row.metric_values[1].value),
+                })
+            geo_data = sorted(geo_data, key=lambda x: x["users"], reverse=True)[:8]
+        except Exception as e:
+            print(f"Geo query error: {e}")
+
+        # Browser breakdown.
+        browser_data = []
+        try:
+            br_request = RunReportRequest(
+                property=target_property_id,
+                dimensions=[Dimension(name="browser")],
+                metrics=[Metric(name="activeUsers")],
+                date_ranges=[DateRange(start_date="30daysAgo", end_date="today")],
+            )
+            br_response = client.run_report(br_request)
+            for row in br_response.rows:
+                browser_data.append({
+                    "browser": row.dimension_values[0].value or "(other)",
+                    "users": int(row.metric_values[0].value),
+                })
+            browser_data = sorted(browser_data, key=lambda x: x["users"], reverse=True)[:6]
+        except Exception as e:
+            print(f"Browser query error: {e}")
+
+        # Operating system breakdown.
+        os_data = []
+        try:
+            os_request = RunReportRequest(
+                property=target_property_id,
+                dimensions=[Dimension(name="operatingSystem")],
+                metrics=[Metric(name="activeUsers")],
+                date_ranges=[DateRange(start_date="30daysAgo", end_date="today")],
+            )
+            os_response = client.run_report(os_request)
+            for row in os_response.rows:
+                os_data.append({
+                    "os": row.dimension_values[0].value or "(other)",
+                    "users": int(row.metric_values[0].value),
+                })
+            os_data = sorted(os_data, key=lambda x: x["users"], reverse=True)[:6]
+        except Exception as e:
+            print(f"OS query error: {e}")
+
+        # Top events by count.
+        events_data = []
+        try:
+            ev_request = RunReportRequest(
+                property=target_property_id,
+                dimensions=[Dimension(name="eventName")],
+                metrics=[Metric(name="eventCount")],
+                date_ranges=[DateRange(start_date="30daysAgo", end_date="today")],
+            )
+            ev_response = client.run_report(ev_request)
+            for row in ev_response.rows:
+                events_data.append({
+                    "event": row.dimension_values[0].value,
+                    "count": int(row.metric_values[0].value),
+                })
+            events_data = sorted(events_data, key=lambda x: x["count"], reverse=True)[:8]
+        except Exception as e:
+            print(f"Events query error: {e}")
+
         # --- DYNAMIC INSIGHTS ENGINE ---
         if post_level_data:
             top_channel = sorted(post_level_data, key=lambda x: x["views"], reverse=True)[0]
@@ -249,6 +424,12 @@ def get_dashboard_data(
                 "ecommerce_data": ecommerce_data,
                 "funnel_data": funnel_data,
                 "cohort_data": cohort_data,
+                "time_series": time_series,
+                "channel_data": channel_data,
+                "geo_data": geo_data,
+                "browser_data": browser_data,
+                "os_data": os_data,
+                "events_data": events_data,
                 "anomaly": {"is_anomaly": False, "message": ""},
                 "suggestions": dynamic_insights
             }
