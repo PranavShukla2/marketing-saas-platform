@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { getApiUrl } from "../../../lib/auth";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -20,7 +21,7 @@ export default function RegisterPage() {
     setError("");
 
     try {
-      const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const backendUrl = getApiUrl();
       
       const response = await fetch(`${backendUrl}/api/v1/auth/register`, {
         method: "POST",
@@ -49,7 +50,7 @@ export default function RegisterPage() {
   const handleGoogleSignUp = async () => {
     setGoogleLoading(true);
     try {
-      const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const backendUrl = getApiUrl();
       const res = await fetch(`${backendUrl}/api/v1/auth/google/login`);
       const data = await res.json();
       if (data.url) {

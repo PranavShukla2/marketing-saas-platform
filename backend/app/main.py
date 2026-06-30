@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -10,16 +12,22 @@ models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Marketing SaaS API")
 
-# --- THE FIX: Explicitly list your frontend domains ---
-origins = [
+# Allowed browser origins. Localhost + our known Vercel URLs are baked in; any
+# other origin (a custom domain, say) can be appended via the CORS_ORIGINS env
+# var (comma-separated). Every *.vercel.app deploy is matched by the regex below
+# so preview/prod URLs keep working without redeploying the backend.
+default_origins = [
     "http://localhost:3000",
-    "https://marketing-saas-platform-nb3q.vercel.app", # Your original Vercel URL
-    "https://marketing-saas-platform-pi.vercel.app",   # Your NEW Vercel URL
+    "https://marketing-saas-platform-nb3q.vercel.app",
+    "https://marketing-saas-platform-pi.vercel.app",
 ]
+extra_origins = [o.strip() for o in os.getenv("CORS_ORIGINS", "").split(",") if o.strip()]
+origins = list(dict.fromkeys(default_origins + extra_origins))
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins, # <-- Uses the strict list instead of "*"
+    allow_origins=origins,
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

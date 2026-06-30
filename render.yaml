@@ -5,7 +5,33 @@ services:
     buildCommand: pip install -r backend/requirements.txt
     startCommand: cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
+      # --- Database (set the connection string in the Render dashboard) ---
       - key: DATABASE_URL
-        sync: false # We will set this in the Render Dashboard
-      - key: SECRET_KEY
+        sync: false
+      # --- JWT signing secret (any strong random string works for HS256) ---
+      - key: JWT_SECRET_KEY
         generateValue: true
+      - key: JWT_ALGORITHM
+        value: HS256
+      # --- Fernet credential-encryption key (REQUIRED) ---
+      # Must be a 32-byte url-safe base64 key, so it can't be auto-generated here.
+      # Generate one and paste it in the dashboard:
+      #   python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+      - key: ENCRYPTION_KEY
+        sync: false
+      # --- Google OAuth / GA4 (set in dashboard) ---
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      # --- Public URLs used to build OAuth redirect + post-login redirects ---
+      # BACKEND_URL must match the redirect URI registered in Google Cloud Console:
+      #   <BACKEND_URL>/api/v1/integrations/google/callback
+      - key: BACKEND_URL
+        value: https://arbflow-backend.onrender.com
+      - key: FRONTEND_URL
+        sync: false
+      # --- Browsers allowed to call the API (comma-separated). *.vercel.app is
+      # already allowed by a regex in main.py; add custom domains here. ---
+      - key: CORS_ORIGINS
+        sync: false

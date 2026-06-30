@@ -9,6 +9,7 @@ import AppleAnalyticsDashboard from "../../../components/AppleAnalyticsDashboard
 import MetaDashboard from "../../../components/MetaDashboard";
 import LinkedInDashboard from "../../../components/LinkedInDashboard";
 import PlatformLoader from "../../../components/PlatformLoader";
+import { getApiUrl } from "../../../lib/auth";
 
 export default function Dashboard() {
   const [activePlatform, setActivePlatform] = useState("google");
@@ -40,7 +41,7 @@ export default function Dashboard() {
     const token = localStorage.getItem("token");
     try {
       // --- THE FIX: Dynamically fetching the backend URL for production ---
-      const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const backendUrl = getApiUrl();
       const url = new URL(`${backendUrl}/api/v1/analytics/dashboard`);
 
       if (propId) url.searchParams.append("property_id", propId);
@@ -105,7 +106,7 @@ export default function Dashboard() {
   const handleConnectGoogle = async () => {
     try {
       const token = localStorage.getItem("token");
-      const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const backendUrl = getApiUrl();
 
       const res = await fetch(`${backendUrl}/api/v1/integrations/google/link`, {
         headers: { "Authorization": `Bearer ${token}` }

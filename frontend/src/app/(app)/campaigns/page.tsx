@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
+import { getApiUrl } from "../../../lib/auth";
 
 export default function CampaignsPage() {
   const [campaigns, setCampaigns] = useState<any[]>([]);
@@ -19,7 +20,7 @@ export default function CampaignsPage() {
   const fetchCampaigns = async () => {
     try {
       const token = localStorage.getItem("token");
-      const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const backendUrl = getApiUrl();
       const res = await fetch(`${backendUrl}/api/v1/workspace/campaigns`, {
         headers: { "Authorization": `Bearer ${token}` }
       });

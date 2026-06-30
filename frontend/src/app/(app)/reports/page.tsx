@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import jsPDF from "jspdf";
 import { useState } from "react";
+import { getApiUrl } from "../../../lib/auth";
 
 export default function ReportsPage() {
   const [generating, setGenerating] = useState(false);
@@ -11,7 +12,7 @@ export default function ReportsPage() {
     setGenerating(true);
     try {
       const token = localStorage.getItem("token");
-      const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const backendUrl = getApiUrl();
 
       // Fetch real dashboard data
       const res = await fetch(`${backendUrl}/api/v1/analytics/dashboard`, {

@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
+import { getApiUrl } from "../../../lib/auth";
 
 export default function BillingPage() {
   const [billing, setBilling] = useState<any>(null);
@@ -11,7 +12,7 @@ export default function BillingPage() {
     const fetchBilling = async () => {
       try {
         const token = localStorage.getItem("token");
-        const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+        const backendUrl = getApiUrl();
         const res = await fetch(`${backendUrl}/api/v1/workspace/billing`, {
           headers: { "Authorization": `Bearer ${token}` }
         });
