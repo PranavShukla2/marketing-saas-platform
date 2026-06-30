@@ -17,3 +17,6 @@ frontend/.env.local
 # OS
 .DS_Store
 venv/
+
+# Local-only project notes (kept off GitHub)
+CLAUDE.md
