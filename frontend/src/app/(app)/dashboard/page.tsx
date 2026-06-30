@@ -2,18 +2,64 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, Legend } from 'recharts';
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell,
+} from "recharts";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import AppleAnalyticsDashboard from "../../../components/AppleAnalyticsDashboard";
 import MetaDashboard from "../../../components/MetaDashboard";
 import LinkedInDashboard from "../../../components/LinkedInDashboard";
 import PlatformLoader from "../../../components/PlatformLoader";
 import { getApiUrl } from "../../../lib/auth";
+import { demoData } from "../../../lib/demoData";
+import { KpiCard, SectionCard, BarList, Sparkline, PALETTE } from "../../../components/workspace/primitives";
+import FloAssistant from "../../../components/workspace/FloAssistant";
+
+const SECTIONS = [
+  { id: "overview", label: "Overview" },
+  { id: "audience", label: "Audience" },
+  { id: "acquisition", label: "Acquisition" },
+  { id: "behavior", label: "Behavior" },
+  { id: "conversions", label: "Conversions" },
+];
+
+const SOURCES = [
+  { id: "google", label: "Google Analytics" },
+  { id: "meta", label: "Meta" },
+  { id: "linkedin", label: "LinkedIn" },
+];
+
+const DEVICE_COLORS = ["var(--indigo)", "var(--violet)", "var(--teal)", "var(--amber)"];
+
+function fmtNum(v: string | number | undefined) {
+  const n = typeof v === "string" ? parseFloat(v) : v ?? 0;
+  if (isNaN(n)) return String(v ?? "0");
+  return Math.round(n).toLocaleString();
+}
+function fmtMoney(v: string | number | undefined) {
+  const n = typeof v === "string" ? parseFloat(v) : v ?? 0;
+  return "$" + (isNaN(n) ? 0 : n).toLocaleString(undefined, { maximumFractionDigits: 0 });
+}
+function delta(series: number[]): number | undefined {
+  if (!series || series.length < 14) return undefined;
+  const n = 7;
+  const last = series.slice(-n).reduce((a, b) => a + b, 0);
+  const prev = series.slice(-2 * n, -n).reduce((a, b) => a + b, 0);
+  if (!prev) return undefined;
+  return Math.round(((last - prev) / prev) * 100);
+}
+
+const cardTip = {
+  borderRadius: 14,
+  border: "1px solid var(--line)",
+  boxShadow: "0 10px 30px rgba(20,18,46,.1)",
+  fontSize: 12,
+};
 
 export default function Dashboard() {
   const [activePlatform, setActivePlatform] = useState("google");
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeSection, setActiveSection] = useState("overview");
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
@@ -23,37 +69,17 @@ export default function Dashboard() {
   const [isPlatformLoading, setIsPlatformLoading] = useState(false);
   const [targetPlatform, setTargetPlatform] = useState<string | null>(null);
 
-  const handlePlatformChange = (platformId: string) => {
-    if (platformId === activePlatform) return;
-    setTargetPlatform(platformId);
-    setIsPlatformLoading(true);
-    setTimeout(() => {
-      setActivePlatform(platformId);
-      setIsPlatformLoading(false);
-      setTargetPlatform(null);
-    }, 1200); // 1.2s loading animation
-  };
-
-  const COLORS = ['#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe', '#2563eb'];
-
   const fetchData = async (isManualSync = false, propId = selectedProperty) => {
     if (isManualSync) setSyncing(true);
     const token = localStorage.getItem("token");
     try {
-      // --- THE FIX: Dynamically fetching the backend URL for production ---
       const backendUrl = getApiUrl();
       const url = new URL(`${backendUrl}/api/v1/analytics/dashboard`);
-
       if (propId) url.searchParams.append("property_id", propId);
-
-      const res = await fetch(url.toString(), {
-        headers: { "Authorization": `Bearer ${token}` }
-      });
+      const res = await fetch(url.toString(), { headers: { Authorization: `Bearer ${token}` } });
       const result = await res.json();
       setData(result.data);
-      if (result.data?.active_property_id) {
-        setSelectedProperty(result.data.active_property_id);
-      }
+      if (result.data?.active_property_id) setSelectedProperty(result.data.active_property_id);
     } catch (err) {
       console.error("Fetch error:", err);
     } finally {
@@ -65,23 +91,27 @@ export default function Dashboard() {
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
-
-      // The session token is established by AuthGuard (via the one-time
-      // ?auth_code= exchange) before this page mounts.
       if (params.get("integration") === "success") {
         setShowSuccessToast(true);
         setTimeout(() => setShowSuccessToast(false), 5000);
       }
-      
-      // Clean URL
       window.history.replaceState({}, document.title, window.location.pathname);
     }
-
     fetchData();
-
     const savedLogo = localStorage.getItem("arbflow_agency_logo");
     if (savedLogo) setAgencyLogo(savedLogo);
   }, []);
+
+  const handlePlatformChange = (platformId: string) => {
+    if (platformId === activePlatform) return;
+    setTargetPlatform(platformId);
+    setIsPlatformLoading(true);
+    setTimeout(() => {
+      setActivePlatform(platformId);
+      setIsPlatformLoading(false);
+      setTargetPlatform(null);
+    }, 1100);
+  };
 
   const handlePropertyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newPropertyId = e.target.value;
@@ -107,96 +137,78 @@ export default function Dashboard() {
     try {
       const token = localStorage.getItem("token");
       const backendUrl = getApiUrl();
-
       const res = await fetch(`${backendUrl}/api/v1/integrations/google/link`, {
-        headers: { "Authorization": `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
-
       const result = await res.json();
-
-      if (result.url) {
-        window.location.href = result.url;
-      } else {
-        console.error("No URL returned from backend:", result);
-      }
+      if (result.url) window.location.href = result.url;
     } catch (err) {
       console.error("Failed to generate Google login link", err);
     }
   };
 
+  const connected = !!(data && data.status === "active");
+  const view: any = connected ? data : demoData;
+  const isDemo = !connected;
+
   const downloadCSV = () => {
-    if (!data?.post_level) return;
-    const headers = "Source,Campaign,Users,Views\n";
-    const rows = data.post_level.map((r: any) => `${r.source},${r.campaign},${r.users},${r.views}`).join("\n");
-    const blob = new Blob([headers + rows], { type: "text/csv" });
+    const rows = view.post_level || [];
+    const headers = "Source,Users,Views\n";
+    const body = rows.map((r: any) => `${r.source},${r.users},${r.views}`).join("\n");
+    const blob = new Blob([headers + body], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `ArbFlow_Data_${data.company_name}.csv`;
+    a.download = `ArbFlow_${view.company_name}.csv`;
     a.click();
   };
 
   const downloadPDF = () => {
-    if (!data?.post_level) return;
     const doc = new jsPDF();
-    let currentY = 20;
-
+    let y = 20;
     if (agencyLogo) {
       try {
-        const imgProps = doc.getImageProperties(agencyLogo);
-        const imgWidth = 40;
-        const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
-        doc.addImage(agencyLogo, 14, 10, imgWidth, imgHeight);
-        currentY = 10 + imgHeight + 15;
-      } catch (e) {
-        console.error("Error adding image to PDF", e);
-      }
+        const p = doc.getImageProperties(agencyLogo);
+        const w = 40;
+        const h = (p.height * w) / p.width;
+        doc.addImage(agencyLogo, 14, 10, w, h);
+        y = 10 + h + 15;
+      } catch {}
     }
-
-    doc.setTextColor(59, 130, 246);
+    doc.setTextColor(91, 91, 214);
     doc.setFontSize(22);
-    doc.text("Agency Performance Report", 14, currentY);
-
+    doc.text("Agency Performance Report", 14, y);
     doc.setTextColor(100, 100, 100);
     doc.setFontSize(12);
-    doc.text(`Client Workspace: ${data.company_name}`, 14, currentY + 8);
-    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, currentY + 14);
-
+    doc.text(`Client Workspace: ${view.company_name}`, 14, y + 8);
+    doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, y + 14);
     autoTable(doc, {
-      head: [['Source', 'Users', 'Views']],
-      body: data.post_level.map((r: any) => [r.source, r.users, r.views]),
-      startY: currentY + 25,
-      theme: 'grid',
-      headStyles: { fillColor: '#3b82f6' }
+      head: [["Source", "Users", "Views"]],
+      body: (view.post_level || []).map((r: any) => [r.source, r.users, r.views]),
+      startY: y + 25,
+      theme: "grid",
+      headStyles: { fillColor: "#5b5bd6" },
     });
-
-    doc.save(`${data.company_name}_Performance_Report.pdf`);
+    doc.save(`${view.company_name}_Report.pdf`);
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-[#fafafa] font-light text-gray-400">Loading Workspace...</div>;
-  if (!data && activePlatform === "google") return <div className="min-h-screen flex flex-col items-center justify-center bg-[#fafafa]"><p className="text-gray-500 mb-4">Session expired.</p><button onClick={() => { localStorage.removeItem("token"); window.location.href = "/"; }} className="px-6 py-2 bg-blue-600 text-white rounded-xl">Log In Again</button></div>;
-
-  if (activePlatform === "google" && (data?.status === "pending" || data?.status === "pending_integration")) {
+  if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#fafafa] p-6">
-        <div className="bg-white p-10 rounded-[2rem] shadow-sm border border-gray-100 max-w-md text-center">
-          <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-          </div>
-          <h2 className="text-2xl font-semibold mb-3">Welcome to ArbFlow</h2>
-          <p className="text-gray-500 mb-8 font-light">To generate your dashboard, you need to connect your Google Analytics account securely.</p>
-          <button onClick={handleConnectGoogle} className="px-6 py-3 bg-blue-600 hover:bg-blue-700 transition-colors text-white font-medium rounded-xl w-full shadow-sm">
-            Sign in with Google
-          </button>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-[var(--page)] text-[var(--ink-3)]">
+        <div className="w-7 h-7 border-2 border-[var(--line)] border-t-[var(--violet)] rounded-full animate-spin" />
+        <span className="ml-3 text-sm">Loading workspace…</span>
       </div>
     );
   }
 
-  const combinedData = data?.post_level ? [...data.post_level, ...(data.forecast || [])] : [];
+  const ts = view.time_series || [];
+  const usersSeries = ts.map((d: any) => d.users);
+  const sessionsSeries = ts.map((d: any) => d.sessions);
+  const viewsSeries = ts.map((d: any) => d.views);
+  const s = view.summary || {};
 
   return (
-    <div className="w-full font-sans text-gray-900 relative">
+    <div className="w-full text-[var(--ink)] relative pb-24">
       <AnimatePresence>
         {isPlatformLoading && targetPlatform && <PlatformLoader platform={targetPlatform} />}
       </AnimatePresence>
@@ -204,218 +216,380 @@ export default function Dashboard() {
       <AnimatePresence>
         {showSuccessToast && (
           <motion.div
-            initial={{ opacity: 0, y: -50 }}
+            initial={{ opacity: 0, y: -40 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -50 }}
-            className="fixed top-8 left-1/2 transform -translate-x-1/2 z-50 bg-green-50 border border-green-200 text-green-700 px-6 py-3 rounded-full shadow-lg flex items-center space-x-3"
+            exit={{ opacity: 0, y: -40 }}
+            className="fixed top-6 left-1/2 -translate-x-1/2 z-50 bg-white border border-[var(--line)] text-[var(--ink)] px-5 py-3 rounded-full shadow-[0_12px_40px_rgba(20,18,46,.14)] flex items-center gap-2.5"
           >
-            <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
-            <span className="font-medium text-sm">Google Analytics connected successfully!</span>
+            <span className="w-2 h-2 rounded-full bg-[var(--teal)]" />
+            <span className="font-medium text-sm">Google Analytics connected.</span>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <header className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center mb-10 gap-6">
-        <div className="flex items-center space-x-6">
-          <div className="relative group cursor-pointer">
-            <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" id="logo-upload" />
-            <label htmlFor="logo-upload" className="cursor-pointer flex items-center justify-center w-12 h-12 bg-white border border-gray-200 rounded-2xl shadow-sm hover:border-blue-300 transition-all overflow-hidden">
-              {agencyLogo ? <img src={agencyLogo} alt="Agency Logo" className="w-full h-full object-contain p-1" /> : <span className="text-gray-400 text-sm font-medium">Logo</span>}
-            </label>
-          </div>
-
+      {/* ---------------- Header ---------------- */}
+      <header className="max-w-7xl mx-auto flex flex-col lg:flex-row lg:items-center justify-between gap-5 mb-8">
+        <div className="flex items-center gap-4">
+          <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" id="logo-upload" />
+          <label
+            htmlFor="logo-upload"
+            className="cursor-pointer flex items-center justify-center w-12 h-12 bg-white border border-[var(--line)] rounded-2xl shadow-sm hover:border-[var(--violet)] transition-all overflow-hidden flex-shrink-0"
+          >
+            {agencyLogo ? (
+              <img src={agencyLogo} alt="Logo" className="w-full h-full object-contain p-1" />
+            ) : (
+              <span className="text-[var(--ink-3)] text-xs font-medium">Logo</span>
+            )}
+          </label>
           <div>
-            <h1 className="text-4xl font-semibold tracking-tight">{data?.company_name || 'My'} Workspace</h1>
-            {activePlatform === "google" && data?.properties && data.properties.length > 0 && (
+            <div className="flex items-center gap-2.5">
+              <h1 className="text-2xl sm:text-3xl font-semibold tracking-[-0.02em]">{view.company_name} Workspace</h1>
+              {isDemo && (
+                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[rgba(245,166,35,.14)] text-[var(--amber)]">
+                  Demo data
+                </span>
+              )}
+            </div>
+            {activePlatform === "google" && view.properties?.length > 0 && (
               <select
                 value={selectedProperty}
                 onChange={handlePropertyChange}
-                className="mt-2 bg-white border border-gray-200 text-gray-600 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 shadow-sm"
+                disabled={isDemo}
+                className="mt-1.5 bg-white border border-[var(--line)] text-[var(--ink-2)] text-xs rounded-lg px-2.5 py-1.5 shadow-sm disabled:opacity-60"
               >
-                {data.properties.map((prop: any) => (
-                  <option key={prop.id} value={prop.id}>{prop.name}</option>
+                {view.properties.map((p: any) => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
                 ))}
               </select>
             )}
           </div>
+        </div>
 
-          <button onClick={() => fetchData(true)} disabled={syncing} className={`flex items-center space-x-2 px-4 py-2 rounded-xl border transition-all ${syncing ? "bg-gray-50 text-gray-400" : "bg-white text-blue-600 border-gray-200 hover:shadow-sm"}`}>
-            <motion.svg animate={syncing ? { rotate: 360 } : { rotate: 0 }} transition={syncing ? { repeat: Infinity, duration: 1, ease: "linear" } : {}} className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 11-9-9c2.52 0 4.85.83 6.72 2.24" strokeLinecap="round" /><path d="M21 3v5h-5" strokeLinecap="round" strokeLinejoin="round" /></motion.svg>
-            <span className="text-xs font-medium">{syncing ? "Syncing..." : "Sync Now"}</span>
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={() => fetchData(true)}
+            disabled={syncing}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-[var(--line)] bg-white text-[var(--ink-2)] hover:text-[var(--ink)] hover:shadow-sm transition-all text-xs font-medium disabled:opacity-60"
+          >
+            <motion.svg
+              animate={syncing ? { rotate: 360 } : { rotate: 0 }}
+              transition={syncing ? { repeat: Infinity, duration: 1, ease: "linear" } : {}}
+              className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+            >
+              <path d="M21 12a9 9 0 11-9-9c2.52 0 4.85.83 6.72 2.24" strokeLinecap="round" />
+              <path d="M21 3v5h-5" strokeLinecap="round" strokeLinejoin="round" />
+            </motion.svg>
+            {syncing ? "Syncing…" : "Sync"}
           </button>
-
-          <button onClick={handleConnectGoogle} className="flex items-center space-x-2 px-4 py-2 rounded-xl border border-gray-200 bg-white text-gray-500 hover:text-gray-800 hover:shadow-sm transition-all">
+          <button onClick={downloadCSV} className="px-3.5 py-2 rounded-xl border border-[var(--line)] bg-white text-[var(--ink-2)] hover:text-[var(--ink)] hover:shadow-sm transition-all text-xs font-medium">
+            Export CSV
+          </button>
+          <button onClick={downloadPDF} className="px-3.5 py-2 rounded-xl text-white text-xs font-semibold bg-[linear-gradient(100deg,var(--indigo),var(--violet))] hover:opacity-90 transition-opacity">
+            Export PDF
+          </button>
+          <button onClick={handleConnectGoogle} className="px-3.5 py-2 rounded-xl border border-[var(--line)] bg-white text-[var(--ink-2)] hover:text-[var(--ink)] hover:shadow-sm transition-all text-xs font-medium flex items-center gap-2">
             <svg className="w-4 h-4" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" /><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" /><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" /><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" /></svg>
-            <span className="text-xs font-medium">Switch Account</span>
+            {connected ? "Switch account" : "Connect"}
           </button>
         </div>
       </header>
 
-      {/* Platform Selector & Header */}
-      <div className="max-w-7xl mx-auto mb-8">
-        <div className="flex flex-col md:flex-row gap-6">
-          {/* Vertical Platform Selector */}
-          <div className="flex md:flex-col gap-2 bg-white/60 backdrop-blur-xl p-2 rounded-2xl border border-gray-200/60 shadow-sm md:w-56 h-max">
-            <div className="px-3 py-2 text-xs font-bold text-gray-400 uppercase tracking-widest mb-1 hidden md:block">
-              Data Sources
-            </div>
-            {[
-              { id: "google", label: "Google Analytics", color: "text-blue-600", bg: "bg-blue-50", icon: "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-6h2v6zm4 0h-2V7h2v10z" },
-              { id: "meta", label: "Meta Business", color: "text-[#1877F2]", bg: "bg-blue-50", icon: "M12 2.04C6.5 2.04 2 6.53 2 12.06C2 17.06 5.66 21.21 10.44 21.96V14.96H7.9V12.06H10.44V9.85C10.44 7.34 11.93 5.96 14.22 5.96C15.31 5.96 16.45 6.15 16.45 6.15V8.62H15.19C13.95 8.62 13.56 9.39 13.56 10.18V12.06H16.34L15.89 14.96H13.56V21.96A10 10 0 0 0 22 12.06C22 6.53 17.5 2.04 12 2.04Z" },
-              { id: "linkedin", label: "LinkedIn Analytics", color: "text-[#0A66C2]", bg: "bg-sky-50", icon: "M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.16-3.51c-1.2 0-1.8.66-2.11 1.16v-1h-2.3v8.65h2.3v-4.83c0-1.27.24-2.5 1.82-2.5 1.55 0 1.58 1.45 1.58 2.58v4.75h2.37zM6.9 8.24A1.33 1.33 0 1 0 5.57 6.9 1.33 1.33 0 0 0 6.9 8.24M5.7 18.5h2.37V9.85H5.7v8.65z" }
-            ].map(platform => {
-              const isActive = (targetPlatform || activePlatform) === platform.id;
-              return (
-                <button 
-                  key={platform.id} 
-                  onClick={() => handlePlatformChange(platform.id)} 
-                  className={`relative flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 w-full text-left overflow-hidden group ${isActive ? "text-gray-900 shadow-sm bg-white" : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"}`}
-                >
-                  {isActive && (
-                    <motion.div layoutId="active-platform" className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 to-indigo-500 rounded-r-full" />
-                  )}
-                  <div className={`p-1.5 rounded-lg transition-colors ${isActive ? platform.bg : 'bg-gray-100 group-hover:bg-gray-200'}`}>
-                    <svg className={`w-4 h-4 ${isActive ? platform.color : 'text-gray-400 group-hover:text-gray-600'}`} fill="currentColor" viewBox="0 0 24 24"><path d={platform.icon} /></svg>
-                  </div>
-                  <span className="flex-grow">{platform.label}</span>
-                </button>
-              );
-            })}
+      {/* ---------------- Demo banner ---------------- */}
+      {isDemo && activePlatform === "google" && (
+        <div className="max-w-7xl mx-auto mb-6">
+          <div className="rounded-2xl border border-[var(--line)] bg-[linear-gradient(100deg,rgba(91,91,214,.06),rgba(139,92,246,.06))] px-5 py-3.5 flex items-center justify-between gap-4 flex-wrap">
+            <p className="text-sm text-[var(--ink-2)]">
+              You&apos;re exploring with <strong className="text-[var(--ink)]">sample data</strong>. Connect Google Analytics to see your own numbers.
+            </p>
+            <button onClick={handleConnectGoogle} className="text-xs font-semibold text-white px-4 py-2 rounded-lg bg-[linear-gradient(100deg,var(--indigo),var(--violet))] hover:opacity-90 transition-opacity flex-shrink-0">
+              Connect Google Analytics →
+            </button>
           </div>
+        </div>
+      )}
 
-          {/* Main Content Area */}
-          <div className="flex-1">
+      {/* ---------------- Source switcher ---------------- */}
+      <div className="max-w-7xl mx-auto mb-6">
+        <div className="inline-flex gap-1 bg-white border border-[var(--line)] p-1 rounded-2xl shadow-sm">
+          {SOURCES.map((src) => {
+            const active = (targetPlatform || activePlatform) === src.id;
+            return (
+              <button
+                key={src.id}
+                onClick={() => handlePlatformChange(src.id)}
+                className={`relative px-4 py-2 rounded-xl text-sm font-medium transition-colors ${active ? "text-white" : "text-[var(--ink-2)] hover:text-[var(--ink)]"}`}
+              >
+                {active && (
+                  <motion.div layoutId="active-source" className="absolute inset-0 rounded-xl bg-[linear-gradient(100deg,var(--indigo),var(--violet))]" transition={{ type: "spring", stiffness: 400, damping: 32 }} />
+                )}
+                <span className="relative z-10">{src.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
-      {/* Google Analytics Sub-Tabs */}
-      <AnimatePresence>
-        {activePlatform === "google" && (
-          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="mb-8 overflow-hidden">
-            <div className="flex bg-gray-100 p-1 rounded-2xl border border-gray-200 w-max">
-              {[
-                { id: "overview", icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" },
-                { id: "tracking", icon: "M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" },
-                { id: "insights", icon: "M13 10V3L4 14h7v7l9-11h-7z" },
-                { id: "analytics", icon: "M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" }
-              ].map(tab => (
-                <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center space-x-2 px-6 py-2 rounded-xl text-sm font-medium transition-all ${activeTab === tab.id ? "bg-white shadow-sm text-black" : "text-gray-500 hover:text-gray-800"}`}>
-                  <svg className="w-4 h-4 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={tab.icon}></path></svg>
-                  <span>{tab.id.charAt(0).toUpperCase() + tab.id.slice(1)}</span>
-                </button>
-              ))}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* ---------------- Section nav (GA only) ---------------- */}
+      {activePlatform === "google" && (
+        <div className="max-w-7xl mx-auto mb-8 border-b border-[var(--line)]">
+          <div className="flex gap-1 overflow-x-auto scrollbar-hide">
+            {SECTIONS.map((sec) => (
+              <button
+                key={sec.id}
+                onClick={() => setActiveSection(sec.id)}
+                className={`relative px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors ${activeSection === sec.id ? "text-[var(--ink)]" : "text-[var(--ink-3)] hover:text-[var(--ink-2)]"}`}
+              >
+                {sec.label}
+                {activeSection === sec.id && (
+                  <motion.div layoutId="active-section" className="absolute left-2 right-2 -bottom-px h-0.5 rounded-full bg-[var(--violet)]" />
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
-      <main className="pb-32">
-        <AnimatePresence>
-          {data?.anomaly?.is_anomaly && (
-            <motion.div initial={{ opacity: 0, y: -20, height: 0 }} animate={{ opacity: 1, y: 0, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="mb-8">
-              <div className="bg-red-50 border border-red-200 p-4 rounded-2xl flex items-center space-x-3 shadow-sm">
-                <span className="flex h-3 w-3 rounded-full bg-red-500 animate-ping"></span>
-                <p className="text-red-700 text-sm font-medium">{data.anomaly.message}</p>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
+      {/* ---------------- Content ---------------- */}
+      <div className="max-w-7xl mx-auto">
         <AnimatePresence mode="wait">
-          {/* META DASHBOARD */}
           {activePlatform === "meta" && (
-             <motion.div key="meta" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-               <MetaDashboard />
-             </motion.div>
+            <motion.div key="meta" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+              <MetaDashboard />
+            </motion.div>
           )}
-
-          {/* LINKEDIN DASHBOARD */}
           {activePlatform === "linkedin" && (
-             <motion.div key="linkedin" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-               <LinkedInDashboard />
-             </motion.div>
+            <motion.div key="linkedin" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+              <LinkedInDashboard />
+            </motion.div>
           )}
 
-          {/* GOOGLE ANALYTICS DASHBOARD */}
-          {activePlatform === "google" && activeTab === "overview" && (
-            <motion.div key="overview" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-16">
+          {activePlatform === "google" && (
+            <motion.div key={activeSection} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
 
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-                {[{ l: "Users", v: data.summary?.active_users }, { l: "Views", v: data.summary?.page_views }, { l: "Bounce", v: data.summary?.bounce_rate }, { l: "Duration", v: data.summary?.avg_duration }].map((k, i) => (
-                  <div key={i} className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm"><p className="text-xs font-bold text-gray-400 mb-2 uppercase tracking-widest">{k.l}</p><p className="text-4xl font-semibold">{k.v || "0"}</p></div>
-                ))}
-              </div>
+              {/* ===== OVERVIEW ===== */}
+              {activeSection === "overview" && (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <KpiCard index={0} label="Active Users" value={fmtNum(s.active_users)} delta={delta(usersSeries)} spark={usersSeries} color="var(--indigo)" />
+                    <KpiCard index={1} label="Sessions" value={fmtNum(s.sessions)} delta={delta(sessionsSeries)} spark={sessionsSeries} color="var(--violet)" />
+                    <KpiCard index={2} label="Page Views" value={fmtNum(s.page_views)} delta={delta(viewsSeries)} spark={viewsSeries} color="var(--teal)" />
+                    <KpiCard index={3} label="Conversions" value={fmtNum(s.conversions)} color="var(--coral)" />
+                    <KpiCard index={4} label="Engagement Rate" value={s.engagement_rate || "—"} color="var(--indigo)" />
+                    <KpiCard index={5} label="Avg. Duration" value={s.avg_duration || "—"} color="var(--violet)" />
+                    <KpiCard index={6} label="Bounce Rate" value={s.bounce_rate || "—"} color="var(--amber)" />
+                    <KpiCard index={7} label="Revenue" value={fmtMoney(s.total_revenue)} color="var(--teal)" />
+                  </div>
 
-              <div className="bg-white p-10 rounded-[2.5rem] border border-gray-100 shadow-sm h-[400px]">
-                <h3 className="text-xl font-medium mb-8">Traffic Velocity & Forecast</h3>
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={combinedData} margin={{ top: 10, right: 30, left: 0, bottom: 60 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                    <XAxis dataKey="source" tick={{ fontSize: 10 }} interval={0} angle={-45} textAnchor="end" height={60} />
-                    <YAxis hide />
-                    <Tooltip contentStyle={{ borderRadius: '16px', border: 'none' }} />
-                    <Area type="monotone" dataKey="views" stroke="#3b82f6" strokeWidth={3} fill="#3b82f610" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
+                  <SectionCard title="Traffic trend" subtitle="Users, sessions & views — last 30 days">
+                    <div className="h-72">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={ts} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+                          <defs>
+                            <linearGradient id="gUsers" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="var(--indigo)" stopOpacity="0.25" /><stop offset="1" stopColor="var(--indigo)" stopOpacity="0" /></linearGradient>
+                            <linearGradient id="gViews" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="var(--teal)" stopOpacity="0.18" /><stop offset="1" stopColor="var(--teal)" stopOpacity="0" /></linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--line)" />
+                          <XAxis dataKey="date" tick={{ fontSize: 10, fill: "var(--ink-3)" }} interval={4} tickLine={false} axisLine={false} />
+                          <YAxis tick={{ fontSize: 10, fill: "var(--ink-3)" }} tickLine={false} axisLine={false} width={40} />
+                          <Tooltip contentStyle={cardTip} />
+                          <Area type="monotone" dataKey="views" stroke="var(--teal)" strokeWidth={2} fill="url(#gViews)" />
+                          <Area type="monotone" dataKey="users" stroke="var(--indigo)" strokeWidth={2.5} fill="url(#gUsers)" />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </SectionCard>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                <div className="bg-white p-10 rounded-[2.5rem] border border-gray-100 shadow-sm h-[380px]">
-                  <h3 className="text-xl font-medium mb-6">Users by Channel</h3>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={data.post_level} margin={{ top: 10, right: 10, left: -20, bottom: 60 }}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                      <XAxis dataKey="source" tick={{ fontSize: 10 }} interval={0} angle={-30} textAnchor="end" height={50} />
-                      <Bar dataKey="users" fill="#3b82f6" radius={[6, 6, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <SectionCard title="Top channels" subtitle="Where your users come from">
+                      <BarList items={(view.channel_data || []).slice(0, 6).map((c: any) => ({ label: c.channel, value: c.users }))} />
+                    </SectionCard>
+                    <SectionCard title="Devices" subtitle="Sessions by device category">
+                      <div className="flex items-center gap-6">
+                        <div className="w-40 h-40 flex-shrink-0">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                              <Pie data={view.device_data} dataKey="users" nameKey="device" cx="50%" cy="50%" innerRadius={45} outerRadius={70} paddingAngle={3}>
+                                {(view.device_data || []).map((_: any, i: number) => <Cell key={i} fill={DEVICE_COLORS[i % DEVICE_COLORS.length]} />)}
+                              </Pie>
+                              <Tooltip contentStyle={cardTip} />
+                            </PieChart>
+                          </ResponsiveContainer>
+                        </div>
+                        <div className="flex-1 space-y-2">
+                          {(view.device_data || []).map((d: any, i: number) => (
+                            <div key={d.device} className="flex items-center justify-between text-sm">
+                              <span className="flex items-center gap-2 text-[var(--ink-2)]"><span className="w-2.5 h-2.5 rounded-full" style={{ background: DEVICE_COLORS[i % DEVICE_COLORS.length] }} />{d.device}</span>
+                              <span className="font-medium tabular-nums">{fmtNum(d.users)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </SectionCard>
+                  </div>
+
+                  <SectionCard title="Flo's take" subtitle="Auto-generated insight">
+                    <div className="flex items-start gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-[rgba(139,92,246,.12)] flex items-center justify-center flex-shrink-0">
+                        <span className="text-[var(--violet)] text-lg">✦</span>
+                      </div>
+                      <div>
+                        <p className="font-semibold text-[var(--ink)]">{view.suggestions?.primary_focus}</p>
+                        <p className="text-sm text-[var(--ink-2)] mt-1 leading-relaxed">{view.suggestions?.reason}</p>
+                        <p className="text-sm text-[var(--ink-2)] mt-2 leading-relaxed"><strong className="text-[var(--ink)]">Next move: </strong>{view.suggestions?.action_item}</p>
+                      </div>
+                    </div>
+                  </SectionCard>
                 </div>
+              )}
 
-                <div className="bg-white p-10 rounded-[2.5rem] border border-gray-100 shadow-sm h-[380px]">
-                  <h3 className="text-xl font-medium mb-6">Reach Distribution</h3>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart margin={{ top: 0, right: 0, left: 0, bottom: 30 }}>
-                      <Pie data={data.post_level} dataKey="views" nameKey="source" cx="50%" cy="45%" innerRadius={60} outerRadius={90}>
-                        {(data.post_level || []).map((_: any, i: number) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                      </Pie>
-                      <Tooltip />
-                      <Legend wrapperStyle={{ fontSize: '10px', paddingTop: '20px' }} verticalAlign="bottom" height={36} />
-                    </PieChart>
-                  </ResponsiveContainer>
+              {/* ===== AUDIENCE ===== */}
+              {activeSection === "audience" && (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <KpiCard index={0} label="Active Users" value={fmtNum(s.active_users)} color="var(--indigo)" />
+                    <KpiCard index={1} label="New Users" value={fmtNum(s.new_users)} color="var(--violet)" />
+                    <KpiCard index={2} label="Engaged Sessions" value={fmtNum(s.engaged_sessions)} color="var(--teal)" />
+                    <KpiCard index={3} label="Engagement Rate" value={s.engagement_rate || "—"} color="var(--coral)" />
+                  </div>
+
+                  <SectionCard title="New vs returning" subtitle="Weekly user mix">
+                    <div className="h-64">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={view.cohort_data} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+                          <defs>
+                            <linearGradient id="gNew" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="var(--indigo)" stopOpacity="0.3" /><stop offset="1" stopColor="var(--indigo)" stopOpacity="0" /></linearGradient>
+                            <linearGradient id="gRet" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="var(--violet)" stopOpacity="0.25" /><stop offset="1" stopColor="var(--violet)" stopOpacity="0" /></linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--line)" />
+                          <XAxis dataKey="week" tick={{ fontSize: 11, fill: "var(--ink-3)" }} tickLine={false} axisLine={false} />
+                          <YAxis tick={{ fontSize: 10, fill: "var(--ink-3)" }} tickLine={false} axisLine={false} width={40} />
+                          <Tooltip contentStyle={cardTip} />
+                          <Area type="monotone" dataKey="new" stackId="1" stroke="var(--indigo)" strokeWidth={2} fill="url(#gNew)" />
+                          <Area type="monotone" dataKey="returning" stackId="1" stroke="var(--violet)" strokeWidth={2} fill="url(#gRet)" />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </SectionCard>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <SectionCard title="Top countries">
+                      <BarList items={(view.geo_data || []).map((g: any) => ({ label: g.country, value: g.users }))} />
+                    </SectionCard>
+                    <SectionCard title="Browsers">
+                      <BarList items={(view.browser_data || []).map((b: any) => ({ label: b.browser, value: b.users }))} />
+                    </SectionCard>
+                    <SectionCard title="Operating systems">
+                      <BarList items={(view.os_data || []).map((o: any) => ({ label: o.os, value: o.users }))} />
+                    </SectionCard>
+                  </div>
                 </div>
-              </div>
+              )}
 
-            </motion.div>
-          )}
+              {/* ===== ACQUISITION ===== */}
+              {activeSection === "acquisition" && (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <KpiCard index={0} label="Sessions" value={fmtNum(s.sessions)} delta={delta(sessionsSeries)} spark={sessionsSeries} color="var(--indigo)" />
+                    <KpiCard index={1} label="New Users" value={fmtNum(s.new_users)} color="var(--violet)" />
+                    <KpiCard index={2} label="Channels" value={String((view.channel_data || []).length)} color="var(--teal)" />
+                    <KpiCard index={3} label="Top Source" value={(view.post_level?.[0]?.source) || "—"} color="var(--coral)" />
+                  </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <SectionCard title="Channels" subtitle="Default channel grouping">
+                      <BarList items={(view.channel_data || []).map((c: any) => ({ label: c.channel, value: c.users, hint: `· ${fmtNum(c.sessions)} sess` }))} />
+                    </SectionCard>
+                    <SectionCard title="Top sources" subtitle="Referrers by users">
+                      <BarList items={(view.post_level || []).map((p: any) => ({ label: p.source, value: p.users, hint: `· ${fmtNum(p.views)} views` }))} />
+                    </SectionCard>
+                  </div>
+                </div>
+              )}
 
-          {activePlatform === "google" && activeTab === "tracking" && (
-            <motion.div key="tracking" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-              <div className="flex justify-end space-x-4"><button onClick={downloadCSV} className="text-sm font-medium text-gray-500 hover:text-black">↓ Download CSV</button><button onClick={downloadPDF} className="text-sm font-medium text-blue-600 hover:underline">↓ Export PDF</button></div>
-              <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden"><table className="w-full text-left">
-                <thead className="bg-gray-50/50 text-xs font-bold text-gray-400 uppercase tracking-widest"><tr><th className="px-10 py-6">Source</th><th className="px-10 py-6 text-center">Users</th><th className="px-10 py-6 text-right">Views</th></tr></thead>
-                <tbody>{data.post_level?.map((row: any, i: number) => (<tr key={i} className="border-b border-gray-50 hover:bg-gray-50 transition-colors text-sm"><td className="px-10 py-6 font-semibold">{row.source}</td><td className="px-10 py-6 text-center text-gray-500">{row.users}</td><td className="px-10 py-6 text-right font-bold text-blue-600">{row.views}</td></tr>))}</tbody>
-              </table></div>
-            </motion.div>
-          )}
+              {/* ===== BEHAVIOR ===== */}
+              {activeSection === "behavior" && (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <KpiCard index={0} label="Page Views" value={fmtNum(s.page_views)} delta={delta(viewsSeries)} spark={viewsSeries} color="var(--indigo)" />
+                    <KpiCard index={1} label="Views / Session" value={s.views_per_session || "—"} color="var(--violet)" />
+                    <KpiCard index={2} label="Total Events" value={fmtNum(s.events)} color="var(--teal)" />
+                    <KpiCard index={3} label="Avg. Duration" value={s.avg_duration || "—"} color="var(--coral)" />
+                  </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <SectionCard title="Top pages" subtitle="Most viewed paths" className="lg:col-span-1">
+                      <div className="overflow-hidden">
+                        <table className="w-full text-sm">
+                          <thead><tr className="text-[11px] uppercase tracking-wider text-[var(--ink-3)] text-left"><th className="pb-3 font-semibold">Path</th><th className="pb-3 font-semibold text-right">Views</th><th className="pb-3 font-semibold text-right">Avg time</th></tr></thead>
+                          <tbody>
+                            {(view.pages_data || []).map((p: any, i: number) => (
+                              <tr key={i} className="border-t border-[var(--line)]">
+                                <td className="py-2.5 font-medium text-[var(--ink)] truncate max-w-[180px]">{p.path}</td>
+                                <td className="py-2.5 text-right text-[var(--ink-2)] tabular-nums">{fmtNum(p.views)}</td>
+                                <td className="py-2.5 text-right text-[var(--ink-3)] tabular-nums">{p.avg_duration}s</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </SectionCard>
+                    <SectionCard title="Top events" subtitle="Event counts (30d)">
+                      <BarList items={(view.events_data || []).map((e: any) => ({ label: e.event, value: e.count }))} />
+                    </SectionCard>
+                  </div>
+                </div>
+              )}
 
-          {activePlatform === "google" && activeTab === "insights" && (
-            <motion.div key="insights" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex justify-center">
-              <div className="w-full max-w-4xl bg-white p-16 rounded-[3rem] border border-gray-100 shadow-2xl relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-blue-50/30 rounded-full blur-[80px]"></div>
-                <div className="relative z-10"><h2 className="text-gray-400 text-2xl font-light italic">Optimal Strategy:</h2><h3 className="text-6xl font-bold mt-4 mb-12 tracking-tighter">{data?.suggestions?.primary_focus}</h3><div className="grid md:grid-cols-2 gap-12 border-t pt-12"><div><p className="text-xs font-bold text-gray-400 uppercase mb-4">Logic</p><p className="text-xl text-gray-600 italic">"{data?.suggestions?.reason}"</p></div><div className="bg-blue-50 p-8 rounded-[2rem] border border-blue-100"><p className="text-blue-600 text-xs font-bold uppercase mb-4">Tactical Move</p><p className="text-xl font-medium">{data?.suggestions?.action_item}</p></div></div></div>
-              </div>
-            </motion.div>
-          )}
+              {/* ===== CONVERSIONS ===== */}
+              {activeSection === "conversions" && (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <KpiCard index={0} label="Conversions" value={fmtNum(s.conversions)} color="var(--indigo)" />
+                    <KpiCard index={1} label="Transactions" value={fmtNum(s.transactions)} color="var(--violet)" />
+                    <KpiCard index={2} label="Revenue" value={fmtMoney(s.total_revenue)} color="var(--teal)" />
+                    <KpiCard index={3} label="Engaged Sessions" value={fmtNum(s.engaged_sessions)} color="var(--coral)" />
+                  </div>
 
-          {activePlatform === "google" && activeTab === "analytics" && (
-            <motion.div key="analytics" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="w-full">
-              <AppleAnalyticsDashboard data={data} />
+                  <SectionCard title="Conversion funnel" subtitle="From first view to purchase">
+                    <div className="space-y-3">
+                      {(view.funnel_data || []).map((f: any, i: number) => {
+                        const top = view.funnel_data[0]?.count || 1;
+                        const pct = Math.round((f.count / top) * 100);
+                        return (
+                          <div key={f.step}>
+                            <div className="flex items-center justify-between text-sm mb-1">
+                              <span className="font-medium text-[var(--ink)]">{f.step}</span>
+                              <span className="text-[var(--ink-2)] tabular-nums">{fmtNum(f.count)} <span className="text-[var(--ink-3)]">· {pct}%</span></span>
+                            </div>
+                            <div className="h-7 rounded-lg bg-[var(--line)] overflow-hidden">
+                              <motion.div initial={{ width: 0 }} whileInView={{ width: `${pct}%` }} viewport={{ once: true }} transition={{ duration: 0.7, delay: i * 0.08 }} className="h-full rounded-lg" style={{ background: PALETTE[i % PALETTE.length] }} />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </SectionCard>
+
+                  <SectionCard title="Top products" subtitle="By revenue">
+                    <table className="w-full text-sm">
+                      <thead><tr className="text-[11px] uppercase tracking-wider text-[var(--ink-3)] text-left"><th className="pb-3 font-semibold">Product</th><th className="pb-3 font-semibold text-right">Purchases</th><th className="pb-3 font-semibold text-right">Revenue</th></tr></thead>
+                      <tbody>
+                        {(view.ecommerce_data || []).map((p: any, i: number) => (
+                          <tr key={i} className="border-t border-[var(--line)]">
+                            <td className="py-3 font-medium text-[var(--ink)]">{p.name}</td>
+                            <td className="py-3 text-right text-[var(--ink-2)] tabular-nums">{fmtNum(p.purchases)}</td>
+                            <td className="py-3 text-right font-semibold text-[var(--ink)] tabular-nums">{fmtMoney(p.revenue)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </SectionCard>
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
-      </main>
+      </div>
 
-      </div>
-      </div>
-      </div>
+      <FloAssistant />
     </div>
   );
 }
