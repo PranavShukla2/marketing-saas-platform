@@ -19,7 +19,7 @@ const STEPS = [
   },
   {
     title: "Go deeper by section",
-    body: "Overview, Audience, Acquisition, Behavior, Conversions — every GA4 angle has its own tab.",
+    body: "Each tab drills into a slice — GA4 audience & conversions, or your Facebook, Instagram and Ads numbers.",
   },
   {
     title: "Sync & export anytime",
