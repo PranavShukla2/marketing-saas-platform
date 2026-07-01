@@ -19,6 +19,10 @@ const navItems = [
 export default function Sidebar() {
   const pathname = usePathname();
   const [usage, setUsage] = useState({ current: 0, limit: 100000, percentage: 0 });
+  const [open, setOpen] = useState(false);
+
+  // Close the mobile drawer whenever the route changes.
+  useEffect(() => { setOpen(false); }, [pathname]);
 
   useEffect(() => {
     const fetchBilling = async () => {
@@ -38,7 +42,23 @@ export default function Sidebar() {
   }, [pathname]); // Refresh when path changes to sync with dashboard
 
   return (
-    <div className="w-64 h-screen bg-white/80 backdrop-blur-md border-r border-gray-100/80 fixed left-0 top-0 flex flex-col py-6 px-4 z-40">
+    <>
+    {/* Mobile top bar */}
+    <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-md border-b border-gray-100 flex items-center justify-between px-4 z-40">
+      <button onClick={() => setOpen(true)} aria-label="Open menu" className="p-2 -ml-2 text-gray-600">
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+      </button>
+      <Link href="/" className="flex items-center space-x-2">
+        <svg width="26" height="26" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="10" fill="url(#arbflow-topbar-gradient)" /><path d="M9 21V16" stroke="white" strokeWidth="2.5" strokeLinecap="round" /><path d="M16 21V10" stroke="white" strokeWidth="2.5" strokeLinecap="round" /><path d="M23 21V13" stroke="white" strokeWidth="2.5" strokeLinecap="round" /><circle cx="16" cy="10" r="2.5" fill="white" /><defs><linearGradient id="arbflow-topbar-gradient" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse"><stop stopColor="#2563EB" /><stop offset="1" stopColor="#8B5CF6" /></linearGradient></defs></svg>
+        <span className="text-lg font-semibold tracking-tight text-gray-900">ArbFlow</span>
+      </Link>
+      <span className="w-8" />
+    </div>
+
+    {/* Backdrop */}
+    {open && <div onClick={() => setOpen(false)} className="lg:hidden fixed inset-0 bg-black/30 z-40" />}
+
+    <div className={`w-64 h-screen bg-white/90 lg:bg-white/80 backdrop-blur-md border-r border-gray-100/80 fixed left-0 top-0 flex flex-col py-6 px-4 z-50 transition-transform duration-300 ${open ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}>
       <Link href="/" className="flex items-center space-x-3 px-3 mb-12 hover:opacity-80 transition-opacity">
         <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="drop-shadow-sm">
           <rect width="32" height="32" rx="10" fill="url(#arbflow-sidebar-gradient)" />
@@ -93,5 +113,6 @@ export default function Sidebar() {
         </div>
       </div>
     </div>
+    </>
   );
 }

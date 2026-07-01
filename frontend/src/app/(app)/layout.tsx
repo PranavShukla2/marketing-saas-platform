@@ -8,9 +8,9 @@ export default function AppLayout({
 }>) {
   return (
     <AuthGuard>
-      <div className="flex bg-[#fafafa] min-h-screen">
+      <div className="flex bg-[var(--page)] min-h-screen">
         <Sidebar />
-        <main className="flex-1 ml-64 p-6 sm:p-10 transition-all">
+        <main className="flex-1 lg:ml-64 px-4 pb-12 pt-20 sm:px-6 lg:px-10 lg:pt-10 transition-all">
           {children}
         </main>
       </div>
