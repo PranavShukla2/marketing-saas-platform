@@ -151,6 +151,19 @@ export default function Dashboard() {
   const view: any = connected ? data : demoData;
   const isDemo = !connected;
 
+  // When we're not showing live data, explain *why* — so the workspace says
+  // "GA4 isn't available for this account, here's sample data" instead of a
+  // generic prompt. Reasons come from the backend's status field.
+  const status = data?.status;
+  const demoNotice =
+    status === "reauth_required"
+      ? { badge: "Reconnect", text: "Your Google session expired. Reconnect to load your live dashboard.", cta: "Reconnect Google" }
+      : status === "no_properties"
+      ? { badge: "No GA4", text: "No Google Analytics property is linked to this Google account — showing sample data instead.", cta: "Use another account" }
+      : status === "no_access"
+      ? { badge: "No GA4", text: data?.message || "Google Analytics isn't available for this account — showing sample data.", cta: "Reconnect Google" }
+      : { badge: "Demo data", text: "You're viewing sample data. Connect Google Analytics to load your own numbers.", cta: "Connect Google Analytics" };
+
   const downloadCSV = () => {
     const rows = view.post_level || [];
     const headers = "Source,Users,Views\n";
@@ -246,7 +259,7 @@ export default function Dashboard() {
               <h1 className="text-2xl sm:text-3xl font-semibold tracking-[-0.02em]">{view.company_name} Workspace</h1>
               {isDemo && (
                 <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[rgba(245,166,35,.14)] text-[var(--amber)]">
-                  Demo data
+                  {demoNotice.badge}
                 </span>
               )}
             </div>
@@ -298,11 +311,9 @@ export default function Dashboard() {
       {isDemo && activePlatform === "google" && (
         <div className="max-w-7xl mx-auto mb-6">
           <div className="rounded-2xl border border-[var(--line)] bg-[linear-gradient(100deg,rgba(91,91,214,.06),rgba(139,92,246,.06))] px-5 py-3.5 flex items-center justify-between gap-4 flex-wrap">
-            <p className="text-sm text-[var(--ink-2)]">
-              You&apos;re exploring with <strong className="text-[var(--ink)]">sample data</strong>. Connect Google Analytics to see your own numbers.
-            </p>
+            <p className="text-sm text-[var(--ink-2)]">{demoNotice.text}</p>
             <button onClick={handleConnectGoogle} className="text-xs font-semibold text-white px-4 py-2 rounded-lg bg-[linear-gradient(100deg,var(--indigo),var(--violet))] hover:opacity-90 transition-opacity flex-shrink-0">
-              Connect Google Analytics →
+              {demoNotice.cta} →
             </button>
           </div>
         </div>

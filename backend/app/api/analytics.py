@@ -5,14 +5,15 @@ from sqlalchemy.orm import Session
 
 # Official Google Libraries
 from google.oauth2.credentials import Credentials
+from google.auth.transport.requests import Request as GoogleAuthRequest
 from google.analytics.data_v1beta import BetaAnalyticsDataClient
 from google.analytics.data_v1beta.types import DateRange, Dimension, Metric, RunReportRequest
-from google.analytics.admin import AnalyticsAdminServiceClient 
+from google.analytics.admin import AnalyticsAdminServiceClient
 
 # Adjust these imports to match your project structure
 from app.api.deps import get_db, get_current_user
 from app.db.models import Integration, User
-from app.core.security import decrypt_credentials
+from app.core.security import decrypt_credentials, encrypt_credentials
 
 router = APIRouter()
 
@@ -51,9 +52,23 @@ def get_dashboard_data(
         client_secret=GOOGLE_CLIENT_SECRET,
     )
 
+    # Access tokens live ~1 hour and we don't persist an expiry, so google-auth
+    # would happily keep using a stale token (it thinks it's still valid) until
+    # the API 401s and the workspace looks "disconnected". Proactively refresh
+    # with the long-lived refresh token and save the new access token back.
+    if creds_data.get("refresh_token"):
+        try:
+            credentials.refresh(GoogleAuthRequest())
+            creds_data["access_token"] = credentials.token
+            integration.encrypted_credentials = encrypt_credentials(creds_data)
+            db.commit()
+        except Exception as e:
+            print(f"Token refresh failed: {e}")
+            return {"data": {"status": "reauth_required"}}
+
     admin_client = AnalyticsAdminServiceClient(credentials=credentials)
     properties_list = []
-    
+
     try:
         # Ask Google for every account and property this user owns
         account_summaries = admin_client.list_account_summaries()
@@ -65,14 +80,13 @@ def get_dashboard_data(
                 })
     except Exception as e:
         print(f"Admin API Error: {e}")
-        # --- THE FIX: Graceful Degradation ---
-        # If the token is expired or invalid, don't crash the server!
-        # Tell the frontend to show the 'Sign in with Google' button so they can reconnect.
-        return {"data": {"status": "pending_integration"}}
+        # Reached Google but the call failed — almost always the Analytics Admin/Data
+        # APIs aren't enabled on the Cloud project, or this account lacks GA4 access.
+        return {"data": {"status": "no_access", "message": "Couldn't reach Google Analytics. Make sure the Analytics Admin & Data APIs are enabled and this Google account has GA4 access."}}
 
-    # If the user has GA connected but no actual websites set up in GA
+    # Connected fine, but this Google account has no GA4 properties set up.
     if not properties_list:
-        return {"data": {"status": "pending", "message": "No Google Analytics properties found on your account."}}
+        return {"data": {"status": "no_properties", "message": "No Google Analytics properties found on this account."}}
 
     # If the frontend sent a specific ID (via dropdown), use it. Otherwise, use their first property!
     target_property_id = property_id if property_id else properties_list[0]["id"]
@@ -437,5 +451,5 @@ def get_dashboard_data(
 
     except Exception as e:
         print(f"GA4 Data API Error: {e}")
-        # Catch Data API token failures as well
-        return {"data": {"status": "pending_integration"}}
+        # Connected, but pulling the report failed (Data API disabled, quota, etc.)
+        return {"data": {"status": "no_access", "message": "Connected, but couldn't pull GA4 reports. Check that the Analytics Data API is enabled."}}
