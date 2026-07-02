@@ -39,7 +39,10 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     };
   }, [pathname, router]);
 
-  if (isAuthenticated === null) {
+  // Anything other than a confirmed "yes" shows the spinner — rendering
+  // children while isAuthenticated is false would flash the protected page
+  // for a beat before router.push("/login") lands.
+  if (isAuthenticated !== true) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#fafafa]">
         <div className="w-8 h-8 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin"></div>
