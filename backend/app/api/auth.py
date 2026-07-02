@@ -6,11 +6,12 @@ import os
 from datetime import datetime, timedelta
 
 from app.db.database import get_db
-from app.db.models import User
+from app.db.models import User, Integration
 from app.schemas import UserCreate, UserLogin, UserResponse, AuthCodeExchange
 from app.core.config import SECRET_KEY, ALGORITHM
 from app.core.oauth import create_oauth_state, consume_auth_code
 from app.core.ratelimit import enforce_rate_limit
+from app.api.deps import get_current_user
 
 router = APIRouter()
 
@@ -126,6 +127,24 @@ def exchange_auth_code(payload: AuthCodeExchange, request: Request, db: Session 
     if not token:
         raise HTTPException(status_code=400, detail="Invalid or expired code")
     return {"access_token": token, "token_type": "bearer"}
+
+
+@router.get("/me", response_model=UserResponse)
+def get_me(current_user: User = Depends(get_current_user)):
+    """The authenticated user's own profile (used by the settings page)."""
+    return current_user
+
+
+@router.delete("/me", status_code=204)
+def delete_account(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Permanently delete the account and everything attached to it — the
+    user's row plus all their connected integrations (which hold encrypted
+    OAuth tokens). This is the GDPR/CCPA right-to-erasure path; it's
+    irreversible and cascades so no orphaned credentials are left behind."""
+    db.query(Integration).filter(Integration.user_id == current_user.id).delete()
+    db.delete(current_user)
+    db.commit()
+    return None
 
 # The actual Google OAuth callback is handled by integrations.py
 # (/api/v1/integrations/google/callback) which is already registered

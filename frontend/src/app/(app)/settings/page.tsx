@@ -1,26 +1,53 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { getApiUrl } from "../../../lib/auth";
 
 export default function SettingsPage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState("profile");
 
-  // UI States
-  const [isSaving, setIsSaving] = useState(false);
-  const [isSaved, setIsSaved] = useState(false);
+  // Real profile, loaded from the backend.
+  const [profile, setProfile] = useState<{ email: string; company_name: string } | null>(null);
 
-  const handleSave = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSaving(true);
-    setIsSaved(false);
+  // Account-deletion flow.
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [confirmText, setConfirmText] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
-    // Mock save delay
-    setTimeout(() => {
-      setIsSaving(false);
-      setIsSaved(true);
-      setTimeout(() => setIsSaved(false), 3000);
-    }, 1000);
+  useEffect(() => {
+    (async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch(`${getApiUrl()}/api/v1/auth/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) setProfile(await res.json());
+      } catch {
+        /* leave profile null; UI shows a graceful fallback */
+      }
+    })();
+  }, []);
+
+  const handleDeleteAccount = async () => {
+    setDeleting(true);
+    setDeleteError("");
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${getApiUrl()}/api/v1/auth/me`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok && res.status !== 204) throw new Error("Failed to delete account.");
+      localStorage.removeItem("token");
+      router.push("/?deleted=1");
+    } catch {
+      setDeleteError("Couldn't delete your account. Please try again.");
+      setDeleting(false);
+    }
   };
 
   const renderContent = () => {
@@ -29,30 +56,35 @@ export default function SettingsPage() {
         return (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} key="profile">
             <h2 className="text-2xl font-medium mb-1 tracking-tight">Personal Information</h2>
-            <p className="text-gray-500 text-sm mb-8 border-b border-gray-100 pb-6">Manage your account details and preferences.</p>
+            <p className="text-gray-500 text-sm mb-8 border-b border-gray-100 pb-6">Your account details.</p>
 
-            <form onSubmit={handleSave} className="space-y-6 max-w-lg">
+            <div className="space-y-6 max-w-lg">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Full Name</label>
-                <input type="text" defaultValue="ArbFlow User" className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all" />
+                <label className="text-sm font-medium text-gray-700">Company / Agency</label>
+                <input type="text" readOnly value={profile?.company_name ?? "—"} className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 text-gray-600 cursor-not-allowed" />
               </div>
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Email Address</label>
-                <input type="email" defaultValue="user@arbflow.com" className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all" />
+                <input type="email" readOnly value={profile?.email ?? "—"} className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 text-gray-600 cursor-not-allowed" />
               </div>
+            </div>
 
-              <div className="pt-4 flex items-center space-x-4">
-                <button type="submit" disabled={isSaving} className="px-6 py-3 bg-black text-white text-sm font-medium rounded-full hover:bg-gray-800 transition-all shadow-sm">
-                  {isSaving ? "Saving..." : "Save Changes"}
-                </button>
-                {isSaved && (
-                  <motion.span initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} className="text-sm font-medium text-green-600">
-                    Changes saved!
-                  </motion.span>
-                )}
+            {/* Danger zone — real, irreversible account deletion (GDPR erasure). */}
+            <div className="mt-12 border border-red-200 rounded-2xl overflow-hidden max-w-lg">
+              <div className="px-6 py-4 bg-red-50/60 border-b border-red-100">
+                <h3 className="text-sm font-semibold text-red-700">Danger zone</h3>
               </div>
-            </form>
+              <div className="p-6 flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-sm font-medium text-gray-900">Delete account</p>
+                  <p className="text-xs text-gray-500 mt-1 leading-relaxed">Permanently removes your account and disconnects every integration. This can&apos;t be undone.</p>
+                </div>
+                <button onClick={() => { setShowDeleteModal(true); setConfirmText(""); setDeleteError(""); }} className="flex-shrink-0 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-xl hover:bg-red-700 transition-colors">
+                  Delete
+                </button>
+              </div>
+            </div>
           </motion.div>
         );
 
@@ -215,6 +247,43 @@ export default function SettingsPage() {
         </div>
 
       </div>
+
+      {/* Delete-account confirmation modal */}
+      <AnimatePresence>
+        {showDeleteModal && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-6"
+            onClick={() => !deleting && setShowDeleteModal(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl"
+            >
+              <h3 className="text-xl font-semibold text-gray-900">Delete your account?</h3>
+              <p className="text-sm text-gray-500 mt-2 leading-relaxed">
+                This permanently deletes <strong className="text-gray-800">{profile?.email ?? "your account"}</strong> and disconnects all integrations. This action cannot be undone.
+              </p>
+              <label className="block text-xs font-medium text-gray-600 mt-6 mb-2">Type <span className="font-mono font-semibold">DELETE</span> to confirm</label>
+              <input
+                autoFocus value={confirmText} onChange={(e) => setConfirmText(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-200 focus:border-red-400 transition-all"
+                placeholder="DELETE"
+              />
+              {deleteError && <p className="text-sm text-red-600 mt-3">{deleteError}</p>}
+              <div className="flex gap-3 mt-6">
+                <button onClick={() => setShowDeleteModal(false)} disabled={deleting} className="flex-1 px-4 py-3 border border-gray-200 text-gray-700 text-sm font-medium rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50">
+                  Cancel
+                </button>
+                <button onClick={handleDeleteAccount} disabled={deleting || confirmText !== "DELETE"} className="flex-1 px-4 py-3 bg-red-600 text-white text-sm font-medium rounded-xl hover:bg-red-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+                  {deleting ? "Deleting…" : "Delete account"}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
