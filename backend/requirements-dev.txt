@@ -1,0 +1,3 @@
+# Test / dev tooling (installed on top of requirements.txt in CI)
+pytest
+httpx
