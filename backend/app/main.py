@@ -2,15 +2,34 @@ import os
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from sqlalchemy import text
 
 from app.db.database import engine
 from app.db import models
 from app.api import analytics, auth, integrations, workspace
 
-# Create database tables
+# Create database tables. NOTE: this is a dev convenience; Alembic
+# (backend/alembic/) is the source of truth for schema changes going forward.
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Marketing SaaS API")
+
+# Optional error tracking — only turns on if SENTRY_DSN is set, so local/dev
+# and unconfigured deploys are unaffected.
+_sentry_dsn = os.getenv("SENTRY_DSN")
+if _sentry_dsn:
+    try:
+        import sentry_sdk
+
+        sentry_sdk.init(
+            dsn=_sentry_dsn,
+            environment=os.getenv("ENVIRONMENT", "production"),
+            traces_sample_rate=float(os.getenv("SENTRY_TRACES_SAMPLE_RATE", "0.1")),
+            send_default_pii=False,
+        )
+    except Exception as e:  # never let observability break startup
+        print(f"Sentry init skipped: {e}")
 
 # Allowed browser origins. Localhost + our known Vercel URLs are baked in; any
 # other origin (a custom domain, say) can be appended via the CORS_ORIGINS env
@@ -43,3 +62,17 @@ app.include_router(workspace.router, prefix="/api/v1/workspace", tags=["Workspac
 @app.get("/")
 def read_root():
     return {"message": "Welcome to the ArbFlow Marketing API"}
+
+
+@app.get("/health")
+def health_check():
+    """Liveness + readiness probe. Verifies the process is up AND that the
+    database is actually reachable, so uptime monitors catch a dead DB, not
+    just a dead process. Returns 503 (not 200) when the DB is down."""
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        return {"status": "ok", "database": "ok"}
+    except Exception as e:
+        print(f"Health check DB error: {e}")
+        return JSONResponse(status_code=503, content={"status": "degraded", "database": "unreachable"})
