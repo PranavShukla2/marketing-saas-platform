@@ -38,6 +38,12 @@ export default function Footer() {
                         <Link href="/pricing" className="text-[#6E6E73] hover:text-[#1D1D1F] transition-colors">
                             Pricing
                         </Link>
+                        <Link href="/privacy" className="text-[#6E6E73] hover:text-[#1D1D1F] transition-colors">
+                            Privacy
+                        </Link>
+                        <Link href="/terms" className="text-[#6E6E73] hover:text-[#1D1D1F] transition-colors">
+                            Terms
+                        </Link>
                     </div>
 
                     <div className="flex items-center space-x-4">
