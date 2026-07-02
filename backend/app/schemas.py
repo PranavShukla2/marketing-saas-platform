@@ -1,15 +1,37 @@
-from pydantic import BaseModel
+import re
+
+from pydantic import BaseModel, Field, field_validator
+
+# Simple, dependency-free email shape check. The frontend's type="email" is
+# trivially bypassed with curl, so the server must validate too.
+EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+
+class _EmailNormalizer(BaseModel):
+    """Shared: validate the email's shape and normalize to lowercase, so
+    Pranav@x.com and pranav@x.com can never become two different accounts."""
+
+    email: str = Field(max_length=254)
+
+    @field_validator("email")
+    @classmethod
+    def check_email(cls, v: str) -> str:
+        v = v.strip().lower()
+        if not EMAIL_RE.match(v):
+            raise ValueError("Enter a valid email address.")
+        return v
+
 
 # What we expect from the frontend when signing up
-class UserCreate(BaseModel):
-    company_name: str
-    email: str
-    password: str
+class UserCreate(_EmailNormalizer):
+    company_name: str = Field(min_length=1, max_length=120)
+    # bcrypt only reads the first 72 bytes, so cap there; floor of 8 keeps
+    # trivially guessable passwords out.
+    password: str = Field(min_length=8, max_length=72)
 
 # What we expect from the frontend when logging in
-class UserLogin(BaseModel):
-    email: str
-    password: str
+class UserLogin(_EmailNormalizer):
+    password: str = Field(max_length=72)
 
 # Single-use code exchanged for a JWT after Google OAuth sign-in
 class AuthCodeExchange(BaseModel):

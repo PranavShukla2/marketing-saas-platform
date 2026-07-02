@@ -53,18 +53,23 @@ def get_google_login_link(current_user: User = Depends(get_current_user)):
     return {"url": auth_url}
 
 @router.get("/google/callback")
-def google_callback(code: str, state: str, db: Session = Depends(get_db)):
+def google_callback(code: str | None = None, state: str | None = None, error: str | None = None, db: Session = Depends(get_db)):
     """Handles Google OAuth callback for BOTH:
     1. Sign-in flow (state purpose='signin') — auto-creates user + connects GA4 + issues a one-time auth code
     2. Integration flow (state purpose='link') — just connects GA4 for the user bound to the state
     """
+    # User hit "Cancel" on the consent screen (or Google sent an error): land
+    # them back on login with a friendly message, not a raw validation error.
+    if error or not code or not state:
+        return RedirectResponse(url=f"{FRONTEND_URL}/login?error=google_cancelled")
+
     # Verify the signed state FIRST — reject anything forged/expired.
     try:
         state_data = verify_oauth_state(state)
     except Exception:
         return RedirectResponse(url=f"{FRONTEND_URL}/login?error=invalid_state")
     purpose = state_data.get("purpose")
-    
+
     # 1. Exchange code for tokens
     token_url = "https://oauth2.googleapis.com/token"
     payload = {
@@ -74,8 +79,9 @@ def google_callback(code: str, state: str, db: Session = Depends(get_db)):
         "grant_type": "authorization_code",
         "redirect_uri": GOOGLE_REDIRECT_URI
     }
-    
-    response = requests.post(token_url, data=payload)
+
+    # Never call out without a timeout: a hung upstream would pin a worker forever.
+    response = requests.post(token_url, data=payload, timeout=15)
     token_data = response.json()
     
     if "error" in token_data:
@@ -98,11 +104,14 @@ def google_callback(code: str, state: str, db: Session = Depends(get_db)):
         # Fetch Google profile
         userinfo_response = requests.get(
             "https://www.googleapis.com/oauth2/v2/userinfo",
-            headers={"Authorization": f"Bearer {access_token}"}
+            headers={"Authorization": f"Bearer {access_token}"},
+            timeout=15,
         )
         userinfo = userinfo_response.json()
 
-        google_email = userinfo.get("email")
+        # Normalize like /register does, so Google sign-in always matches the
+        # password account with the same address instead of duplicating it.
+        google_email = (userinfo.get("email") or "").strip().lower() or None
         # Google's v2 userinfo returns this boolean; treat missing as unverified.
         email_verified = userinfo.get("verified_email", False)
 

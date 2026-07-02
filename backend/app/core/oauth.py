@@ -11,6 +11,7 @@ These two mechanisms harden the Google sign-in / integration-linking flow:
   redirects with a single-use `auth_code`, so the long-lived token never appears
   in a URL / browser history / referer header.
 """
+import hashlib
 import secrets
 from datetime import datetime, timedelta
 
@@ -19,6 +20,13 @@ from sqlalchemy.orm import Session
 
 from app.core.config import SECRET_KEY, ALGORITHM
 from app.db.models import AuthCode
+
+
+def _hash_code(code: str) -> str:
+    """Auth codes are stored hashed, like passwords: a leaked DB row must not
+    be redeemable for a session token. sha256 is fine here — the input is a
+    256-bit random value, so there's nothing to brute-force."""
+    return hashlib.sha256(code.encode("utf-8")).hexdigest()
 
 STATE_TTL_MINUTES = 10
 AUTH_CODE_TTL_SECONDS = 120
@@ -48,9 +56,13 @@ def verify_oauth_state(state: str) -> dict:
 
 
 def create_auth_code(db: Session, token: str) -> str:
-    """Persist a JWT behind a fresh single-use code and return the code."""
+    """Persist a JWT behind a fresh single-use code and return the code.
+
+    Only the sha256 of the code touches the database; the plaintext code goes
+    to the browser once, in the redirect URL, and is never stored.
+    """
     code = secrets.token_urlsafe(32)
-    db.add(AuthCode(code=code, token=token))
+    db.add(AuthCode(code=_hash_code(code), token=token))
     db.commit()
     return code
 
@@ -65,7 +77,7 @@ def consume_auth_code(db: Session, code: str) -> str | None:
     # Best-effort cleanup of stale codes.
     db.query(AuthCode).filter(AuthCode.created_at < cutoff).delete()
 
-    row = db.query(AuthCode).filter(AuthCode.code == code).first()
+    row = db.query(AuthCode).filter(AuthCode.code == _hash_code(code)).first()
     if row is None:
         db.commit()
         return None

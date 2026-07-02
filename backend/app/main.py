@@ -27,7 +27,8 @@ origins = list(dict.fromkeys(default_origins + extra_origins))
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_origin_regex=r"https://.*\.vercel\.app",
+    # Only OUR Vercel deployments (prod + previews), not every vercel.app site.
+    allow_origin_regex=r"https://marketing-saas-platform[a-z0-9-]*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
