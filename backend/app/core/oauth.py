@@ -16,6 +16,7 @@ import secrets
 from datetime import datetime, timedelta
 
 import jwt
+from sqlalchemy import delete
 from sqlalchemy.orm import Session
 
 from app.core.config import SECRET_KEY, ALGORITHM
@@ -68,22 +69,29 @@ def create_auth_code(db: Session, token: str) -> str:
 
 
 def consume_auth_code(db: Session, code: str) -> str | None:
-    """Return the JWT for a valid, unexpired code, deleting it (single use).
+    """Atomically claim a single-use code and return its JWT (or None).
 
-    Returns None if the code is unknown or expired. Also opportunistically
-    purges expired codes so the table doesn't grow unbounded.
+    Single use is the whole security value of the claim-ticket, so it has to
+    hold under real concurrency. A SELECT-then-DELETE would race: under
+    Postgres READ COMMITTED, two exchanges of the same code can both read the
+    row before either deletes, and both walk away with the JWT. `DELETE ...
+    RETURNING` takes the row lock — exactly one caller gets the row back, the
+    loser re-reads and finds nothing. We then check expiry on the returned row.
+
+    Consumed codes delete themselves here; the rare abandoned (never-exchanged)
+    code expires harmlessly and can be pruned by a periodic sweep if the table
+    ever grows — deliberately kept off this hot path to avoid lock contention.
     """
-    cutoff = datetime.utcnow() - timedelta(seconds=AUTH_CODE_TTL_SECONDS)
-    # Best-effort cleanup of stale codes.
-    db.query(AuthCode).filter(AuthCode.created_at < cutoff).delete()
+    row = db.execute(
+        delete(AuthCode)
+        .where(AuthCode.code == _hash_code(code))
+        .returning(AuthCode.token, AuthCode.created_at)
+    ).first()
+    db.commit()
 
-    row = db.query(AuthCode).filter(AuthCode.code == _hash_code(code)).first()
     if row is None:
-        db.commit()
         return None
 
-    token = row.token
-    expired = row.created_at < cutoff
-    db.delete(row)  # single-use: remove regardless of validity
-    db.commit()
-    return None if expired else token
+    token, created_at = row
+    cutoff = datetime.utcnow() - timedelta(seconds=AUTH_CODE_TTL_SECONDS)
+    return None if created_at < cutoff else token
