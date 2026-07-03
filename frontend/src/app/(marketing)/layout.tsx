@@ -1,4 +1,5 @@
 import Navbar from "../../components/Navbar";
+import Footer from "../../components/Footer";
 
 export default function MarketingLayout({
   children,
@@ -9,6 +10,7 @@ export default function MarketingLayout({
     <div className="pt-16">
       <Navbar />
       <main>{children}</main>
+      <Footer />
     </div>
   );
 }
