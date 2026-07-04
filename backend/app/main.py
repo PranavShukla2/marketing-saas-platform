@@ -31,12 +31,14 @@ if _sentry_dsn:
     except Exception as e:  # never let observability break startup
         print(f"Sentry init skipped: {e}")
 
-# Allowed browser origins. Localhost + our known Vercel URLs are baked in; any
-# other origin (a custom domain, say) can be appended via the CORS_ORIGINS env
-# var (comma-separated). Every *.vercel.app deploy is matched by the regex below
-# so preview/prod URLs keep working without redeploying the backend.
+# Allowed browser origins. Localhost, our production domain, and our known Vercel
+# URLs are baked in; any other origin can be appended via the CORS_ORIGINS env
+# var (comma-separated). The regex matches our own Vercel deploys (prod +
+# previews) and any *.pranavmshukla.in subdomain, so custom-domain and preview
+# URLs keep working without redeploying the backend.
 default_origins = [
     "http://localhost:3000",
+    "https://arbflow.pranavmshukla.in",
     "https://marketing-saas-platform-nb3q.vercel.app",
     "https://marketing-saas-platform-pi.vercel.app",
 ]
@@ -46,8 +48,9 @@ origins = list(dict.fromkeys(default_origins + extra_origins))
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    # Only OUR Vercel deployments (prod + previews), not every vercel.app site.
-    allow_origin_regex=r"https://marketing-saas-platform[a-z0-9-]*\.vercel\.app",
+    # Our Vercel deployments (prod + previews) OR any pranavmshukla.in subdomain
+    # (e.g. arbflow.pranavmshukla.in) — not every vercel.app site.
+    allow_origin_regex=r"https://(marketing-saas-platform[a-z0-9-]*\.vercel\.app|([a-z0-9-]+\.)*pranavmshukla\.in)",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
