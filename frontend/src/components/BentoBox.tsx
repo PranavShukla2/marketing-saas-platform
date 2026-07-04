@@ -1,14 +1,14 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 
 export default function BentoBox() {
-    const fadeUp = {
+    const fadeUp: Variants = {
         hidden: { opacity: 0, y: 40 },
         visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] } }
     };
 
-    const stagger = {
+    const stagger: Variants = {
         visible: { transition: { staggerChildren: 0.15 } }
     };
 

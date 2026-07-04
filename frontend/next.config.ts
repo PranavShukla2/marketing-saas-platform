@@ -1,10 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  typescript: {
-    // Dangerously allow production builds to successfully complete even if
-    // your project has type errors.
-    ignoreBuildErrors: true,
-  },
+  // Type errors now fail the build (as they should). The old
+  // `typescript.ignoreBuildErrors` escape hatch was removed once the
+  // outstanding framer-motion `Variants` type errors were fixed.
 };
 
 export default nextConfig;
