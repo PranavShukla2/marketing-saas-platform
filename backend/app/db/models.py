@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from app.db.database import Base
-from datetime import datetime
+from app.core.time import utcnow
 
 class User(Base):
     __tablename__ = "users"
@@ -10,7 +10,7 @@ class User(Base):
     company_name = Column(String, index=True)
     email = Column(String, unique=True, index=True)
     hashed_password = Column(String)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow)
 
     # A single user can have multiple integrations (GA4, Meta Ads, etc.)
     integrations = relationship("Integration", back_populates="owner")
@@ -24,7 +24,7 @@ class Integration(Base):
     provider = Column(String) # e.g., "google_analytics", "meta_ads"
     property_id = Column(String, nullable=True) # e.g., GA4 Property ID
     encrypted_credentials = Column(String) # Fernet-encrypted JSON credentials blob
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow)
 
     owner = relationship("User", back_populates="integrations")
 
@@ -40,4 +40,4 @@ class AuthCode(Base):
 
     code = Column(String, primary_key=True, index=True)
     token = Column(String, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow)

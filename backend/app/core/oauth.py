@@ -13,13 +13,14 @@ These two mechanisms harden the Google sign-in / integration-linking flow:
 """
 import hashlib
 import secrets
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 import jwt
 from sqlalchemy import delete
 from sqlalchemy.orm import Session
 
 from app.core.config import SECRET_KEY, ALGORITHM
+from app.core.time import utcnow
 from app.db.models import AuthCode
 
 
@@ -43,7 +44,7 @@ def create_oauth_state(purpose: str, user_id: int | None = None) -> str:
         "purpose": purpose,
         "uid": user_id,
         "nonce": secrets.token_urlsafe(8),
-        "exp": datetime.utcnow() + timedelta(minutes=STATE_TTL_MINUTES),
+        "exp": utcnow() + timedelta(minutes=STATE_TTL_MINUTES),
     }
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
@@ -93,5 +94,5 @@ def consume_auth_code(db: Session, code: str) -> str | None:
         return None
 
     token, created_at = row
-    cutoff = datetime.utcnow() - timedelta(seconds=AUTH_CODE_TTL_SECONDS)
+    cutoff = utcnow() - timedelta(seconds=AUTH_CODE_TTL_SECONDS)
     return None if created_at < cutoff else token

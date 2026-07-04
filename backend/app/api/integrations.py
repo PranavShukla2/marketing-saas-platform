@@ -6,13 +6,14 @@ from sqlalchemy.orm import Session
 from fastapi.responses import RedirectResponse
 from passlib.context import CryptContext
 import jwt
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from app.api.deps import get_db, get_current_user
 from app.db.models import Integration, User
 from app.core.config import SECRET_KEY, ALGORITHM
 from app.core.security import encrypt_credentials
 from app.core.oauth import create_oauth_state, verify_oauth_state, create_auth_code
+from app.core.time import utcnow
 
 router = APIRouter()
 
@@ -160,7 +161,7 @@ def google_callback(code: str | None = None, state: str | None = None, error: st
 
         # Mint the session JWT, but hand the browser a single-use code instead
         # of the token itself so the JWT never lands in a URL / history / logs.
-        expire = datetime.utcnow() + timedelta(hours=24)
+        expire = utcnow() + timedelta(hours=24)
         jwt_token = jwt.encode({"sub": str(user.id), "exp": expire}, SECRET_KEY, algorithm=ALGORITHM)
         auth_code = create_auth_code(db, jwt_token)
 

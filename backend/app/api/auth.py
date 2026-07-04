@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 import jwt
 import os
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from app.db.database import get_db
 from app.db.models import User, Integration
@@ -11,6 +11,7 @@ from app.schemas import UserCreate, UserLogin, UserResponse, AuthCodeExchange
 from app.core.config import SECRET_KEY, ALGORITHM
 from app.core.oauth import create_oauth_state, consume_auth_code
 from app.core.ratelimit import enforce_rate_limit
+from app.core.time import utcnow
 from app.api.deps import get_current_user
 
 router = APIRouter()
@@ -69,7 +70,7 @@ def login_user(credentials: UserLogin, request: Request, db: Session = Depends(g
             detail="Incorrect email or password"
         )
 
-    expire = datetime.utcnow() + timedelta(hours=24)
+    expire = utcnow() + timedelta(hours=24)
     token_data = {"sub": str(user.id), "exp": expire}
     token = jwt.encode(token_data, SECRET_KEY, algorithm=ALGORITHM)
 
