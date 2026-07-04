@@ -40,10 +40,9 @@ jobs:
       - name: Install dependencies
         working-directory: frontend
         run: npm ci
-      # NOTE: `npm run lint` is intentionally omitted — the pinned
-      # eslint-config-next (^0.2.4) is incompatible with Next 16 / eslint 10 and
-      # errors at config load. Re-enable once the eslint deps are realigned
-      # (tracked in the roadmap). The build below is the real deploy gate.
+      - name: Lint
+        working-directory: frontend
+        run: npm run lint
       - name: Build
         working-directory: frontend
         run: npm run build

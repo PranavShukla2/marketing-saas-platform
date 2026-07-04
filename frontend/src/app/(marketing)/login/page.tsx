@@ -217,7 +217,7 @@ export default function LoginPage() {
         </form>
 
         <div className="mt-8 text-center text-sm text-gray-500">
-          Don't have an account? <Link href="/register" className="text-blue-600 font-medium hover:underline cursor-pointer">Create one</Link>
+          Don&apos;t have an account? <Link href="/register" className="text-blue-600 font-medium hover:underline cursor-pointer">Create one</Link>
         </div>
       </motion.div>
     </div>
