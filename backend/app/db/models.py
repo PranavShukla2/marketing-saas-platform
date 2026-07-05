@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
+from sqlalchemy import Boolean, Column, Integer, String, ForeignKey, DateTime, false
 from sqlalchemy.orm import relationship
 from app.db.database import Base
 from app.core.time import utcnow
@@ -10,6 +10,10 @@ class User(Base):
     company_name = Column(String, index=True)
     email = Column(String, unique=True, index=True)
     hashed_password = Column(String)
+    # New signups start unverified; existing accounts are grandfathered to
+    # verified in the migration. Enforcement of this at login is opt-in via the
+    # REQUIRE_EMAIL_VERIFICATION env flag.
+    is_verified = Column(Boolean, nullable=False, default=False, server_default=false())
     created_at = Column(DateTime, default=utcnow)
 
     # A single user can have multiple integrations (GA4, Meta Ads, etc.)
@@ -41,3 +45,19 @@ class AuthCode(Base):
     code = Column(String, primary_key=True, index=True)
     token = Column(String, nullable=False)
     created_at = Column(DateTime, default=utcnow)
+
+
+class VerificationToken(Base):
+    """Single-use, hashed token for email verification and password resets.
+
+    Only the sha256 of the token is stored (like `auth_codes`), the raw token
+    goes out once in an email link, and the row is deleted atomically on first
+    use. `purpose` separates the two flows so a verify token can't reset a
+    password and vice-versa.
+    """
+    __tablename__ = "verification_tokens"
+
+    token_hash = Column(String, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    purpose = Column(String, nullable=False)  # "verify_email" | "reset_password"
+    created_at = Column(DateTime, default=utcnow, nullable=False)
