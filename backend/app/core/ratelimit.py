@@ -16,6 +16,8 @@ LIMITS = {
     "login": (10, 60),       # brute-force guard
     "register": (5, 60),     # bot signup guard
     "exchange": (10, 60),    # auth-code guessing guard
+    "email": (5, 60),        # verify-resend / forgot-password (email-send abuse)
+    "token": (10, 60),       # verify / reset token submission
 }
 
 

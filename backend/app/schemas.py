@@ -37,6 +37,19 @@ class UserLogin(_EmailNormalizer):
 class AuthCodeExchange(BaseModel):
     code: str
 
+# Just an email (verification resend, forgot-password) — normalized like the rest
+class EmailRequest(_EmailNormalizer):
+    pass
+
+# A single-use token from an email link (email verification)
+class TokenPayload(BaseModel):
+    token: str = Field(min_length=1, max_length=512)
+
+# Reset a password with a single-use token + the new password
+class PasswordResetPayload(BaseModel):
+    token: str = Field(min_length=1, max_length=512)
+    password: str = Field(min_length=8, max_length=72)
+
 # What we send back to the frontend (notice we NEVER send the password back!)
 class UserResponse(BaseModel):
     id: int

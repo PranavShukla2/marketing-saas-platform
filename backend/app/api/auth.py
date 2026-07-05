@@ -6,15 +6,27 @@ import os
 from datetime import timedelta
 
 from app.db.database import get_db
-from app.db.models import User, Integration
-from app.schemas import UserCreate, UserLogin, UserResponse, AuthCodeExchange
+from app.db.models import User, Integration, VerificationToken
+from app.schemas import (
+    UserCreate, UserLogin, UserResponse, AuthCodeExchange,
+    EmailRequest, TokenPayload, PasswordResetPayload,
+)
 from app.core.config import SECRET_KEY, ALGORITHM
 from app.core.oauth import create_oauth_state, consume_auth_code
 from app.core.ratelimit import enforce_rate_limit
 from app.core.time import utcnow
+from app.core.verification import (
+    create_token, consume_token,
+    VERIFY_EMAIL, RESET_PASSWORD, VERIFY_TTL_SECONDS, RESET_TTL_SECONDS,
+)
+from app.core.email import send_verification_email, send_password_reset_email
 from app.api.deps import get_current_user
 
 router = APIRouter()
+
+# Opt-in: when true, unverified accounts can't log in. Default off so existing
+# deployments (and any without email configured) keep working unchanged.
+REQUIRE_EMAIL_VERIFICATION = os.getenv("REQUIRE_EMAIL_VERIFICATION", "false").lower() == "true"
 
 # 1. Setup Password Hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -51,6 +63,11 @@ def register_user(user_data: UserCreate, request: Request, db: Session = Depends
     db.commit()
     db.refresh(new_user)
 
+    # Send the verification email (best-effort — a failed send never blocks
+    # signup; the user can request a fresh link from /verify/resend).
+    token = create_token(db, new_user.id, VERIFY_EMAIL)
+    send_verification_email(new_user.email, token)
+
     return new_user
 
 @router.post("/login")
@@ -68,6 +85,13 @@ def login_user(credentials: UserLogin, request: Request, db: Session = Depends(g
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password"
+        )
+
+    # Opt-in gate: block unverified accounts only when explicitly enabled.
+    if REQUIRE_EMAIL_VERIFICATION and not user.is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Please verify your email before signing in. Check your inbox for the link.",
         )
 
     expire = utcnow() + timedelta(hours=24)
@@ -143,9 +167,65 @@ def delete_account(current_user: User = Depends(get_current_user), db: Session =
     OAuth tokens). This is the GDPR/CCPA right-to-erasure path; it's
     irreversible and cascades so no orphaned credentials are left behind."""
     db.query(Integration).filter(Integration.user_id == current_user.id).delete()
+    db.query(VerificationToken).filter(VerificationToken.user_id == current_user.id).delete()
     db.delete(current_user)
     db.commit()
     return None
+
+
+# ---- Email verification ----
+
+@router.post("/verify")
+def verify_email(payload: TokenPayload, request: Request, db: Session = Depends(get_db)):
+    """Confirm an email address from the link we emailed at signup."""
+    enforce_rate_limit(request, "token")
+    user_id = consume_token(db, payload.token, VERIFY_EMAIL, VERIFY_TTL_SECONDS)
+    user = db.query(User).filter(User.id == user_id).first() if user_id else None
+    if user is None:
+        raise HTTPException(status_code=400, detail="This verification link is invalid or has expired.")
+    user.is_verified = True
+    db.commit()
+    return {"detail": "Email verified. You can now sign in."}
+
+
+@router.post("/verify/resend")
+def resend_verification(payload: EmailRequest, request: Request, db: Session = Depends(get_db)):
+    """Send a fresh verification link. Always returns the same generic response
+    so it can't be used to probe which addresses have (unverified) accounts."""
+    enforce_rate_limit(request, "email")
+    user = db.query(User).filter(User.email == payload.email).first()
+    if user and not user.is_verified:
+        token = create_token(db, user.id, VERIFY_EMAIL)
+        send_verification_email(user.email, token)
+    return {"detail": "If that account exists and isn't verified yet, a new link is on its way."}
+
+
+# ---- Password reset ----
+
+@router.post("/password/forgot")
+def forgot_password(payload: EmailRequest, request: Request, db: Session = Depends(get_db)):
+    """Start a password reset. Generic response either way — no enumeration."""
+    enforce_rate_limit(request, "email")
+    user = db.query(User).filter(User.email == payload.email).first()
+    if user:
+        token = create_token(db, user.id, RESET_PASSWORD)
+        send_password_reset_email(user.email, token)
+    return {"detail": "If that account exists, a password-reset link is on its way."}
+
+
+@router.post("/password/reset")
+def reset_password(payload: PasswordResetPayload, request: Request, db: Session = Depends(get_db)):
+    """Set a new password using a single-use reset token."""
+    enforce_rate_limit(request, "token")
+    user_id = consume_token(db, payload.token, RESET_PASSWORD, RESET_TTL_SECONDS)
+    user = db.query(User).filter(User.id == user_id).first() if user_id else None
+    if user is None:
+        raise HTTPException(status_code=400, detail="This reset link is invalid or has expired.")
+    user.hashed_password = pwd_context.hash(payload.password)
+    # Completing a reset proves the person controls the inbox — treat as verified.
+    user.is_verified = True
+    db.commit()
+    return {"detail": "Password updated. You can now sign in with your new password."}
 
 # The actual Google OAuth callback is handled by integrations.py
 # (/api/v1/integrations/google/callback) which is already registered
