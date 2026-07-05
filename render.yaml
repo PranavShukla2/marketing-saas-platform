@@ -3,6 +3,10 @@ services:
     name: arbflow-backend
     env: python
     buildCommand: pip install -r backend/requirements.txt
+    # Apply DB migrations before the new version starts serving, so schema
+    # changes are always live before the code that needs them. (Without this,
+    # a schema-dependent deploy 500s until the migration is run by hand.)
+    preDeployCommand: cd backend && alembic upgrade head
     startCommand: cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
       # --- Database (set the connection string in the Render dashboard) ---
