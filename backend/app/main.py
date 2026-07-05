@@ -56,6 +56,27 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Security headers on every response. Kept deliberately light for an API:
+# `frame-ancestors 'none'` (+ X-Frame-Options) stops clickjacking without a
+# `default-src` that would break the Swagger docs at /docs. HSTS is inert over
+# plain HTTP, so it's safe locally and enforced in prod behind HTTPS.
+_SECURITY_HEADERS = {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "Referrer-Policy": "no-referrer",
+    "Strict-Transport-Security": "max-age=63072000; includeSubDomains",
+    "Content-Security-Policy": "frame-ancestors 'none'",
+    "Permissions-Policy": "geolocation=(), microphone=(), camera=()",
+}
+
+
+@app.middleware("http")
+async def add_security_headers(request, call_next):
+    response = await call_next(request)
+    for key, value in _SECURITY_HEADERS.items():
+        response.headers.setdefault(key, value)
+    return response
+
 # Register our API routes
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
 app.include_router(integrations.router, prefix="/api/v1/integrations", tags=["Integrations"]) 
