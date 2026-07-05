@@ -1,0 +1,22 @@
+# gitleaks config — builds on the default ruleset, plus an allowlist for the
+# known non-secrets in this repo so the scan doesn't cry wolf.
+title = "ArbFlow gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Known placeholders / mock values that aren't real secrets"
+regexTarget = "match"
+regexes = [
+  # Scaffolded mock provider tokens (see api/integrations.py)
+  '''mock_(meta|linkedin)_token_123''',
+  # Sentry's documented example DSN used in a build sanity check / docs
+  '''examplePublicKey@''',
+]
+paths = [
+  # Documented template, intentionally committed with blank values
+  '''backend/\.env\.example''',
+  # Package lockfile integrity hashes look like secrets but aren't
+  '''frontend/package-lock\.json''',
+]
