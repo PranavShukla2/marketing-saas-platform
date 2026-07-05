@@ -46,7 +46,7 @@ export default function LoginPage() {
       }
       const params = new URLSearchParams(window.location.search);
       if (params.get("registered") === "1") {
-        setNotice("Account created — sign in below.");
+        setNotice("Account created — check your email for a verification link, then sign in.");
       }
       const errParam = params.get("error");
       if (errParam) {
@@ -189,7 +189,10 @@ export default function LoginPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-sm font-medium text-gray-700">Password</label>
+              <Link href="/forgot-password" className="text-xs text-blue-600 font-medium hover:underline">Forgot?</Link>
+            </div>
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"} required value={password} onChange={(e) => setPassword(e.target.value)}
