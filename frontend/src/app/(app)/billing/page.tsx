@@ -11,11 +11,9 @@ export default function BillingPage() {
   useEffect(() => {
     const fetchBilling = async () => {
       try {
-        const token = localStorage.getItem("token");
         const backendUrl = getApiUrl();
-        const res = await fetch(`${backendUrl}/api/v1/workspace/billing`, {
-          headers: { "Authorization": `Bearer ${token}` }
-        });
+        // Session rides in the httpOnly cookie — no header needed.
+        const res = await fetch(`${backendUrl}/api/v1/workspace/billing`);
         if (res.ok) {
           const data = await res.json();
           setBilling(data);

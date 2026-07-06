@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getApiUrl } from "../../../lib/auth";
+import { getApiUrl, logout } from "../../../lib/auth";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -21,10 +21,8 @@ export default function SettingsPage() {
   useEffect(() => {
     (async () => {
       try {
-        const token = localStorage.getItem("token");
-        const res = await fetch(`${getApiUrl()}/api/v1/auth/me`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        // Session rides in the httpOnly cookie — no header needed.
+        const res = await fetch(`${getApiUrl()}/api/v1/auth/me`);
         if (res.ok) setProfile(await res.json());
       } catch {
         /* leave profile null; UI shows a graceful fallback */
@@ -36,13 +34,11 @@ export default function SettingsPage() {
     setDeleting(true);
     setDeleteError("");
     try {
-      const token = localStorage.getItem("token");
       const res = await fetch(`${getApiUrl()}/api/v1/auth/me`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok && res.status !== 204) throw new Error("Failed to delete account.");
-      localStorage.removeItem("token");
+      await logout(); // clear the (now-orphaned) session cookie + legacy storage
       router.push("/?deleted=1");
     } catch {
       setDeleteError("Couldn't delete your account. Please try again.");

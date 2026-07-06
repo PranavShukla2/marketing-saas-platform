@@ -33,6 +33,16 @@ const securityHeaders = [
   ...(isProd ? [{ key: "Content-Security-Policy", value: csp }] : []),
 ];
 
+// Where the /api/backend/* proxy forwards to. Same-origin proxying is what
+// makes the httpOnly session cookie *first-party* in every browser (Safari
+// blocks third-party cookies outright, so calling the Render origin directly
+// from the browser would break sign-in there).
+const proxyTarget =
+  process.env.API_PROXY_TARGET ||
+  (process.env.NODE_ENV === "development"
+    ? "http://localhost:8000"
+    : "https://arbflow-backend.onrender.com");
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Type errors now fail the build (as they should). The old
@@ -40,6 +50,11 @@ const nextConfig = {
   // outstanding framer-motion `Variants` type errors were fixed.
   async headers() {
     return [{ source: "/(.*)", headers: securityHeaders }];
+  },
+  async rewrites() {
+    // Browser calls /api/backend/api/v1/... on OUR origin; Next forwards it to
+    // the FastAPI backend. Set-Cookie in the response lands on our origin.
+    return [{ source: "/api/backend/:path*", destination: `${proxyTarget}/:path*` }];
   },
 };
 

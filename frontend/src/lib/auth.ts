@@ -1,21 +1,14 @@
-// Shared auth helpers for the OAuth sign-in flow.
-
-// Production backend (Render). Used as the fallback when NEXT_PUBLIC_API_URL is
-// not set, so a deployed frontend never silently calls localhost.
-const PROD_API_URL = "https://arbflow-backend.onrender.com";
+// Shared auth helpers.
+//
+// All API calls go through the same-origin proxy (/api/backend/* — a Next.js
+// rewrite to the FastAPI backend, see next.config.ts). Same-origin is what lets
+// the session live in an httpOnly first-party cookie that works in every
+// browser: JS never sees the token, so an XSS can't steal the session the way
+// it could when we kept a JWT in localStorage.
 
 export function getApiUrl(): string {
-  const fromEnv = process.env.NEXT_PUBLIC_API_URL;
-  if (fromEnv) return fromEnv.replace(/\/$/, "");
-
-  // Only fall back to the local backend when actually running on localhost.
-  if (
-    typeof window !== "undefined" &&
-    /^(localhost|127\.0\.0\.1)/.test(window.location.hostname)
-  ) {
-    return "http://localhost:8000";
-  }
-  return PROD_API_URL;
+  // Same-origin proxy prefix. Call sites append /api/v1/... as before.
+  return "/api/backend";
 }
 
 // Dedupe in-flight / repeat calls for the same code. React can mount AuthGuard
@@ -32,10 +25,8 @@ async function exchange(code: string): Promise<boolean> {
     });
     if (!res.ok) return false;
 
-    const data = await res.json();
-    if (!data.access_token) return false;
-
-    localStorage.setItem("token", data.access_token);
+    // The session arrives as an httpOnly Set-Cookie on this response; there is
+    // nothing to store client-side.
 
     // Remove the (now-spent) code from the URL + history, keep other params.
     const params = new URLSearchParams(window.location.search);
@@ -53,8 +44,7 @@ async function exchange(code: string): Promise<boolean> {
 }
 
 // After Google sign-in, the backend redirects with a single-use `?auth_code=`.
-// Exchange it for the real JWT (which never travels in the URL), store the
-// token, and strip the code from the URL. Returns true on success.
+// Exchange it for the session cookie and strip the code from the URL.
 export async function consumeAuthCode(): Promise<boolean> {
   if (typeof window === "undefined") return false;
 
@@ -67,4 +57,29 @@ export async function consumeAuthCode(): Promise<boolean> {
   const promise = exchange(code);
   pending = { code, promise };
   return promise;
+}
+
+// Is there a live session? The cookie is httpOnly (invisible to JS), so the
+// only way to know is to ask the backend.
+export async function fetchSession(): Promise<boolean> {
+  try {
+    const res = await fetch(`${getApiUrl()}/api/v1/auth/me`);
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+// Clear the session cookie server-side, plus any legacy localStorage token
+// from the pre-cookie era.
+export async function logout(): Promise<void> {
+  try {
+    await fetch(`${getApiUrl()}/api/v1/auth/logout`, { method: "POST" });
+  } catch {
+    // Even if the network call fails, fall through to the redirect — the
+    // cookie will expire on its own.
+  }
+  try {
+    localStorage.removeItem("token");
+  } catch {}
 }

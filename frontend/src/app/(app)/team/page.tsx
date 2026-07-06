@@ -11,11 +11,9 @@ export default function TeamPage() {
   useEffect(() => {
     const fetchTeam = async () => {
       try {
-        const token = localStorage.getItem("token");
         const backendUrl = getApiUrl();
-        const res = await fetch(`${backendUrl}/api/v1/workspace/team`, {
-          headers: { "Authorization": `Bearer ${token}` }
-        });
+        // Session rides in the httpOnly cookie — no header needed.
+        const res = await fetch(`${backendUrl}/api/v1/workspace/team`);
         if (res.ok) {
           const data = await res.json();
           setTeam(data.team);

@@ -71,12 +71,12 @@ export default function Dashboard() {
 
   const fetchData = async (isManualSync = false, propId = selectedProperty) => {
     if (isManualSync) setSyncing(true);
-    const token = localStorage.getItem("token");
     try {
-      const backendUrl = getApiUrl();
-      const url = new URL(`${backendUrl}/api/v1/analytics/dashboard`);
+      // getApiUrl() is a same-origin path now, so give URL an explicit base.
+      const url = new URL(`${getApiUrl()}/api/v1/analytics/dashboard`, window.location.origin);
       if (propId) url.searchParams.append("property_id", propId);
-      const res = await fetch(url.toString(), { headers: { Authorization: `Bearer ${token}` } });
+      // Session rides in the httpOnly cookie — no header needed.
+      const res = await fetch(url.toString());
       const result = await res.json();
       setData(result.data);
       if (result.data?.active_property_id) setSelectedProperty(result.data.active_property_id);
@@ -135,11 +135,8 @@ export default function Dashboard() {
 
   const handleConnectGoogle = async () => {
     try {
-      const token = localStorage.getItem("token");
       const backendUrl = getApiUrl();
-      const res = await fetch(`${backendUrl}/api/v1/integrations/google/link`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch(`${backendUrl}/api/v1/integrations/google/link`);
       const result = await res.json();
       if (result.url) window.location.href = result.url;
     } catch (err) {

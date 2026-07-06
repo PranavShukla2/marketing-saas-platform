@@ -118,9 +118,11 @@ Schema changes go through Alembic (`backend/alembic/README.md`).
 
 ## Authentication & OAuth flow
 
-Two ways in, both issuing a 24-hour JWT (currently held in `localStorage`):
+Two ways in, both ending in a 24-hour JWT delivered as an **httpOnly, Secure,
+SameSite=Lax session cookie** (`arbflow_session`) — JS can never read it:
 
-1. **Email / password** — `POST /register` then `POST /login`.
+1. **Email / password** — `POST /register` then `POST /login` (login response
+   sets the cookie).
 2. **Google sign-in** — the frontend calls `GET /auth/google/login` to get a
    Google consent URL carrying a **signed `state`** (a short-lived JWT encoding
    the flow's intent, so callbacks can't be forged). After consent, Google
@@ -130,10 +132,22 @@ Two ways in, both issuing a 24-hour JWT (currently held in `localStorage`):
    - **auto-connects GA4** and finds/creates the user by verified email,
    - mints the session JWT but hands the browser a **single-use `auth_code`** in
      the redirect URL (never the JWT itself),
-   - the frontend `POST`s that code to `/auth/exchange` to receive the JWT.
+   - the frontend `POST`s that code to `/auth/exchange`, whose response sets the
+     session cookie.
+
+**Why the cookie works cross-deployment:** the browser never calls the Render
+origin directly. All API calls go through a **same-origin Next.js rewrite proxy**
+(`/api/backend/* → the FastAPI backend`, see `next.config.ts`), so the cookie is
+*first-party* in every browser — including Safari, which blocks third-party
+cookies. `get_current_user` also still accepts `Authorization: Bearer` for API
+clients, and `POST /auth/logout` clears the cookie. CSRF: SameSite=Lax plus a
+middleware that rejects cookie-carrying state-changing requests with a foreign
+`Origin`. Note the rewrite destination is **baked at build time** — changing the
+backend URL requires a frontend rebuild.
 
 `AuthGuard` (frontend) gates the authed routes: it runs the auth-code exchange,
-else checks the stored token, else redirects to `/login`.
+else asks `GET /auth/me` whether the session cookie is live, else redirects to
+`/login`.
 
 ### GA4 connection status
 `GET /analytics/dashboard` returns a `status` the workspace maps to a banner:
@@ -176,10 +190,13 @@ See `docs/auth-audit.md` for the full audit. In short:
   outbound Google calls have timeouts.
 - Emails normalized to lowercase everywhere; server-side input validation
   (Pydantic) independent of the browser.
-- CORS is scoped to our own origins (localhost + our Vercel deployments).
+- CORS is scoped to our own origins (localhost + our deployments); the same
+  allow-list backs the **CSRF Origin check** on cookie-authed writes.
+- **Sessions are httpOnly cookies** behind a same-origin proxy — XSS can't read
+  the token (the old localStorage tradeoff is closed). Security headers (HSTS,
+  frame denial, a production CSP) on both apps.
 - Secrets (`JWT_SECRET_KEY`, `ENCRYPTION_KEY`) are required at startup — the app
-  fails fast if missing. **Known tradeoff:** JWT lives in `localStorage` (see the
-  audit for the httpOnly-cookie migration plan).
+  fails fast if missing.
 
 ## Testing & CI
 
@@ -202,7 +219,10 @@ cd frontend && npm run build
   a valid Fernet key)*, `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`,
   `BACKEND_URL`, `FRONTEND_URL`, optional `CORS_ORIGINS`, optional `SENTRY_DSN`.
 
-**Frontend**: `NEXT_PUBLIC_API_URL` (falls back to the prod Render URL if unset).
+**Frontend**: the browser talks to the same-origin `/api/backend/*` proxy; its
+destination comes from `API_PROXY_TARGET` at **build time** (defaults to
+localhost:8000 in dev, the prod Render URL otherwise). `NEXT_PUBLIC_API_URL`
+now only feeds the CSP `connect-src`.
 
 **Google Cloud Console**: the authorized redirect URI must equal
 `<BACKEND_URL>/api/v1/integrations/google/callback`, and the project needs the
@@ -210,9 +230,11 @@ cd frontend && npm run build
 
 ## Deployment
 
-- **Frontend** → Vercel (set `NEXT_PUBLIC_API_URL`).
+- **Frontend** → Vercel (no API env needed — the proxy defaults to the prod
+  backend; set `API_PROXY_TARGET` only to point elsewhere, then redeploy).
 - **Backend** → Render (`render.yaml`; set the `sync: false` secrets in the
-  dashboard). Run `alembic upgrade head` as a release step.
+  dashboard). Migrations run via the blueprint's `preDeployCommand`
+  (`alembic upgrade head`).
 - **Database** → Neon Postgres (enable backups; never rely on Render's ephemeral
   SQLite for anything that must persist).
 
@@ -222,7 +244,7 @@ cd frontend && npm run build
   OAuth + Graph/Marketing API services are still stubs.
 - **Billing / team** pages are placeholders (no Stripe, single-owner team yet).
 - **Anomaly alerts** (advertised on the landing page) aren't implemented yet.
-- Auth uses `localStorage` (not httpOnly cookies); no email verification /
-  password reset yet.
+- Access tokens are 24h with no refresh-token rotation / server-side revocation
+  yet; the rate limiter is per-process (needs Redis before horizontal scaling).
 
 A fuller production-readiness plan is tracked privately by the maintainer.

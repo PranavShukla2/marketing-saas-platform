@@ -19,11 +19,9 @@ export default function CampaignsPage() {
 
   const fetchCampaigns = async () => {
     try {
-      const token = localStorage.getItem("token");
       const backendUrl = getApiUrl();
-      const res = await fetch(`${backendUrl}/api/v1/workspace/campaigns`, {
-        headers: { "Authorization": `Bearer ${token}` }
-      });
+      // Session rides in the httpOnly cookie — no header needed.
+      const res = await fetch(`${backendUrl}/api/v1/workspace/campaigns`);
       if (res.ok) {
         const data = await res.json();
         setCampaigns(data.campaigns || []);

@@ -11,20 +11,15 @@ export default function ReportsPage() {
   const generatePDF = async () => {
     setGenerating(true);
     try {
-      const token = localStorage.getItem("token");
       const backendUrl = getApiUrl();
 
-      // Fetch real dashboard data
-      const res = await fetch(`${backendUrl}/api/v1/analytics/dashboard`, {
-        headers: { "Authorization": `Bearer ${token}` }
-      });
+      // Fetch real dashboard data (session rides in the httpOnly cookie)
+      const res = await fetch(`${backendUrl}/api/v1/analytics/dashboard`);
       const result = await res.json();
       const d = result.data;
 
       // Fetch real campaign data
-      const campRes = await fetch(`${backendUrl}/api/v1/workspace/campaigns`, {
-        headers: { "Authorization": `Bearer ${token}` }
-      });
+      const campRes = await fetch(`${backendUrl}/api/v1/workspace/campaigns`);
       const campResult = await campRes.json();
       const campaigns = campResult.campaigns || [];
 

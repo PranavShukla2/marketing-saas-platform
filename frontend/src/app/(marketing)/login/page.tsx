@@ -82,8 +82,9 @@ export default function LoginPage() {
         throw new Error(detailToMessage(errorData.detail, "Invalid credentials"));
       }
 
-      const data = await response.json();
-      localStorage.setItem("token", data.access_token);
+      // The session arrives as an httpOnly Set-Cookie on this response —
+      // nothing to store client-side.
+      await response.json();
       router.push("/dashboard");
 
     } catch (err) {

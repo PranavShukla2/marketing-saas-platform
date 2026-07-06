@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { consumeAuthCode } from "../lib/auth";
+import { consumeAuthCode, fetchSession } from "../lib/auth";
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -15,16 +15,18 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     (async () => {
       // Google OAuth sign-in lands here with a one-time ?auth_code=. Exchange
       // it before rendering children so the protected page never mounts (and
-      // wipes the URL) until we have a token.
+      // wipes the URL) until the session cookie is set.
       if (await consumeAuthCode()) {
         if (!cancelled) setIsAuthenticated(true);
         return;
       }
 
-      const token = localStorage.getItem("token");
+      // The session lives in an httpOnly cookie JS can't read, so ask the
+      // backend whether we're signed in.
+      const authed = await fetchSession();
       if (cancelled) return;
 
-      if (!token) {
+      if (!authed) {
         setIsAuthenticated(false);
         if (pathname !== "/login" && pathname !== "/register") {
           router.push("/login");

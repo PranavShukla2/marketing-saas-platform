@@ -3,15 +3,22 @@
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { fetchSession } from "../../../lib/auth";
 
 export default function IntegrationsPage() {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Check if the user is logged in as soon as the page loads
+  // Check if the user is logged in as soon as the page loads. The session is
+  // an httpOnly cookie, so we ask the backend rather than read storage.
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    setIsAuthenticated(!!token);
+    let cancelled = false;
+    fetchSession().then((ok) => {
+      if (!cancelled) setIsAuthenticated(ok);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const handleConnectClick = () => {

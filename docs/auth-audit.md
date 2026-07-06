@@ -139,3 +139,24 @@ hint + client-side check on register (matching the server rule), and
 - **No password reset flow yet** — needs an email provider first.
 - **24h token lifetime, no refresh/rotation** — acceptable for the current
   product stage.
+
+---
+
+## Update — the localStorage tradeoff is closed
+
+Sessions now live in an **httpOnly, Secure, SameSite=Lax cookie**
+(`arbflow_session`) instead of localStorage, so an XSS can no longer read the
+token. The pieces that make it work across our split deployment:
+
+- All browser→API traffic goes through a **same-origin Next.js rewrite proxy**
+  (`/api/backend/*`), making the cookie first-party in every browser (Safari
+  included).
+- `get_current_user` accepts the cookie **or** a Bearer header (API clients
+  unchanged); `POST /auth/logout` clears the cookie.
+- CSRF: SameSite=Lax + a middleware that rejects cookie-authed state-changing
+  requests whose `Origin` isn't ours.
+- Verified by 8 backend tests and a full browser E2E
+  (register → login → cookie flags → reload → logout).
+
+Password reset also exists now (see `/auth/password/*`). Still open from the
+list above: per-process rate limiter, and 24h tokens with no refresh rotation.

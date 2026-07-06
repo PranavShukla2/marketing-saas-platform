@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Flo from "./landing/Flo";
+import { fetchSession, logout } from "../lib/auth";
 
 export default function Navbar() {
   const router = useRouter();
@@ -13,8 +14,14 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    setIsAuthenticated(!!token);
+    // Session is an httpOnly cookie — ask the backend instead of reading storage.
+    let cancelled = false;
+    fetchSession().then((ok) => {
+      if (!cancelled) setIsAuthenticated(ok);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [pathname]);
 
   useEffect(() => {
@@ -23,8 +30,8 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
+  const handleLogout = async () => {
+    await logout();
     setIsAuthenticated(false);
     router.push("/login");
   };

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import { getApiUrl } from "../lib/auth";
+import { getApiUrl, logout } from "../lib/auth";
 
 const navItems = [
   { name: "Dashboard", href: "/dashboard", icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" },
@@ -27,11 +27,9 @@ export default function Sidebar() {
   useEffect(() => {
     const fetchBilling = async () => {
       try {
-        const token = localStorage.getItem("token");
         const backendUrl = getApiUrl();
-        const res = await fetch(`${backendUrl}/api/v1/workspace/billing`, {
-          headers: { "Authorization": `Bearer ${token}` }
-        });
+        // Session rides in the httpOnly cookie — no header needed.
+        const res = await fetch(`${backendUrl}/api/v1/workspace/billing`);
         if (res.ok) {
           const data = await res.json();
           setUsage(data.usage);
@@ -107,7 +105,7 @@ export default function Sidebar() {
           </div>
         </Link>
         
-        <div onClick={() => { localStorage.removeItem("token"); window.location.href = "/login"; }} className="flex items-center space-x-3 text-sm font-medium text-gray-500 hover:text-gray-800 transition-colors px-3 py-2 cursor-pointer">
+        <div onClick={async () => { await logout(); window.location.href = "/login"; }} className="flex items-center space-x-3 text-sm font-medium text-gray-500 hover:text-gray-800 transition-colors px-3 py-2 cursor-pointer">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
           <span>Log out</span>
         </div>
