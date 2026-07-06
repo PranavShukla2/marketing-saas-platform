@@ -18,6 +18,10 @@ from app.db.models import Integration, User
 from app.core.security import decrypt_credentials, encrypt_credentials
 from app.services.anomaly import detect_anomaly
 
+from app.core.log import get_logger
+
+log = get_logger("analytics")
+
 router = APIRouter()
 
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
@@ -54,7 +58,7 @@ def _refresh_and_store(credentials, creds_data, integration, db) -> bool:
         db.commit()
         return True
     except Exception as e:
-        print(f"Token refresh failed: {e}")
+        log.warning(f"Token refresh failed: {e}")
         return False
 
 @router.get("/dashboard")
@@ -129,7 +133,7 @@ def get_dashboard_data(
             except Exception as e2:
                 e = e2
         if not retried:
-            print(f"Admin API Error: {e}")
+            log.warning(f"Admin API error: {e}")
             # Reached Google but the call failed — almost always the Analytics Admin/Data
             # APIs aren't enabled on the Cloud project, or this account lacks GA4 access.
             return {"data": {"status": "no_access", "message": "Couldn't reach Google Analytics. Make sure the Analytics Admin & Data APIs are enabled and this Google account has GA4 access."}}
@@ -193,7 +197,7 @@ def get_dashboard_data(
                     "views_per_session": str(round(float(v[9].value), 1)),
                 })
         except Exception as e:
-            print(f"Summary query error: {e}")
+            log.warning(f"Summary query error: {e}")
 
         # Revenue / conversions live in a second request (often zero for non-ecommerce
         # properties, and a bad metric here shouldn't blank the whole KPI band).
@@ -217,7 +221,7 @@ def get_dashboard_data(
                     "conversions": str(int(round(float(v[2].value)))),
                 })
         except Exception as e:
-            print(f"Revenue query error: {e}")
+            log.warning(f"Revenue query error: {e}")
 
         # Channel Metrics
         source_request = RunReportRequest(
@@ -308,7 +312,7 @@ def get_dashboard_data(
             ]
             funnel_data = [{"step": s, "count": c} for s, c in funnel_steps if c > 0]
         except Exception as e:
-            print(f"Funnel query error: {e}")
+            log.warning(f"Funnel query error: {e}")
 
         # Weekly New vs Returning Users (for retention cohort)
         cohort_data = []
@@ -330,7 +334,7 @@ def get_dashboard_data(
                 weeks[week][user_type] = users
             cohort_data = sorted(weeks.values(), key=lambda x: x["week"])
         except Exception as e:
-            print(f"Cohort query error: {e}")
+            log.warning(f"Cohort query error: {e}")
 
         # Daily time series (last 30 days) — powers the trend chart.
         time_series = []
@@ -358,7 +362,7 @@ def get_dashboard_data(
                 })
             time_series = sorted(time_series, key=lambda x: x["raw"])
         except Exception as e:
-            print(f"Time series query error: {e}")
+            log.warning(f"Time series query error: {e}")
 
         # Default channel grouping (Organic Search, Direct, Paid, Social, ...).
         channel_data = []
@@ -378,7 +382,7 @@ def get_dashboard_data(
                 })
             channel_data = sorted(channel_data, key=lambda x: x["users"], reverse=True)
         except Exception as e:
-            print(f"Channel query error: {e}")
+            log.warning(f"Channel query error: {e}")
 
         # Geography — top countries by users.
         geo_data = []
@@ -398,7 +402,7 @@ def get_dashboard_data(
                 })
             geo_data = sorted(geo_data, key=lambda x: x["users"], reverse=True)[:8]
         except Exception as e:
-            print(f"Geo query error: {e}")
+            log.warning(f"Geo query error: {e}")
 
         # Browser breakdown.
         browser_data = []
@@ -417,7 +421,7 @@ def get_dashboard_data(
                 })
             browser_data = sorted(browser_data, key=lambda x: x["users"], reverse=True)[:6]
         except Exception as e:
-            print(f"Browser query error: {e}")
+            log.warning(f"Browser query error: {e}")
 
         # Operating system breakdown.
         os_data = []
@@ -436,7 +440,7 @@ def get_dashboard_data(
                 })
             os_data = sorted(os_data, key=lambda x: x["users"], reverse=True)[:6]
         except Exception as e:
-            print(f"OS query error: {e}")
+            log.warning(f"OS query error: {e}")
 
         # Top events by count.
         events_data = []
@@ -455,7 +459,7 @@ def get_dashboard_data(
                 })
             events_data = sorted(events_data, key=lambda x: x["count"], reverse=True)[:8]
         except Exception as e:
-            print(f"Events query error: {e}")
+            log.warning(f"Events query error: {e}")
 
         # --- DYNAMIC INSIGHTS ENGINE ---
         if post_level_data:
@@ -500,6 +504,6 @@ def get_dashboard_data(
         }
 
     except Exception as e:
-        print(f"GA4 Data API Error: {e}")
+        log.error(f"GA4 Data API error: {e}")
         # Connected, but pulling the report failed (Data API disabled, quota, etc.)
         return {"data": {"status": "no_access", "message": "Connected, but couldn't pull GA4 reports. Check that the Analytics Data API is enabled."}}

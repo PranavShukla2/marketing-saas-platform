@@ -16,6 +16,10 @@ from app.api import analytics, auth, integrations, workspace
 # (backend/alembic/) is the source of truth for schema changes going forward.
 models.Base.metadata.create_all(bind=engine)
 
+from app.core.log import get_logger
+
+log = get_logger("main")
+
 app = FastAPI(title="Marketing SaaS API")
 
 # Optional error tracking — only turns on if SENTRY_DSN is set, so local/dev
@@ -32,7 +36,7 @@ if _sentry_dsn:
             send_default_pii=False,
         )
     except Exception as e:  # never let observability break startup
-        print(f"Sentry init skipped: {e}")
+        log.warning(f"Sentry init skipped: {e}")
 
 
 @app.exception_handler(Exception)
@@ -50,7 +54,7 @@ async def unhandled_exception_handler(request, exc):
         sentry_sdk.capture_exception(exc)
     except Exception:
         pass
-    print(f"Unhandled error on {request.method} {request.url.path}: {exc!r}")
+    log.error(f"Unhandled error on {request.method} {request.url.path}: {exc!r}")
     return JSONResponse(status_code=500, content={"detail": "Something went wrong on our end."})
 
 # Allowed browser origins. Localhost, our production domain, and our known Vercel
@@ -147,5 +151,5 @@ def health_check():
             conn.execute(text("SELECT 1"))
         return {"status": "ok", "database": "ok"}
     except Exception as e:
-        print(f"Health check DB error: {e}")
+        log.error(f"Health check DB error: {e}")
         return JSONResponse(status_code=503, content={"status": "degraded", "database": "unreachable"})

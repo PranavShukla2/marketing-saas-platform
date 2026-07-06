@@ -8,6 +8,10 @@ import os
 
 import requests
 
+from app.core.log import get_logger
+
+log = get_logger("email")
+
 RESEND_API_URL = "https://api.resend.com/emails"
 
 
@@ -24,7 +28,7 @@ def send_email(to: str, subject: str, html: str) -> bool:
     """Send one email. Returns True if actually sent, False if logged-only/failed."""
     api_key, email_from, _ = _cfg()
     if not api_key:
-        print(f"[email:dev] (no RESEND_API_KEY) to={to} subject={subject!r}\n{html}\n")
+        log.info(f"[email:dev] (no RESEND_API_KEY) to={to} subject={subject!r}\n{html}")
         return False
     try:
         r = requests.post(
@@ -34,11 +38,11 @@ def send_email(to: str, subject: str, html: str) -> bool:
             timeout=15,
         )
         if r.status_code >= 400:
-            print(f"[email] Resend error {r.status_code}: {r.text}")
+            log.error(f"Resend error {r.status_code}: {r.text}")
             return False
         return True
     except Exception as e:  # never let email failure break the request
-        print(f"[email] send failed: {e}")
+        log.error(f"Email send failed: {e}")
         return False
 
 
