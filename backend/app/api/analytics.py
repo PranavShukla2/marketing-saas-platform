@@ -14,6 +14,7 @@ from google.analytics.admin import AnalyticsAdminServiceClient
 from app.api.deps import get_db, get_current_user
 from app.db.models import Integration, User
 from app.core.security import decrypt_credentials, encrypt_credentials
+from app.services.anomaly import detect_anomaly
 
 router = APIRouter()
 
@@ -446,7 +447,7 @@ def get_dashboard_data(
                 "browser_data": browser_data,
                 "os_data": os_data,
                 "events_data": events_data,
-                "anomaly": {"is_anomaly": False, "message": ""},
+                "anomaly": detect_anomaly(time_series),
                 "suggestions": dynamic_insights
             }
         }

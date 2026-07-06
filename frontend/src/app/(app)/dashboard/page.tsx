@@ -316,6 +316,28 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* ---------------- Anomaly alert (live data only) ---------------- */}
+      {!isDemo && activePlatform === "google" && data?.anomaly?.is_anomaly && (
+        <div className="max-w-7xl mx-auto mb-6">
+          <div
+            className="rounded-2xl border px-5 py-3.5 flex items-center gap-3"
+            style={{
+              borderColor: data.anomaly.direction === "dip" ? "rgba(255,107,94,.35)" : "rgba(20,184,166,.35)",
+              background: data.anomaly.direction === "dip" ? "rgba(255,107,94,.07)" : "rgba(20,184,166,.07)",
+            }}
+          >
+            <span
+              className="w-2.5 h-2.5 rounded-full animate-pulse flex-shrink-0"
+              style={{ background: data.anomaly.direction === "dip" ? "var(--coral)" : "var(--teal)" }}
+            />
+            <p className="text-sm text-[var(--ink)]">
+              <strong>{data.anomaly.direction === "dip" ? "Worth a look:" : "Nice spike:"}</strong>{" "}
+              {data.anomaly.message}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* ---------------- Source switcher ---------------- */}
       <div className="max-w-7xl mx-auto mb-6">
         <div className="inline-flex gap-1 bg-white border border-[var(--line)] p-1 rounded-2xl shadow-sm">

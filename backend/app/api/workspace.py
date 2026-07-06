@@ -50,19 +50,17 @@ def get_billing(db: Session = Depends(get_db), current_user: User = Depends(get_
     if dash_data.get("status") == "active":
         current_views = int(dash_data.get("summary", {}).get("page_views", 0))
         
-    # Standard plan limit is 100000 views
+    # The free beta includes 100k tracked views/month. (Real enforced limits and
+    # paid plans arrive with Stripe.)
     limit = 100000
     percentage = min(int((current_views / limit) * 100), 100)
-    
+
     return {
-        "plan": "Pro Agency (Beta)",
-        "billing_cycle": "Monthly",
+        "plan": "Free Beta",
+        "billing_cycle": "—",
         "price": "$0",
-        "renewal_date": "Waived",
+        "renewal_date": "—",
         "usage": { "current": current_views, "limit": limit, "percentage": percentage },
-        "invoices": [
-            { "date": "Oct 1, 2026", "amount": "$0.00", "status": "Waived (Beta)" },
-            { "date": "Sep 1, 2026", "amount": "$0.00", "status": "Waived (Beta)" },
-            { "date": "Aug 1, 2026", "amount": "$0.00", "status": "Waived (Beta)" },
-        ]
+        # Honest: nothing has ever been billed, so there are no invoices.
+        "invoices": []
     }
