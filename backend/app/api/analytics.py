@@ -1,5 +1,7 @@
 import os
-import json
+import time
+from datetime import timezone
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
@@ -21,6 +23,39 @@ router = APIRouter()
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 TOKEN_URI = "https://oauth2.googleapis.com/token"
+
+# Refresh the Google access token only when it's actually near expiry (with a
+# healthy buffer), instead of on every single dashboard load.
+REFRESH_BUFFER_SECONDS = 300
+
+
+def _token_is_fresh(creds_data: dict) -> bool:
+    """True only when a stored expiry exists and is comfortably in the future.
+
+    Older integrations have no expiry_ts stored — they return False and take
+    the refresh path, which is exactly the previous behaviour.
+    """
+    expiry_ts = creds_data.get("expiry_ts")
+    if not isinstance(expiry_ts, (int, float)):
+        return False
+    return expiry_ts - time.time() > REFRESH_BUFFER_SECONDS
+
+
+def _refresh_and_store(credentials, creds_data, integration, db) -> bool:
+    """Refresh the access token and persist it (with its expiry) re-encrypted."""
+    try:
+        credentials.refresh(GoogleAuthRequest())
+        creds_data["access_token"] = credentials.token
+        if credentials.expiry is not None:
+            # google-auth gives a *naive UTC* datetime; pin the zone before
+            # converting, or .timestamp() would treat it as local time.
+            creds_data["expiry_ts"] = int(credentials.expiry.replace(tzinfo=timezone.utc).timestamp())
+        integration.encrypted_credentials = encrypt_credentials(creds_data)
+        db.commit()
+        return True
+    except Exception as e:
+        print(f"Token refresh failed: {e}")
+        return False
 
 @router.get("/dashboard")
 def get_dashboard_data(
@@ -55,37 +90,49 @@ def get_dashboard_data(
         client_secret=GOOGLE_CLIENT_SECRET,
     )
 
-    # Access tokens live ~1 hour and we don't persist an expiry, so google-auth
-    # would happily keep using a stale token (it thinks it's still valid) until
-    # the API 401s and the workspace looks "disconnected". Proactively refresh
-    # with the long-lived refresh token and save the new access token back.
+    # Access tokens live ~1 hour. We persist the expiry alongside the token and
+    # only refresh when it's near/past it — older rows without a stored expiry
+    # (and any refresh failure) take the old always-refresh path.
+    skipped_refresh = False
     if creds_data.get("refresh_token"):
-        try:
-            credentials.refresh(GoogleAuthRequest())
-            creds_data["access_token"] = credentials.token
-            integration.encrypted_credentials = encrypt_credentials(creds_data)
-            db.commit()
-        except Exception as e:
-            print(f"Token refresh failed: {e}")
+        if _token_is_fresh(creds_data):
+            skipped_refresh = True
+        elif not _refresh_and_store(credentials, creds_data, integration, db):
             return {"data": {"status": "reauth_required"}}
 
     admin_client = AnalyticsAdminServiceClient(credentials=credentials)
     properties_list = []
 
-    try:
+    def _list_properties():
         # Ask Google for every account and property this user owns
-        account_summaries = admin_client.list_account_summaries()
-        for account in account_summaries:
+        out = []
+        for account in admin_client.list_account_summaries():
             for prop in account.property_summaries:
-                properties_list.append({
-                    "id": prop.property, # Formatted perfectly as "properties/12345"
+                out.append({
+                    "id": prop.property,  # formatted as "properties/12345"
                     "name": f"{account.display_name} - {prop.display_name}"
                 })
+        return out
+
+    try:
+        properties_list = _list_properties()
     except Exception as e:
-        print(f"Admin API Error: {e}")
-        # Reached Google but the call failed — almost always the Analytics Admin/Data
-        # APIs aren't enabled on the Cloud project, or this account lacks GA4 access.
-        return {"data": {"status": "no_access", "message": "Couldn't reach Google Analytics. Make sure the Analytics Admin & Data APIs are enabled and this Google account has GA4 access."}}
+        # If we trusted a stored expiry and skipped the refresh, the token may
+        # have been revoked out from under us — refresh once and retry before
+        # concluding anything.
+        retried = False
+        if skipped_refresh and creds_data.get("refresh_token") and _refresh_and_store(credentials, creds_data, integration, db):
+            admin_client = AnalyticsAdminServiceClient(credentials=credentials)
+            try:
+                properties_list = _list_properties()
+                retried = True
+            except Exception as e2:
+                e = e2
+        if not retried:
+            print(f"Admin API Error: {e}")
+            # Reached Google but the call failed — almost always the Analytics Admin/Data
+            # APIs aren't enabled on the Cloud project, or this account lacks GA4 access.
+            return {"data": {"status": "no_access", "message": "Couldn't reach Google Analytics. Make sure the Analytics Admin & Data APIs are enabled and this Google account has GA4 access."}}
 
     # Connected fine, but this Google account has no GA4 properties set up.
     if not properties_list:

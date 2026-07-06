@@ -37,3 +37,15 @@ def test_unhandled_errors_return_json_envelope(client):
         r = c.get("/_test/boom")
     assert r.status_code == 500
     assert r.json() == {"detail": "Something went wrong on our end."}
+
+
+def test_token_freshness_helper():
+    import time
+    from app.api.analytics import _token_is_fresh, REFRESH_BUFFER_SECONDS
+
+    now = time.time()
+    assert _token_is_fresh({}) is False                                   # legacy rows: no expiry stored
+    assert _token_is_fresh({"expiry_ts": "soon"}) is False                # garbage value
+    assert _token_is_fresh({"expiry_ts": now - 10}) is False              # already expired
+    assert _token_is_fresh({"expiry_ts": now + REFRESH_BUFFER_SECONDS - 5}) is False  # inside buffer
+    assert _token_is_fresh({"expiry_ts": now + 3600}) is True             # comfortably fresh
