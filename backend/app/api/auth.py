@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 import jwt
@@ -11,7 +11,10 @@ from app.schemas import (
     UserCreate, UserLogin, UserResponse, AuthCodeExchange,
     EmailRequest, TokenPayload, PasswordResetPayload,
 )
-from app.core.config import SECRET_KEY, ALGORITHM
+from app.core.config import (
+    SECRET_KEY, ALGORITHM,
+    SESSION_COOKIE_NAME, SESSION_MAX_AGE_SECONDS, COOKIE_SECURE,
+)
 from app.core.oauth import create_oauth_state, consume_auth_code
 from app.core.ratelimit import enforce_rate_limit
 from app.core.time import utcnow
@@ -36,6 +39,24 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 # take the same time — otherwise response timing quietly reveals which emails
 # have accounts.
 _DUMMY_HASH = pwd_context.hash(os.urandom(24).hex())
+
+
+def _set_session_cookie(response: Response, token: str) -> None:
+    """Attach the session JWT as an httpOnly cookie.
+
+    JS can't read it (httpOnly), so an XSS can't exfiltrate the session the way
+    it could with localStorage. The frontend reaches the API through a
+    same-origin rewrite proxy, so Lax is enough and works in every browser.
+    """
+    response.set_cookie(
+        key=SESSION_COOKIE_NAME,
+        value=token,
+        max_age=SESSION_MAX_AGE_SECONDS,
+        httponly=True,
+        secure=COOKIE_SECURE,
+        samesite="lax",
+        path="/",
+    )
 
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
@@ -71,7 +92,7 @@ def register_user(user_data: UserCreate, request: Request, db: Session = Depends
     return new_user
 
 @router.post("/login")
-def login_user(credentials: UserLogin, request: Request, db: Session = Depends(get_db)):
+def login_user(credentials: UserLogin, request: Request, response: Response, db: Session = Depends(get_db)):
     enforce_rate_limit(request, "login")
 
     user = db.query(User).filter(User.email == credentials.email).first()
@@ -97,6 +118,10 @@ def login_user(credentials: UserLogin, request: Request, db: Session = Depends(g
     expire = utcnow() + timedelta(hours=24)
     token_data = {"sub": str(user.id), "exp": expire}
     token = jwt.encode(token_data, SECRET_KEY, algorithm=ALGORITHM)
+
+    # Session travels as an httpOnly cookie; the body copy stays for API
+    # clients and the transition period (the frontend no longer stores it).
+    _set_session_cookie(response, token)
 
     return {
         "access_token": token,
@@ -141,7 +166,7 @@ def google_auth_redirect():
 
 
 @router.post("/exchange")
-def exchange_auth_code(payload: AuthCodeExchange, request: Request, db: Session = Depends(get_db)):
+def exchange_auth_code(payload: AuthCodeExchange, request: Request, response: Response, db: Session = Depends(get_db)):
     """Exchange a single-use OAuth `auth_code` for the session JWT.
 
     Keeps the long-lived token out of the redirect URL: the callback hands the
@@ -151,7 +176,21 @@ def exchange_auth_code(payload: AuthCodeExchange, request: Request, db: Session 
     token = consume_auth_code(db, payload.code)
     if not token:
         raise HTTPException(status_code=400, detail="Invalid or expired code")
+    _set_session_cookie(response, token)
     return {"access_token": token, "token_type": "bearer"}
+
+
+@router.post("/logout")
+def logout(response: Response):
+    """Clear the session cookie. (Bearer clients just drop their token.)"""
+    response.delete_cookie(
+        key=SESSION_COOKIE_NAME,
+        path="/",
+        httponly=True,
+        secure=COOKIE_SECURE,
+        samesite="lax",
+    )
+    return {"detail": "Signed out."}
 
 
 @router.get("/me", response_model=UserResponse)

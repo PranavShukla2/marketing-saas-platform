@@ -32,7 +32,9 @@ def client():
     # another's limit.
     ratelimit._hits.clear()
 
-    with TestClient(app) as c:
+    # https base_url so the Secure session cookie round-trips in tests the same
+    # way it does in production.
+    with TestClient(app, base_url="https://testserver") as c:
         yield c
 
 

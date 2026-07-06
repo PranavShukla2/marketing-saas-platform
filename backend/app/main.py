@@ -1,9 +1,12 @@
 import os
+import re
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
+
+from app.core.config import SESSION_COOKIE_NAME
 
 from app.db.database import engine
 from app.db import models
@@ -45,16 +48,43 @@ default_origins = [
 extra_origins = [o.strip() for o in os.getenv("CORS_ORIGINS", "").split(",") if o.strip()]
 origins = list(dict.fromkeys(default_origins + extra_origins))
 
+# Our Vercel deployments (prod + previews) OR any pranavmshukla.in subdomain
+# (e.g. arbflow.pranavmshukla.in) — not every vercel.app site. Shared by CORS
+# and the CSRF origin check below.
+ORIGIN_REGEX = r"https://(marketing-saas-platform[a-z0-9-]*\.vercel\.app|([a-z0-9-]+\.)*pranavmshukla\.in)"
+_origin_pattern = re.compile(ORIGIN_REGEX)
+
+
+def _origin_allowed(origin: str) -> bool:
+    return origin in origins or _origin_pattern.fullmatch(origin) is not None
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    # Our Vercel deployments (prod + previews) OR any pranavmshukla.in subdomain
-    # (e.g. arbflow.pranavmshukla.in) — not every vercel.app site.
-    allow_origin_regex=r"https://(marketing-saas-platform[a-z0-9-]*\.vercel\.app|([a-z0-9-]+\.)*pranavmshukla\.in)",
+    allow_origin_regex=ORIGIN_REGEX,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def csrf_origin_check(request, call_next):
+    """CSRF guard for cookie-based sessions.
+
+    The session cookie is SameSite=Lax behind a same-origin proxy, which already
+    blocks classic cross-site sends; this is defense-in-depth. For state-changing
+    requests that carry the session cookie, the browser-sent Origin must be one
+    of ours. Requests without the cookie (Bearer/API clients) and requests
+    without an Origin header (curl, server-to-server) are untouched — CSRF is a
+    browser problem, and every modern browser sends Origin on such requests.
+    """
+    if request.method in ("POST", "PUT", "PATCH", "DELETE") and SESSION_COOKIE_NAME in request.cookies:
+        origin = request.headers.get("origin")
+        if origin is not None and not _origin_allowed(origin):
+            return JSONResponse(status_code=403, content={"detail": "Origin not allowed."})
+    return await call_next(request)
 
 # Security headers on every response. Kept deliberately light for an API:
 # `frame-ancestors 'none'` (+ X-Frame-Options) stops clickjacking without a

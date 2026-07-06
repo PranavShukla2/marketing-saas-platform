@@ -28,3 +28,14 @@ ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
 # --- Credential encryption (Fernet / AES-128-CBC + HMAC) ---
 # Must be a 32-byte url-safe base64-encoded key, e.g. Fernet.generate_key().
 ENCRYPTION_KEY = _require("ENCRYPTION_KEY").encode("utf-8")
+
+# --- Session cookie (httpOnly JWT) ---
+# The frontend proxies all API calls through its own origin (a Next.js
+# rewrite), so this cookie is first-party and SameSite=Lax works everywhere —
+# including Safari, which blocks third-party cookies outright.
+SESSION_COOKIE_NAME = "arbflow_session"
+SESSION_MAX_AGE_SECONDS = 24 * 60 * 60  # matches the JWT's 24h expiry
+# Secure=True is right for prod and also fine on http://localhost in
+# Chrome/Firefox (localhost counts as a trustworthy origin). Set
+# COOKIE_SECURE=false only if a local browser refuses the cookie.
+COOKIE_SECURE = os.getenv("COOKIE_SECURE", "true").lower() == "true"
