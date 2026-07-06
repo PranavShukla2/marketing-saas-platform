@@ -1,6 +1,6 @@
 import os
 import json
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 # Official Google Libraries
@@ -23,8 +23,10 @@ TOKEN_URI = "https://oauth2.googleapis.com/token"
 
 @router.get("/dashboard")
 def get_dashboard_data(
-    property_id: str = None, 
-    db: Session = Depends(get_db), 
+    # GA4 property ids look like "properties/123456789". Validate the shape at
+    # the edge so nothing user-controlled flows into Google API calls verbatim.
+    property_id: str | None = Query(default=None, pattern=r"^properties/\d{1,20}$"),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """Fetches live Google Analytics data for the logged-in user dynamically."""

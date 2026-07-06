@@ -34,6 +34,25 @@ if _sentry_dsn:
     except Exception as e:  # never let observability break startup
         print(f"Sentry init skipped: {e}")
 
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request, exc):
+    """Consistent error envelope for anything unexpected.
+
+    Every intentional error in the API is an HTTPException with a `detail`
+    string; this makes *unintentional* ones look the same to the frontend
+    (instead of a bare 500 with a non-JSON body), and hands the exception to
+    Sentry when it's configured.
+    """
+    try:
+        import sentry_sdk
+
+        sentry_sdk.capture_exception(exc)
+    except Exception:
+        pass
+    print(f"Unhandled error on {request.method} {request.url.path}: {exc!r}")
+    return JSONResponse(status_code=500, content={"detail": "Something went wrong on our end."})
+
 # Allowed browser origins. Localhost, our production domain, and our known Vercel
 # URLs are baked in; any other origin can be appended via the CORS_ORIGINS env
 # var (comma-separated). The regex matches our own Vercel deploys (prod +
