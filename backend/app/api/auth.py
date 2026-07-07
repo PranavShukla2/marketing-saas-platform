@@ -6,7 +6,7 @@ import os
 from datetime import timedelta
 
 from app.db.database import get_db
-from app.db.models import User, Integration, VerificationToken
+from app.db.models import User, Integration, VerificationToken, DashboardCache
 from app.schemas import (
     UserCreate, UserLogin, UserResponse, AuthCodeExchange,
     EmailRequest, TokenPayload, PasswordResetPayload,
@@ -207,6 +207,7 @@ def delete_account(current_user: User = Depends(get_current_user), db: Session =
     irreversible and cascades so no orphaned credentials are left behind."""
     db.query(Integration).filter(Integration.user_id == current_user.id).delete()
     db.query(VerificationToken).filter(VerificationToken.user_id == current_user.id).delete()
+    db.query(DashboardCache).filter(DashboardCache.user_id == current_user.id).delete()
     db.delete(current_user)
     db.commit()
     return None

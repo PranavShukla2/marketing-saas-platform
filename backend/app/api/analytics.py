@@ -17,6 +17,7 @@ from app.api.deps import get_db, get_current_user
 from app.db.models import Integration, User
 from app.core.security import decrypt_credentials, encrypt_credentials
 from app.services.anomaly import detect_anomaly
+from app.services.dashboard_cache import get_cached, store_and_alert
 
 from app.core.log import get_logger
 
@@ -66,9 +67,24 @@ def get_dashboard_data(
     # GA4 property ids look like "properties/123456789". Validate the shape at
     # the edge so nothing user-controlled flows into Google API calls verbatim.
     property_id: str | None = Query(default=None, pattern=r"^properties/\d{1,20}$"),
+    # Sync button sends refresh=true to bypass the cache and force a live pull.
+    refresh: bool = Query(default=False),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    """Dashboard data — served from the short-TTL cache when fresh, else built
+    live from Google and written back (which also triggers anomaly alerting)."""
+    if not refresh:
+        cached = get_cached(db, current_user.id, property_id)
+        if cached is not None:
+            return {"data": cached}
+
+    result = _build_dashboard_payload(property_id, db, current_user)
+    store_and_alert(db, current_user, property_id, result.get("data", {}))
+    return result
+
+
+def _build_dashboard_payload(property_id, db, current_user):
     """Fetches live Google Analytics data for the logged-in user dynamically."""
     
     integration = db.query(Integration).filter(

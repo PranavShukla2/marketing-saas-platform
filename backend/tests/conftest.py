@@ -17,6 +17,7 @@ os.environ["JWT_ALGORITHM"] = "HS256"
 os.environ["ENCRYPTION_KEY"] = Fernet.generate_key().decode()
 os.environ["DATABASE_URL"] = f"sqlite:///{_db_path}"
 os.environ.pop("SENTRY_DSN", None)  # keep error tracking off during tests
+os.environ["BACKGROUND_SYNC_ENABLED"] = "false"  # no background loop in tests
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402

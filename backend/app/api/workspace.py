@@ -10,7 +10,7 @@ router = APIRouter()
 @router.get("/campaigns")
 def get_campaigns(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """Returns real traffic source channels from GA4 as campaign cards."""
-    dash_info = get_dashboard_data(property_id=None, db=db, current_user=current_user)
+    dash_info = get_dashboard_data(property_id=None, refresh=False, db=db, current_user=current_user)
     dash_data = dash_info.get("data", {})
     
     status = dash_data.get("status", "pending_integration")
@@ -43,7 +43,7 @@ def get_team(current_user: User = Depends(get_current_user)):
 @router.get("/billing")
 def get_billing(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """Returns billing correctly mapped to GA4 page views limits."""
-    dash_info = get_dashboard_data(property_id=None, db=db, current_user=current_user)
+    dash_info = get_dashboard_data(property_id=None, refresh=False, db=db, current_user=current_user)
     dash_data = dash_info.get("data", {})
     
     current_views = 0

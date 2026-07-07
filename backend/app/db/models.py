@@ -61,3 +61,21 @@ class VerificationToken(Base):
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     purpose = Column(String, nullable=False)  # "verify_email" | "reset_password"
     created_at = Column(DateTime, default=utcnow, nullable=False)
+
+
+class DashboardCache(Base):
+    """Cached GA4 dashboard payload per (user, property).
+
+    Serves dashboard loads within a TTL instead of hitting Google live on every
+    page view, and gives the background sync somewhere to write. Also carries
+    the anomaly-alert dedupe key so the same anomaly never emails twice.
+    """
+    __tablename__ = "dashboard_cache"
+
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    # "" for the account's default property, else the requested property id.
+    property_key = Column(String, primary_key=True, default="")
+    payload = Column(String, nullable=False)  # JSON blob of the dashboard data
+    fetched_at = Column(DateTime, nullable=False, default=utcnow)
+    # e.g. "sessions:07/11:dip" — the last anomaly we emailed about.
+    last_anomaly_key = Column(String, nullable=True)

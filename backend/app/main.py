@@ -1,5 +1,7 @@
+import asyncio
 import os
 import re
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,10 +19,22 @@ from app.api import analytics, auth, integrations, workspace
 models.Base.metadata.create_all(bind=engine)
 
 from app.core.log import get_logger
+from app.services.sync import SYNC_ENABLED, sync_loop
 
 log = get_logger("main")
 
-app = FastAPI(title="Marketing SaaS API")
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    # Background dashboard sync (cache warmer + anomaly emails). Env-gated so
+    # tests and one-off scripts can turn it off.
+    task = asyncio.create_task(sync_loop()) if SYNC_ENABLED else None
+    yield
+    if task:
+        task.cancel()
+
+
+app = FastAPI(title="Marketing SaaS API", lifespan=lifespan)
 
 # Optional error tracking — only turns on if SENTRY_DSN is set, so local/dev
 # and unconfigured deploys are unaffected.

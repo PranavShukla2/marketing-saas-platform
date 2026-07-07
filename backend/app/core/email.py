@@ -79,3 +79,15 @@ def send_password_reset_email(to: str, token: str) -> bool:
         link,
     )
     return send_email(to, "Reset your ArbFlow password", html)
+
+
+def send_anomaly_email(to: str, message: str) -> bool:
+    _, _, frontend = _cfg()
+    link = f"{frontend}/dashboard"
+    html = _template(
+        "Something changed in your analytics",
+        message,
+        "Open your dashboard",
+        link,
+    )
+    return send_email(to, "ArbFlow alert: something changed", html)
