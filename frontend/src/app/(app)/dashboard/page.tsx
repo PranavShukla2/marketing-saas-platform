@@ -75,6 +75,8 @@ export default function Dashboard() {
       // getApiUrl() is a same-origin path now, so give URL an explicit base.
       const url = new URL(`${getApiUrl()}/api/v1/analytics/dashboard`, window.location.origin);
       if (propId) url.searchParams.append("property_id", propId);
+      // "Sync now" bypasses the backend's short-TTL cache for a live pull.
+      if (isManualSync) url.searchParams.append("refresh", "true");
       // Session rides in the httpOnly cookie — no header needed.
       const res = await fetch(url.toString());
       const result = await res.json();
