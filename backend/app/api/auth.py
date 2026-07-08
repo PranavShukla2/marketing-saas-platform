@@ -1,12 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
+import json
 import jwt
 import os
 from datetime import timedelta
 
 from app.db.database import get_db
-from app.db.models import User, Integration, VerificationToken, DashboardCache
+from app.db.models import User, Integration, VerificationToken, DashboardCache, AuditLog
 from app.schemas import (
     UserCreate, UserLogin, UserResponse, AuthCodeExchange,
     EmailRequest, TokenPayload, PasswordResetPayload,
@@ -24,6 +26,7 @@ from app.core.verification import (
 )
 from app.core.email import send_verification_email, send_password_reset_email
 from app.api.deps import get_current_user
+from app.services.audit import record as audit
 
 router = APIRouter()
 
@@ -89,6 +92,8 @@ def register_user(user_data: UserCreate, request: Request, db: Session = Depends
     token = create_token(db, new_user.id, VERIFY_EMAIL)
     send_verification_email(new_user.email, token)
 
+    audit(db, "auth.register", request, user_id=new_user.id, email=new_user.email)
+
     return new_user
 
 @router.post("/login")
@@ -103,6 +108,7 @@ def login_user(credentials: UserLogin, request: Request, response: Response, db:
     password_ok = pwd_context.verify(credentials.password, hash_to_check)
 
     if not user or not password_ok:
+        audit(db, "auth.login.failed", request, user_id=user.id if user else None, email=credentials.email)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password"
@@ -118,6 +124,8 @@ def login_user(credentials: UserLogin, request: Request, response: Response, db:
     expire = utcnow() + timedelta(hours=24)
     token_data = {"sub": str(user.id), "exp": expire}
     token = jwt.encode(token_data, SECRET_KEY, algorithm=ALGORITHM)
+
+    audit(db, "auth.login.success", request, user_id=user.id, email=user.email)
 
     # Session travels as an httpOnly cookie; the body copy stays for API
     # clients and the transition period (the frontend no longer stores it).
@@ -177,6 +185,7 @@ def exchange_auth_code(payload: AuthCodeExchange, request: Request, response: Re
     if not token:
         raise HTTPException(status_code=400, detail="Invalid or expired code")
     _set_session_cookie(response, token)
+    audit(db, "auth.login.google", request)
     return {"access_token": token, "token_type": "bearer"}
 
 
@@ -199,17 +208,84 @@ def get_me(current_user: User = Depends(get_current_user)):
     return current_user
 
 
+@router.get("/me/export")
+def export_my_data(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """GDPR/CCPA data-portability: download everything we hold about you.
+
+    Encrypted OAuth credentials are deliberately excluded — they're Google's
+    secrets, not user data, and exporting them would be a security hole.
+    """
+    enforce_rate_limit(request, "export")
+
+    integrations = db.query(Integration).filter(Integration.user_id == current_user.id).all()
+    trail = (
+        db.query(AuditLog)
+        .filter(AuditLog.user_id == current_user.id)
+        .order_by(AuditLog.created_at.desc())
+        .limit(500)
+        .all()
+    )
+    caches = db.query(DashboardCache).filter(DashboardCache.user_id == current_user.id).all()
+
+    def _iso(dt):
+        return dt.isoformat() + "Z" if dt else None
+
+    export = {
+        "exported_at": _iso(utcnow()),
+        "profile": {
+            "id": current_user.id,
+            "email": current_user.email,
+            "company_name": current_user.company_name,
+            "is_verified": current_user.is_verified,
+            "created_at": _iso(current_user.created_at),
+        },
+        "integrations": [
+            {
+                "provider": i.provider,
+                "property_id": i.property_id,
+                "created_at": _iso(i.created_at),
+                "note": "OAuth credentials are stored encrypted and are not exportable.",
+            }
+            for i in integrations
+        ],
+        "audit_trail": [
+            {"event": a.event, "ip": a.ip, "detail": a.detail, "at": _iso(a.created_at)}
+            for a in trail
+        ],
+        "cached_dashboards": [
+            {
+                "property": c.property_key or "(default)",
+                "fetched_at": _iso(c.fetched_at),
+                "payload": json.loads(c.payload),
+            }
+            for c in caches
+        ],
+    }
+
+    audit(db, "account.exported", request, user_id=current_user.id, email=current_user.email)
+
+    return JSONResponse(
+        content=export,
+        headers={"Content-Disposition": 'attachment; filename="arbflow-data-export.json"'},
+    )
+
+
 @router.delete("/me", status_code=204)
-def delete_account(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+def delete_account(request: Request, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Permanently delete the account and everything attached to it — the
     user's row plus all their connected integrations (which hold encrypted
     OAuth tokens). This is the GDPR/CCPA right-to-erasure path; it's
-    irreversible and cascades so no orphaned credentials are left behind."""
-    db.query(Integration).filter(Integration.user_id == current_user.id).delete()
-    db.query(VerificationToken).filter(VerificationToken.user_id == current_user.id).delete()
-    db.query(DashboardCache).filter(DashboardCache.user_id == current_user.id).delete()
+    irreversible and cascades so no orphaned credentials are left behind.
+    The audit trail is kept for incident response but *anonymized* (emails
+    nulled), honouring erasure while preserving the security record."""
+    user_id = current_user.id
+    db.query(Integration).filter(Integration.user_id == user_id).delete()
+    db.query(VerificationToken).filter(VerificationToken.user_id == user_id).delete()
+    db.query(DashboardCache).filter(DashboardCache.user_id == user_id).delete()
+    db.query(AuditLog).filter(AuditLog.user_id == user_id).update({"email": None})
     db.delete(current_user)
     db.commit()
+    audit(db, "auth.account.deleted", request, user_id=user_id)
     return None
 
 
@@ -225,6 +301,7 @@ def verify_email(payload: TokenPayload, request: Request, db: Session = Depends(
         raise HTTPException(status_code=400, detail="This verification link is invalid or has expired.")
     user.is_verified = True
     db.commit()
+    audit(db, "auth.email.verified", request, user_id=user.id, email=user.email)
     return {"detail": "Email verified. You can now sign in."}
 
 
@@ -250,6 +327,7 @@ def forgot_password(payload: EmailRequest, request: Request, db: Session = Depen
     if user:
         token = create_token(db, user.id, RESET_PASSWORD)
         send_password_reset_email(user.email, token)
+        audit(db, "auth.password.reset.requested", request, user_id=user.id, email=user.email)
     return {"detail": "If that account exists, a password-reset link is on its way."}
 
 
@@ -265,6 +343,7 @@ def reset_password(payload: PasswordResetPayload, request: Request, db: Session 
     # Completing a reset proves the person controls the inbox — treat as verified.
     user.is_verified = True
     db.commit()
+    audit(db, "auth.password.reset.success", request, user_id=user.id, email=user.email)
     return {"detail": "Password updated. You can now sign in with your new password."}
 
 # The actual Google OAuth callback is handled by integrations.py

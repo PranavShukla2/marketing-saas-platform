@@ -79,3 +79,21 @@ class DashboardCache(Base):
     fetched_at = Column(DateTime, nullable=False, default=utcnow)
     # e.g. "sessions:07/11:dip" — the last anomaly we emailed about.
     last_anomaly_key = Column(String, nullable=True)
+
+class AuditLog(Base):
+    """Security-relevant events: who did what, from where, when.
+
+    user_id is a plain Integer (no FK) so history survives account deletion —
+    but deletion *anonymizes* the rows (email nulled) to honour erasure. Only
+    high-value events are recorded; this is an incident-response trail, not
+    general analytics.
+    """
+    __tablename__ = "audit_logs"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, nullable=True, index=True)
+    event = Column(String, nullable=False, index=True)   # e.g. "auth.login.failed"
+    email = Column(String, nullable=True)                # nulled on account deletion
+    ip = Column(String, nullable=True)
+    detail = Column(String, nullable=True)
+    created_at = Column(DateTime, default=utcnow, nullable=False)

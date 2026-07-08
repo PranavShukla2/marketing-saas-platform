@@ -1,7 +1,7 @@
 import os
 import json 
 import requests
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from fastapi.responses import RedirectResponse
 from passlib.context import CryptContext
@@ -13,6 +13,7 @@ from app.db.models import Integration, User
 from app.core.config import SECRET_KEY, ALGORITHM
 from app.core.security import encrypt_credentials
 from app.core.oauth import create_oauth_state, verify_oauth_state, create_auth_code
+from app.services.audit import record as audit
 from app.core.time import utcnow
 
 router = APIRouter()
@@ -54,7 +55,7 @@ def get_google_login_link(current_user: User = Depends(get_current_user)):
     return {"url": auth_url}
 
 @router.get("/google/callback")
-def google_callback(code: str | None = None, state: str | None = None, error: str | None = None, db: Session = Depends(get_db)):
+def google_callback(request: Request, code: str | None = None, state: str | None = None, error: str | None = None, db: Session = Depends(get_db)):
     """Handles Google OAuth callback for BOTH:
     1. Sign-in flow (state purpose='signin') — auto-creates user + connects GA4 + issues a one-time auth code
     2. Integration flow (state purpose='link') — just connects GA4 for the user bound to the state
@@ -165,6 +166,8 @@ def google_callback(code: str | None = None, state: str | None = None, error: st
         jwt_token = jwt.encode({"sub": str(user.id), "exp": expire}, SECRET_KEY, algorithm=ALGORITHM)
         auth_code = create_auth_code(db, jwt_token)
 
+        audit(db, "integration.google.connected", request, user_id=user.id, email=user.email, detail="signin flow")
+
         return RedirectResponse(url=f"{FRONTEND_URL}/dashboard?auth_code={auth_code}&integration=success")
 
     # ---- INTEGRATION FLOW (existing user connecting GA4) ----
@@ -189,7 +192,9 @@ def google_callback(code: str | None = None, state: str | None = None, error: st
             db.add(new_integration)
             
         db.commit()
-        
+
+        audit(db, "integration.google.connected", request, user_id=user_id, detail="link flow")
+
         return RedirectResponse(url=f"{FRONTEND_URL}/dashboard?integration=success")
 
 # ---- META OAUTH SCAFFOLDING ----

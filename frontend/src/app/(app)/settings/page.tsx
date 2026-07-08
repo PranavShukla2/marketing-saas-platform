@@ -17,6 +17,7 @@ export default function SettingsPage() {
   const [confirmText, setConfirmText] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -29,6 +30,25 @@ export default function SettingsPage() {
       }
     })();
   }, []);
+
+  const handleExportData = async () => {
+    setExporting(true);
+    try {
+      const res = await fetch(`${getApiUrl()}/api/v1/auth/me/export`);
+      if (!res.ok) throw new Error("export failed");
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "arbflow-data-export.json";
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      /* non-critical; the button simply re-enables */
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const handleDeleteAccount = async () => {
     setDeleting(true);
@@ -66,8 +86,24 @@ export default function SettingsPage() {
               </div>
             </div>
 
+            {/* Your data — GDPR/CCPA portability: download everything we hold. */}
+            <div className="mt-12 border border-gray-200 rounded-2xl overflow-hidden max-w-lg">
+              <div className="px-6 py-4 bg-gray-50/60 border-b border-gray-100">
+                <h3 className="text-sm font-semibold text-gray-700">Your data</h3>
+              </div>
+              <div className="p-6 flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-sm font-medium text-gray-900">Export my data</p>
+                  <p className="text-xs text-gray-500 mt-1 leading-relaxed">Download a JSON copy of your profile, connections, activity log and cached dashboards. Credentials are never included.</p>
+                </div>
+                <button onClick={handleExportData} disabled={exporting} className="flex-shrink-0 px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-xl hover:bg-black transition-colors disabled:opacity-50">
+                  {exporting ? "Preparing…" : "Export"}
+                </button>
+              </div>
+            </div>
+
             {/* Danger zone — real, irreversible account deletion (GDPR erasure). */}
-            <div className="mt-12 border border-red-200 rounded-2xl overflow-hidden max-w-lg">
+            <div className="mt-6 border border-red-200 rounded-2xl overflow-hidden max-w-lg">
               <div className="px-6 py-4 bg-red-50/60 border-b border-red-100">
                 <h3 className="text-sm font-semibold text-red-700">Danger zone</h3>
               </div>

@@ -18,10 +18,11 @@ LIMITS = {
     "exchange": (10, 60),    # auth-code guessing guard
     "email": (5, 60),        # verify-resend / forgot-password (email-send abuse)
     "token": (10, 60),       # verify / reset token submission
+    "export": (3, 60),       # GDPR data export (heavier query, no need for more)
 }
 
 
-def _client_ip(request: Request) -> str:
+def client_ip(request: Request) -> str:
     # Render/Vercel sit behind proxies; the left-most X-Forwarded-For entry is
     # the original client.
     fwd = request.headers.get("x-forwarded-for")
@@ -33,7 +34,7 @@ def _client_ip(request: Request) -> str:
 def enforce_rate_limit(request: Request, bucket: str) -> None:
     """Raise 429 if this IP has exceeded the bucket's limit."""
     max_hits, window = LIMITS[bucket]
-    key = f"{bucket}:{_client_ip(request)}"
+    key = f"{bucket}:{client_ip(request)}"
     now = time.monotonic()
 
     q = _hits[key]
