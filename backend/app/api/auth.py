@@ -8,7 +8,7 @@ import os
 from datetime import timedelta
 
 from app.db.database import get_db
-from app.db.models import User, Integration, VerificationToken, DashboardCache, AuditLog
+from app.db.models import User, Integration, VerificationToken, DashboardCache, AuditLog, RefreshToken
 from app.schemas import (
     UserCreate, UserLogin, UserResponse, AuthCodeExchange,
     EmailRequest, TokenPayload, PasswordResetPayload,
@@ -16,6 +16,7 @@ from app.schemas import (
 from app.core.config import (
     SECRET_KEY, ALGORITHM,
     SESSION_COOKIE_NAME, SESSION_MAX_AGE_SECONDS, COOKIE_SECURE,
+    ACCESS_TOKEN_TTL_MINUTES, REFRESH_COOKIE_NAME, REFRESH_COOKIE_MAX_AGE_SECONDS,
 )
 from app.core.oauth import create_oauth_state, consume_auth_code
 from app.core.ratelimit import enforce_rate_limit
@@ -27,6 +28,7 @@ from app.core.verification import (
 from app.core.email import send_verification_email, send_password_reset_email
 from app.api.deps import get_current_user
 from app.services.audit import record as audit
+from app.core.refresh import ReuseDetected, create_family, revoke_all, revoke_family, rotate
 
 router = APIRouter()
 
@@ -60,6 +62,29 @@ def _set_session_cookie(response: Response, token: str) -> None:
         samesite="lax",
         path="/",
     )
+
+def _set_refresh_cookie(response: Response, raw: str) -> None:
+    """The rotating refresh token rides its own httpOnly cookie.
+
+    Path is "/" (not scoped to /auth/refresh) because the browser reaches us
+    through the /api/backend rewrite — a backend-side path would never match
+    the browser's path and the cookie would never be sent.
+    """
+    response.set_cookie(
+        key=REFRESH_COOKIE_NAME,
+        value=raw,
+        max_age=REFRESH_COOKIE_MAX_AGE_SECONDS,
+        httponly=True,
+        secure=COOKIE_SECURE,
+        samesite="lax",
+        path="/",
+    )
+
+
+def _mint_access_token(user_id: int) -> str:
+    expire = utcnow() + timedelta(minutes=ACCESS_TOKEN_TTL_MINUTES)
+    return jwt.encode({"sub": str(user_id), "exp": expire}, SECRET_KEY, algorithm=ALGORITHM)
+
 
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
@@ -121,15 +146,16 @@ def login_user(credentials: UserLogin, request: Request, response: Response, db:
             detail="Please verify your email before signing in. Check your inbox for the link.",
         )
 
-    expire = utcnow() + timedelta(hours=24)
-    token_data = {"sub": str(user.id), "exp": expire}
-    token = jwt.encode(token_data, SECRET_KEY, algorithm=ALGORITHM)
+    token = _mint_access_token(user.id)
 
     audit(db, "auth.login.success", request, user_id=user.id, email=user.email)
 
     # Session travels as an httpOnly cookie; the body copy stays for API
     # clients and the transition period (the frontend no longer stores it).
+    # A rotating refresh token (its own cookie) silently renews the short
+    # access token — see POST /auth/refresh.
     _set_session_cookie(response, token)
+    _set_refresh_cookie(response, create_family(db, user.id))
 
     return {
         "access_token": token,
@@ -185,21 +211,68 @@ def exchange_auth_code(payload: AuthCodeExchange, request: Request, response: Re
     if not token:
         raise HTTPException(status_code=400, detail="Invalid or expired code")
     _set_session_cookie(response, token)
-    audit(db, "auth.login.google", request)
+    try:
+        user_id = int(jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])["sub"])
+        _set_refresh_cookie(response, create_family(db, user_id))
+        audit(db, "auth.login.google", request, user_id=user_id)
+    except Exception:
+        audit(db, "auth.login.google", request)
     return {"access_token": token, "token_type": "bearer"}
 
 
 @router.post("/logout")
-def logout(response: Response):
-    """Clear the session cookie. (Bearer clients just drop their token.)"""
-    response.delete_cookie(
-        key=SESSION_COOKIE_NAME,
-        path="/",
-        httponly=True,
-        secure=COOKIE_SECURE,
-        samesite="lax",
-    )
+def logout(request: Request, response: Response, db: Session = Depends(get_db)):
+    """Sign out this device: revoke its refresh-token family server-side and
+    clear both cookies. (Bearer clients just drop their token.)"""
+    raw = request.cookies.get(REFRESH_COOKIE_NAME)
+    if raw:
+        revoke_family(db, raw)
+    for name in (SESSION_COOKIE_NAME, REFRESH_COOKIE_NAME):
+        response.delete_cookie(key=name, path="/", httponly=True, secure=COOKIE_SECURE, samesite="lax")
     return {"detail": "Signed out."}
+
+
+@router.post("/refresh")
+def refresh_session(request: Request, response: Response, db: Session = Depends(get_db)):
+    """Trade the rotating refresh token for a fresh access token.
+
+    Single-use: the presented token is spent and a successor in the same
+    family is set. Replaying a spent token means two parties hold it (theft) —
+    the family is revoked, both get signed out, and the event is audited.
+    """
+    enforce_rate_limit(request, "refresh")
+
+    raw = request.cookies.get(REFRESH_COOKIE_NAME)
+    if not raw:
+        raise HTTPException(status_code=401, detail="No refresh token.")
+
+    try:
+        rotated = rotate(db, raw)
+    except ReuseDetected as reuse:
+        audit(db, "auth.refresh.reuse_detected", request, user_id=reuse.user_id)
+        for name in (SESSION_COOKIE_NAME, REFRESH_COOKIE_NAME):
+            response.delete_cookie(key=name, path="/", httponly=True, secure=COOKIE_SECURE, samesite="lax")
+        raise HTTPException(status_code=401, detail="Session revoked. Please sign in again.")
+
+    if rotated is None:
+        raise HTTPException(status_code=401, detail="Invalid or expired refresh token.")
+
+    user_id, new_raw = rotated
+    token = _mint_access_token(user_id)
+    _set_session_cookie(response, token)
+    _set_refresh_cookie(response, new_raw)
+    return {"access_token": token, "token_type": "bearer"}
+
+
+@router.post("/logout-all")
+def logout_all(request: Request, response: Response, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Sign out everywhere: revoke every refresh token on the account. Existing
+    access tokens still ride out their short TTL (max ~30 min)."""
+    n = revoke_all(db, current_user.id)
+    audit(db, "auth.logout.all", request, user_id=current_user.id, email=current_user.email, detail=f"{n} token(s) revoked")
+    for name in (SESSION_COOKIE_NAME, REFRESH_COOKIE_NAME):
+        response.delete_cookie(key=name, path="/", httponly=True, secure=COOKIE_SECURE, samesite="lax")
+    return {"detail": "Signed out on all devices."}
 
 
 @router.get("/me", response_model=UserResponse)
@@ -282,6 +355,7 @@ def delete_account(request: Request, current_user: User = Depends(get_current_us
     db.query(Integration).filter(Integration.user_id == user_id).delete()
     db.query(VerificationToken).filter(VerificationToken.user_id == user_id).delete()
     db.query(DashboardCache).filter(DashboardCache.user_id == user_id).delete()
+    db.query(RefreshToken).filter(RefreshToken.user_id == user_id).delete()
     db.query(AuditLog).filter(AuditLog.user_id == user_id).update({"email": None})
     db.delete(current_user)
     db.commit()

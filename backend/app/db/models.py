@@ -97,3 +97,19 @@ class AuditLog(Base):
     ip = Column(String, nullable=True)
     detail = Column(String, nullable=True)
     created_at = Column(DateTime, default=utcnow, nullable=False)
+
+
+class RefreshToken(Base):
+    """Rotating refresh tokens, stored hashed (like auth codes).
+
+    One `family_id` per login ≈ one device/session. Rotation marks the old row
+    consumed and inserts a successor in the same family; presenting a consumed
+    token again is treated as theft and revokes the entire family.
+    """
+    __tablename__ = "refresh_tokens"
+
+    token_hash = Column(String, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    family_id = Column(String, nullable=False, index=True)
+    consumed_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=utcnow, nullable=False)

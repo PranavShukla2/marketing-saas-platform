@@ -19,6 +19,7 @@ LIMITS = {
     "email": (5, 60),        # verify-resend / forgot-password (email-send abuse)
     "token": (10, 60),       # verify / reset token submission
     "export": (3, 60),       # GDPR data export (heavier query, no need for more)
+    "refresh": (20, 60),     # access-token renewal (one per ~30min per tab normally)
 }
 
 
