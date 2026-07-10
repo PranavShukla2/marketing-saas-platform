@@ -15,3 +15,4 @@ google-analytics-admin
 bcrypt==3.2.2
 alembic
 sentry-sdk[fastapi]
+redis==5.2.1

@@ -39,3 +39,8 @@ services:
       # already allowed by a regex in main.py; add custom domains here. ---
       - key: CORS_ORIGINS
         sync: false
+      # --- Optional: shared rate-limit store. Set this (e.g. an Upstash / Render
+      # Key Value Redis URL) before scaling past ONE instance, or per-IP auth
+      # limits only count each instance's own slice. Unset = in-memory. ---
+      - key: REDIS_URL
+        sync: false
