@@ -65,7 +65,7 @@ jobs:
       # build. npm audit gates on high/critical only — moderate is tracked via
       # Dependabot without blocking every PR.
       - name: Secret scan (gitleaks)
-        uses: gitleaks/gitleaks-action@v2
+        uses: gitleaks/gitleaks-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_CONFIG: .gitleaks.toml
