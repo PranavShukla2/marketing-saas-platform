@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import jsPDF from "jspdf";
 import { useState } from "react";
-import { getApiUrl } from "../../../lib/auth";
+import { getApiUrl, apiFetch } from "../../../lib/auth";
 
 export default function ReportsPage() {
   const [generating, setGenerating] = useState(false);
@@ -14,12 +14,12 @@ export default function ReportsPage() {
       const backendUrl = getApiUrl();
 
       // Fetch real dashboard data (session rides in the httpOnly cookie)
-      const res = await fetch(`${backendUrl}/api/v1/analytics/dashboard`);
+      const res = await apiFetch(`${backendUrl}/api/v1/analytics/dashboard`);
       const result = await res.json();
       const d = result.data;
 
       // Fetch real campaign data
-      const campRes = await fetch(`${backendUrl}/api/v1/workspace/campaigns`);
+      const campRes = await apiFetch(`${backendUrl}/api/v1/workspace/campaigns`);
       const campResult = await campRes.json();
       const campaigns = campResult.campaigns || [];
 

@@ -59,11 +59,42 @@ export async function consumeAuthCode(): Promise<boolean> {
   return promise;
 }
 
+// Access tokens are short-lived (30 min); a rotating refresh cookie renews
+// them. Dedupe concurrent refreshes so five parallel 401s don't spend five
+// refresh tokens (rotation makes each single-use).
+let refreshing: Promise<boolean> | null = null;
+
+async function refreshSession(): Promise<boolean> {
+  if (!refreshing) {
+    refreshing = (async () => {
+      try {
+        const res = await fetch(`${getApiUrl()}/api/v1/auth/refresh`, { method: "POST" });
+        return res.ok;
+      } catch {
+        return false;
+      } finally {
+        refreshing = null;
+      }
+    })();
+  }
+  return refreshing;
+}
+
+// fetch() for authenticated API calls: on a 401 (expired access token), renew
+// through the refresh cookie once and retry. A second 401 is a real signout.
+export async function apiFetch(input: string, init?: RequestInit): Promise<Response> {
+  const res = await fetch(input, init);
+  if (res.status !== 401) return res;
+  const renewed = await refreshSession();
+  if (!renewed) return res;
+  return fetch(input, init);
+}
+
 // Is there a live session? The cookie is httpOnly (invisible to JS), so the
-// only way to know is to ask the backend.
+// only way to know is to ask the backend (renewing via refresh if needed).
 export async function fetchSession(): Promise<boolean> {
   try {
-    const res = await fetch(`${getApiUrl()}/api/v1/auth/me`);
+    const res = await apiFetch(`${getApiUrl()}/api/v1/auth/me`);
     return res.ok;
   } catch {
     return false;

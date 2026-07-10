@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import { getApiUrl, logout } from "../lib/auth";
+import { getApiUrl, logout, apiFetch } from "../lib/auth";
 
 const navItems = [
   { name: "Dashboard", href: "/dashboard", icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" },
@@ -29,7 +29,7 @@ export default function Sidebar() {
       try {
         const backendUrl = getApiUrl();
         // Session rides in the httpOnly cookie — no header needed.
-        const res = await fetch(`${backendUrl}/api/v1/workspace/billing`);
+        const res = await apiFetch(`${backendUrl}/api/v1/workspace/billing`);
         if (res.ok) {
           const data = await res.json();
           setUsage(data.usage);

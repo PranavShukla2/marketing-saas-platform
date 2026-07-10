@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
-import { getApiUrl } from "../../../lib/auth";
+import { getApiUrl, apiFetch } from "../../../lib/auth";
 
 export default function CampaignsPage() {
   const [campaigns, setCampaigns] = useState<any[]>([]);
@@ -21,7 +21,7 @@ export default function CampaignsPage() {
     try {
       const backendUrl = getApiUrl();
       // Session rides in the httpOnly cookie — no header needed.
-      const res = await fetch(`${backendUrl}/api/v1/workspace/campaigns`);
+      const res = await apiFetch(`${backendUrl}/api/v1/workspace/campaigns`);
       if (res.ok) {
         const data = await res.json();
         setCampaigns(data.campaigns || []);

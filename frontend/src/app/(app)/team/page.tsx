@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import { getApiUrl } from "../../../lib/auth";
+import { getApiUrl, apiFetch } from "../../../lib/auth";
 
 export default function TeamPage() {
   const [team, setTeam] = useState<any[]>([]);
@@ -13,7 +13,7 @@ export default function TeamPage() {
       try {
         const backendUrl = getApiUrl();
         // Session rides in the httpOnly cookie — no header needed.
-        const res = await fetch(`${backendUrl}/api/v1/workspace/team`);
+        const res = await apiFetch(`${backendUrl}/api/v1/workspace/team`);
         if (res.ok) {
           const data = await res.json();
           setTeam(data.team);

@@ -11,7 +11,7 @@ import autoTable from "jspdf-autotable";
 import MetaDashboard from "../../../components/MetaDashboard";
 import LinkedInDashboard from "../../../components/LinkedInDashboard";
 import PlatformLoader from "../../../components/PlatformLoader";
-import { getApiUrl } from "../../../lib/auth";
+import { getApiUrl, apiFetch } from "../../../lib/auth";
 import { demoData } from "../../../lib/demoData";
 import { KpiCard, SectionCard, BarList, Sparkline, PALETTE } from "../../../components/workspace/primitives";
 import FloAssistant from "../../../components/workspace/FloAssistant";
@@ -78,7 +78,7 @@ export default function Dashboard() {
       // "Sync now" bypasses the backend's short-TTL cache for a live pull.
       if (isManualSync) url.searchParams.append("refresh", "true");
       // Session rides in the httpOnly cookie — no header needed.
-      const res = await fetch(url.toString());
+      const res = await apiFetch(url.toString());
       const result = await res.json();
       setData(result.data);
       if (result.data?.active_property_id) setSelectedProperty(result.data.active_property_id);
@@ -138,7 +138,7 @@ export default function Dashboard() {
   const handleConnectGoogle = async () => {
     try {
       const backendUrl = getApiUrl();
-      const res = await fetch(`${backendUrl}/api/v1/integrations/google/link`);
+      const res = await apiFetch(`${backendUrl}/api/v1/integrations/google/link`);
       const result = await res.json();
       if (result.url) window.location.href = result.url;
     } catch (err) {

@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getApiUrl, logout } from "../../../lib/auth";
+import { getApiUrl, logout, apiFetch } from "../../../lib/auth";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -18,12 +18,13 @@ export default function SettingsPage() {
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   const [exporting, setExporting] = useState(false);
+  const [signingOutAll, setSigningOutAll] = useState(false);
 
   useEffect(() => {
     (async () => {
       try {
         // Session rides in the httpOnly cookie — no header needed.
-        const res = await fetch(`${getApiUrl()}/api/v1/auth/me`);
+        const res = await apiFetch(`${getApiUrl()}/api/v1/auth/me`);
         if (res.ok) setProfile(await res.json());
       } catch {
         /* leave profile null; UI shows a graceful fallback */
@@ -34,7 +35,7 @@ export default function SettingsPage() {
   const handleExportData = async () => {
     setExporting(true);
     try {
-      const res = await fetch(`${getApiUrl()}/api/v1/auth/me/export`);
+      const res = await apiFetch(`${getApiUrl()}/api/v1/auth/me/export`);
       if (!res.ok) throw new Error("export failed");
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
@@ -50,11 +51,25 @@ export default function SettingsPage() {
     }
   };
 
+  const handleLogoutAll = async () => {
+    setSigningOutAll(true);
+    try {
+      // Revokes every refresh-token family server-side, including this one.
+      await apiFetch(`${getApiUrl()}/api/v1/auth/logout-all`, { method: "POST" });
+    } catch {
+      /* fall through — cookies are cleared on the redirect either way */
+    }
+    try {
+      localStorage.removeItem("token");
+    } catch {}
+    window.location.href = "/login";
+  };
+
   const handleDeleteAccount = async () => {
     setDeleting(true);
     setDeleteError("");
     try {
-      const res = await fetch(`${getApiUrl()}/api/v1/auth/me`, {
+      const res = await apiFetch(`${getApiUrl()}/api/v1/auth/me`, {
         method: "DELETE",
       });
       if (!res.ok && res.status !== 204) throw new Error("Failed to delete account.");
@@ -98,6 +113,22 @@ export default function SettingsPage() {
                 </div>
                 <button onClick={handleExportData} disabled={exporting} className="flex-shrink-0 px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-xl hover:bg-black transition-colors disabled:opacity-50">
                   {exporting ? "Preparing…" : "Export"}
+                </button>
+              </div>
+            </div>
+
+            {/* Sessions — revoke every refresh token (all devices). */}
+            <div className="mt-6 border border-gray-200 rounded-2xl overflow-hidden max-w-lg">
+              <div className="px-6 py-4 bg-gray-50/60 border-b border-gray-100">
+                <h3 className="text-sm font-semibold text-gray-700">Sessions</h3>
+              </div>
+              <div className="p-6 flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-sm font-medium text-gray-900">Sign out all devices</p>
+                  <p className="text-xs text-gray-500 mt-1 leading-relaxed">Revokes every active session, including this one. Use it if you think a device you&apos;re signed in on was lost or compromised.</p>
+                </div>
+                <button onClick={handleLogoutAll} disabled={signingOutAll} className="flex-shrink-0 px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-xl hover:bg-black transition-colors disabled:opacity-50">
+                  {signingOutAll ? "Signing out…" : "Sign out all"}
                 </button>
               </div>
             </div>
