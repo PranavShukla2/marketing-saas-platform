@@ -118,8 +118,10 @@ Schema changes go through Alembic (`backend/alembic/README.md`).
 
 ## Authentication & OAuth flow
 
-Two ways in, both ending in a 24-hour JWT delivered as an **httpOnly, Secure,
-SameSite=Lax session cookie** (`arbflow_session`) — JS can never read it:
+Two ways in, both ending in a **30-minute access JWT** delivered as an
+**httpOnly, Secure, SameSite=Lax session cookie** (`arbflow_session`) — JS can
+never read it — plus a **rotating refresh token** in its own cookie
+(`arbflow_refresh`, hashed at rest) that silently renews it:
 
 1. **Email / password** — `POST /register` then `POST /login` (login response
    sets the cookie).
@@ -140,14 +142,21 @@ origin directly. All API calls go through a **same-origin Next.js rewrite proxy*
 (`/api/backend/* → the FastAPI backend`, see `next.config.ts`), so the cookie is
 *first-party* in every browser — including Safari, which blocks third-party
 cookies. `get_current_user` also still accepts `Authorization: Bearer` for API
-clients, and `POST /auth/logout` clears the cookie. CSRF: SameSite=Lax plus a
-middleware that rejects cookie-carrying state-changing requests with a foreign
-`Origin`. Note the rewrite destination is **baked at build time** — changing the
-backend URL requires a frontend rebuild.
+clients. CSRF: SameSite=Lax plus a middleware that rejects cookie-carrying
+state-changing requests with a foreign `Origin`. Note the rewrite destination is
+**baked at build time** — changing the backend URL requires a frontend rebuild.
+
+**Token rotation:** access tokens live 30 min. The frontend's `apiFetch` wrapper
+catches a 401, calls `POST /auth/refresh` once (deduped across concurrent calls),
+and retries — so sessions never drop mid-use. Refresh tokens rotate on every use
+(single-spend, one *family* per device); replaying a spent token is treated as
+theft and **revokes the whole family** (audited). `POST /auth/logout` revokes the
+current device's family; `POST /auth/logout-all` (Settings → "Sign out all
+devices") revokes every session.
 
 `AuthGuard` (frontend) gates the authed routes: it runs the auth-code exchange,
-else asks `GET /auth/me` whether the session cookie is live, else redirects to
-`/login`.
+else asks `GET /auth/me` (which refreshes under the hood) whether the session is
+live, else redirects to `/login`.
 
 ### GA4 connection status
 `GET /analytics/dashboard` returns a `status` the workspace maps to a banner:
@@ -243,8 +252,9 @@ now only feeds the CSP `connect-src`.
 - **Meta & LinkedIn** run on sample data — the frontends are ready; the backend
   OAuth + Graph/Marketing API services are still stubs.
 - **Billing / team** pages are placeholders (no Stripe, single-owner team yet).
-- **Anomaly alerts** (advertised on the landing page) aren't implemented yet.
-- Access tokens are 24h with no refresh-token rotation / server-side revocation
-  yet; the rate limiter is per-process (needs Redis before horizontal scaling).
+- **Anomaly alerts** are detected + emailed, but only over in-app/email — no
+  Slack/push channels or scheduled digest yet.
+- The rate limiter is per-process (needs Redis before horizontal scaling), and
+  the background sync runs in-process (sleeps when a free-tier dyno spins down).
 
 A fuller production-readiness plan is tracked privately by the maintainer.
