@@ -4,7 +4,6 @@ sqlalchemy
 psycopg2-binary
 python-dotenv
 python-multipart
-python-jose[cryptography]
 passlib[bcrypt]
 google-analytics-data
 google-auth
