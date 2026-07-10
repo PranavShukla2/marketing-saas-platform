@@ -8,6 +8,8 @@ import os
 
 import requests
 
+from app.core.http import http
+
 from app.core.log import get_logger
 
 log = get_logger("email")
@@ -31,7 +33,7 @@ def send_email(to: str, subject: str, html: str) -> bool:
         log.info(f"[email:dev] (no RESEND_API_KEY) to={to} subject={subject!r}\n{html}")
         return False
     try:
-        r = requests.post(
+        r = http.post(
             RESEND_API_URL,
             headers={"Authorization": f"Bearer {api_key}"},
             json={"from": email_from, "to": [to], "subject": subject, "html": html},

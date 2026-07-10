@@ -13,6 +13,7 @@ from app.db.models import Integration, User
 from app.core.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_TTL_MINUTES
 from app.core.security import encrypt_credentials
 from app.core.oauth import create_oauth_state, verify_oauth_state, create_auth_code
+from app.core.http import http
 from app.services.audit import record as audit
 from app.core.time import utcnow
 
@@ -83,7 +84,7 @@ def google_callback(request: Request, code: str | None = None, state: str | None
     }
 
     # Never call out without a timeout: a hung upstream would pin a worker forever.
-    response = requests.post(token_url, data=payload, timeout=15)
+    response = http.post(token_url, data=payload, timeout=15)
     token_data = response.json()
     
     if "error" in token_data:
@@ -104,7 +105,7 @@ def google_callback(request: Request, code: str | None = None, state: str | None
     # ---- SIGN-IN FLOW ----
     if purpose == "signin":
         # Fetch Google profile
-        userinfo_response = requests.get(
+        userinfo_response = http.get(
             "https://www.googleapis.com/oauth2/v2/userinfo",
             headers={"Authorization": f"Bearer {access_token}"},
             timeout=15,
