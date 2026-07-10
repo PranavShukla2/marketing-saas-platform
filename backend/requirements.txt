@@ -11,7 +11,7 @@ numpy
 PyJWT
 requests
 google-analytics-admin
-bcrypt==3.2.2
+bcrypt==5.0.0
 alembic
 sentry-sdk[fastapi]
 redis==5.2.1
