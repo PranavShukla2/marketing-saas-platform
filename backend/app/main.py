@@ -1,6 +1,7 @@
 import asyncio
 import os
 import re
+import uuid
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -18,7 +19,7 @@ from app.api import analytics, auth, integrations, workspace
 # (backend/alembic/) is the source of truth for schema changes going forward.
 models.Base.metadata.create_all(bind=engine)
 
-from app.core.log import get_logger
+from app.core.log import get_logger, request_id_var
 from app.services.sync import SYNC_ENABLED, sync_loop
 
 log = get_logger("main")
@@ -69,7 +70,12 @@ async def unhandled_exception_handler(request, exc):
     except Exception:
         pass
     log.error(f"Unhandled error on {request.method} {request.url.path}: {exc!r}")
-    return JSONResponse(status_code=500, content={"detail": "Something went wrong on our end."})
+    rid = request_id_var.get()
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Something went wrong on our end.", "request_id": rid},
+        headers={"X-Request-ID": rid},
+    )
 
 # Allowed browser origins. Localhost, our production domain, and our known Vercel
 # URLs are baked in; any other origin can be appended via the CORS_ORIGINS env
@@ -104,6 +110,24 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def request_id_middleware(request, call_next):
+    """Tag each request with an id so its log lines can be correlated.
+
+    Honours an inbound X-Request-ID (e.g. from a proxy/load balancer) so a
+    trace can span the whole edge→app path, else generates one. Echoed back in
+    the response header for the client/logs.
+    """
+    rid = request.headers.get("x-request-id") or uuid.uuid4().hex[:12]
+    token = request_id_var.set(rid)
+    try:
+        response = await call_next(request)
+    finally:
+        request_id_var.reset(token)
+    response.headers["X-Request-ID"] = rid
+    return response
 
 
 @app.middleware("http")

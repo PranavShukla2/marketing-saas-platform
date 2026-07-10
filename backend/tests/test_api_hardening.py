@@ -36,7 +36,10 @@ def test_unhandled_errors_return_json_envelope(client):
     with TestClient(app, base_url="https://testserver", raise_server_exceptions=False) as c:
         r = c.get("/_test/boom")
     assert r.status_code == 500
-    assert r.json() == {"detail": "Something went wrong on our end."}
+    body = r.json()
+    assert body["detail"] == "Something went wrong on our end."
+    # a request id is included (in body + header) so support can correlate
+    assert body["request_id"] and body["request_id"] == r.headers.get("x-request-id")
 
 
 def test_token_freshness_helper():
@@ -49,3 +52,12 @@ def test_token_freshness_helper():
     assert _token_is_fresh({"expiry_ts": now - 10}) is False              # already expired
     assert _token_is_fresh({"expiry_ts": now + REFRESH_BUFFER_SECONDS - 5}) is False  # inside buffer
     assert _token_is_fresh({"expiry_ts": now + 3600}) is True             # comfortably fresh
+
+
+def test_request_id_header_generated_and_honored(client):
+    # generated when absent
+    r = client.get("/health")
+    assert r.headers.get("x-request-id")
+    # honoured when provided (edge trace continuity)
+    r2 = client.get("/health", headers={"X-Request-ID": "trace-abc-123"})
+    assert r2.headers.get("x-request-id") == "trace-abc-123"
