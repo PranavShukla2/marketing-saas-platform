@@ -93,3 +93,17 @@ def send_anomaly_email(to: str, message: str) -> bool:
         link,
     )
     return send_email(to, "ArbFlow alert: something changed", html)
+
+
+def send_team_invite_email(to: str, inviter_company: str, role: str, token: str) -> bool:
+    _, _, frontend = _cfg()
+    link = f"{frontend}/accept-invite?token={token}"
+    html = _template(
+        f"You've been invited to {inviter_company} on ArbFlow",
+        f"{inviter_company} invited you to their ArbFlow workspace as a {role}. "
+        "Accept to see their marketing dashboards. If you don't have an account yet, "
+        "you'll be able to create one with this email first.",
+        "Accept invite",
+        link,
+    )
+    return send_email(to, f"{inviter_company} invited you to ArbFlow", html)

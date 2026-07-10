@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, Integer, String, ForeignKey, DateTime, false
+from sqlalchemy import Boolean, Column, Integer, String, ForeignKey, DateTime, false, UniqueConstraint
 from sqlalchemy.orm import relationship
 from app.db.database import Base
 from app.core.time import utcnow
@@ -112,4 +112,36 @@ class RefreshToken(Base):
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     family_id = Column(String, nullable=False, index=True)
     consumed_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=utcnow, nullable=False)
+
+
+class TeamMembership(Base):
+    """A member's access to a workspace (= an owner's account).
+
+    owner_id is the workspace (the agency account); member_id is the user who
+    was invited in. role gates what they can do. One row per (owner, member).
+    """
+    __tablename__ = "team_memberships"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    owner_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    member_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    role = Column(String, nullable=False, default="member")  # admin | member | viewer
+    created_at = Column(DateTime, default=utcnow, nullable=False)
+
+    __table_args__ = (UniqueConstraint("owner_id", "member_id", name="uq_membership_owner_member"),)
+
+
+class TeamInvitation(Base):
+    """A pending invite to join a workspace, stored hashed like other tokens.
+
+    The raw token goes out once in an email link; the row is consumed on
+    acceptance. One pending invite per (owner, email).
+    """
+    __tablename__ = "team_invitations"
+
+    token_hash = Column(String, primary_key=True)
+    owner_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    email = Column(String, nullable=False, index=True)
+    role = Column(String, nullable=False, default="member")
     created_at = Column(DateTime, default=utcnow, nullable=False)

@@ -18,6 +18,7 @@ from app.db.models import Integration, User
 from app.core.security import decrypt_credentials, encrypt_credentials
 from app.services.anomaly import detect_anomaly
 from app.services.dashboard_cache import get_cached, store_and_alert
+from app.core.team import resolve_workspace_owner
 
 from app.core.log import get_logger
 
@@ -69,18 +70,28 @@ def get_dashboard_data(
     property_id: str | None = Query(default=None, pattern=r"^properties/\d{1,20}$"),
     # Sync button sends refresh=true to bypass the cache and force a live pull.
     refresh: bool = Query(default=False),
+    # Which workspace to view: omitted/own id = your own account; another id
+    # requires a team membership (checked in resolve_workspace_owner).
+    workspace: int | None = Query(default=None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """Dashboard data — served from the short-TTL cache when fresh, else built
-    live from Google and written back (which also triggers anomaly alerting)."""
+    live from Google and written back (which also triggers anomaly alerting).
+
+    All data is resolved against the *workspace owner*, so a team member sees
+    the owner's integrations/cache; anomaly emails go to the owner. Defaulting
+    the workspace to the caller keeps existing single-user behaviour identical.
+    """
+    owner, _role = resolve_workspace_owner(current_user, workspace, db)
+
     if not refresh:
-        cached = get_cached(db, current_user.id, property_id)
+        cached = get_cached(db, owner.id, property_id)
         if cached is not None:
             return {"data": cached}
 
-    result = _build_dashboard_payload(property_id, db, current_user)
-    store_and_alert(db, current_user, property_id, result.get("data", {}))
+    result = _build_dashboard_payload(property_id, db, owner)
+    store_and_alert(db, owner, property_id, result.get("data", {}))
     return result
 
 
