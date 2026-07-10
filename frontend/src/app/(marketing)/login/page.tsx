@@ -85,7 +85,10 @@ export default function LoginPage() {
       // The session arrives as an httpOnly Set-Cookie on this response —
       // nothing to store client-side.
       await response.json();
-      router.push("/dashboard");
+      // Honour a safe relative ?next= (e.g. returning to an invite link);
+      // reject anything non-relative to avoid an open redirect.
+      const next = new URLSearchParams(window.location.search).get("next");
+      router.push(next && next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard");
 
     } catch (err) {
       setError(friendlyError(err, "Sign-in failed. Please try again."));

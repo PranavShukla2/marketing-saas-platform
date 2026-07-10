@@ -112,5 +112,6 @@ export async function logout(): Promise<void> {
   }
   try {
     localStorage.removeItem("token");
+    localStorage.removeItem("arbflow_active_workspace");
   } catch {}
 }

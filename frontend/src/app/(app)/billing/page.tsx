@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { getApiUrl, apiFetch } from "../../../lib/auth";
+import { withWorkspace } from "../../../lib/workspace";
 
 export default function BillingPage() {
   const [billing, setBilling] = useState<any>(null);
@@ -13,7 +14,7 @@ export default function BillingPage() {
       try {
         const backendUrl = getApiUrl();
         // Session rides in the httpOnly cookie — no header needed.
-        const res = await apiFetch(`${backendUrl}/api/v1/workspace/billing`);
+        const res = await apiFetch(withWorkspace(`${backendUrl}/api/v1/workspace/billing`));
         if (res.ok) {
           const data = await res.json();
           setBilling(data);

@@ -12,6 +12,7 @@ import MetaDashboard from "../../../components/MetaDashboard";
 import LinkedInDashboard from "../../../components/LinkedInDashboard";
 import PlatformLoader from "../../../components/PlatformLoader";
 import { getApiUrl, apiFetch } from "../../../lib/auth";
+import { getActiveWorkspace } from "../../../lib/workspace";
 import { demoData } from "../../../lib/demoData";
 import { KpiCard, SectionCard, BarList, Sparkline, PALETTE } from "../../../components/workspace/primitives";
 import FloAssistant from "../../../components/workspace/FloAssistant";
@@ -77,6 +78,9 @@ export default function Dashboard() {
       if (propId) url.searchParams.append("property_id", propId);
       // "Sync now" bypasses the backend's short-TTL cache for a live pull.
       if (isManualSync) url.searchParams.append("refresh", "true");
+      // If viewing a teammate's workspace, scope the request to it.
+      const ws = getActiveWorkspace();
+      if (ws) url.searchParams.append("workspace", ws);
       // Session rides in the httpOnly cookie — no header needed.
       const res = await apiFetch(url.toString());
       const result = await res.json();

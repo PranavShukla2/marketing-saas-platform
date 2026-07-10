@@ -66,8 +66,11 @@ export default function RegisterPage() {
         throw new Error(detailToMessage(errorData.detail, "Failed to register"));
       }
 
-      // Land on login with a success note instead of an unexplained redirect.
-      router.push("/login?registered=1");
+      // Land on login with a success note; preserve a safe ?next= so an
+      // invite flow resumes after sign-in.
+      const next = new URLSearchParams(window.location.search).get("next");
+      const suffix = next && next.startsWith("/") && !next.startsWith("//") ? `&next=${encodeURIComponent(next)}` : "";
+      router.push(`/login?registered=1${suffix}`);
 
     } catch (err) {
       setError(friendlyError(err, "Failed to register. Please try again."));
