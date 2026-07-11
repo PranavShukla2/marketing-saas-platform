@@ -12,7 +12,7 @@ import MetaDashboard from "../../../components/MetaDashboard";
 import LinkedInDashboard from "../../../components/LinkedInDashboard";
 import PlatformLoader from "../../../components/PlatformLoader";
 import { getApiUrl, apiFetch } from "../../../lib/auth";
-import { getActiveWorkspace } from "../../../lib/workspace";
+import { getActiveWorkspace, withWorkspace } from "../../../lib/workspace";
 import { demoData } from "../../../lib/demoData";
 import { KpiCard, SectionCard, BarList, Sparkline, PALETTE } from "../../../components/workspace/primitives";
 import FloAssistant from "../../../components/workspace/FloAssistant";
@@ -66,6 +66,9 @@ export default function Dashboard() {
   const [syncing, setSyncing] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState<string>("");
   const [agencyLogo, setAgencyLogo] = useState<string | null>(null);
+  const [brand, setBrand] = useState<{ logo_url: string | null; accent_color: string; report_footer: string | null }>(
+    { logo_url: null, accent_color: "#5b5bd6", report_footer: null }
+  );
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [isPlatformLoading, setIsPlatformLoading] = useState(false);
   const [targetPlatform, setTargetPlatform] = useState<string | null>(null);
@@ -106,6 +109,16 @@ export default function Dashboard() {
     fetchData();
     const savedLogo = localStorage.getItem("arbflow_agency_logo");
     if (savedLogo) setAgencyLogo(savedLogo);
+    // Load this workspace's white-label branding (logo/accent/footer).
+    (async () => {
+      try {
+        const res = await apiFetch(withWorkspace(`${getApiUrl()}/api/v1/workspace/branding`));
+        if (res.ok) {
+          const b = await res.json();
+          setBrand({ logo_url: b.logo_url, accent_color: b.accent_color || "#5b5bd6", report_footer: b.report_footer });
+        }
+      } catch {}
+    })();
   }, []);
 
   const handlePlatformChange = (platformId: string) => {
@@ -181,17 +194,19 @@ export default function Dashboard() {
 
   const downloadPDF = () => {
     const doc = new jsPDF();
+    const accent = brand.accent_color || "#5b5bd6";
+    const logo = brand.logo_url || agencyLogo;
     let y = 20;
-    if (agencyLogo) {
+    if (logo) {
       try {
-        const p = doc.getImageProperties(agencyLogo);
+        const p = doc.getImageProperties(logo);
         const w = 40;
         const h = (p.height * w) / p.width;
-        doc.addImage(agencyLogo, 14, 10, w, h);
+        doc.addImage(logo, 14, 10, w, h);
         y = 10 + h + 15;
       } catch {}
     }
-    doc.setTextColor(91, 91, 214);
+    doc.setTextColor(accent);
     doc.setFontSize(22);
     doc.text("Agency Performance Report", 14, y);
     doc.setTextColor(100, 100, 100);
@@ -203,8 +218,13 @@ export default function Dashboard() {
       body: (view.post_level || []).map((r: any) => [r.source, r.users, r.views]),
       startY: y + 25,
       theme: "grid",
-      headStyles: { fillColor: "#5b5bd6" },
+      headStyles: { fillColor: accent },
     });
+    // White-label footer (falls back to a neutral ArbFlow line when unset).
+    const footer = brand.report_footer || "Generated with ArbFlow";
+    doc.setFontSize(9);
+    doc.setTextColor(150, 150, 150);
+    doc.text(footer, 14, doc.internal.pageSize.getHeight() - 10);
     doc.save(`${view.company_name}_Report.pdf`);
   };
 
@@ -251,8 +271,8 @@ export default function Dashboard() {
             htmlFor="logo-upload"
             className="cursor-pointer flex items-center justify-center w-12 h-12 bg-white border border-[var(--line)] rounded-2xl shadow-sm hover:border-[var(--violet)] transition-all overflow-hidden flex-shrink-0"
           >
-            {agencyLogo ? (
-              <img src={agencyLogo} alt="Logo" className="w-full h-full object-contain p-1" />
+            {(brand.logo_url || agencyLogo) ? (
+              <img src={brand.logo_url || agencyLogo || ""} alt="Logo" className="w-full h-full object-contain p-1" />
             ) : (
               <span className="text-[var(--ink-3)] text-xs font-medium">Logo</span>
             )}

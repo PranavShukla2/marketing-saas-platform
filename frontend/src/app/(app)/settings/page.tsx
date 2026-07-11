@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getApiUrl, logout, apiFetch } from "../../../lib/auth";
+import { withWorkspace } from "../../../lib/workspace";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -19,6 +20,53 @@ export default function SettingsPage() {
   const [deleteError, setDeleteError] = useState("");
   const [exporting, setExporting] = useState(false);
   const [signingOutAll, setSigningOutAll] = useState(false);
+
+  // Branding (white-label) — logo / accent colour / report footer.
+  const [brand, setBrand] = useState<{ logo_url: string | null; accent_color: string; report_footer: string }>(
+    { logo_url: null, accent_color: "#5b5bd6", report_footer: "" }
+  );
+  const [brandSaving, setBrandSaving] = useState(false);
+  const [brandMsg, setBrandMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await apiFetch(withWorkspace(`${getApiUrl()}/api/v1/workspace/branding`));
+        if (res.ok) {
+          const b = await res.json();
+          setBrand({ logo_url: b.logo_url, accent_color: b.accent_color || "#5b5bd6", report_footer: b.report_footer || "" });
+        }
+      } catch {}
+    })();
+  }, []);
+
+  const onLogoPick = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 500 * 1024) { setBrandMsg({ kind: "err", text: "Please choose an image under 500KB." }); return; }
+    const reader = new FileReader();
+    reader.onloadend = () => setBrand((b) => ({ ...b, logo_url: reader.result as string }));
+    reader.readAsDataURL(file);
+  };
+
+  const saveBranding = async () => {
+    setBrandSaving(true);
+    setBrandMsg(null);
+    try {
+      const res = await apiFetch(withWorkspace(`${getApiUrl()}/api/v1/workspace/branding`), {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(brand),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || "Couldn't save branding.");
+      setBrandMsg({ kind: "ok", text: "Branding saved. It'll show on your dashboards and exported reports." });
+    } catch (err) {
+      setBrandMsg({ kind: "err", text: err instanceof Error ? err.message : "Couldn't save branding." });
+    } finally {
+      setBrandSaving(false);
+    }
+  };
 
   useEffect(() => {
     (async () => {
@@ -151,33 +199,58 @@ export default function SettingsPage() {
           </motion.div>
         );
 
-      case "workspace":
+      case "branding":
         return (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} key="workspace">
-            <h2 className="text-2xl font-medium mb-1 tracking-tight">Workspace Configuration</h2>
-            <p className="text-gray-500 text-sm mb-8 border-b border-gray-100 pb-6">Configure your agency dashboard environment.</p>
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} key="branding">
+            <h2 className="text-2xl font-medium mb-1 tracking-tight">White-label branding</h2>
+            <p className="text-gray-500 text-sm mb-8 border-b border-gray-100 pb-6">Your logo, colour and footer appear on this workspace&apos;s dashboards and exported reports.</p>
 
             <div className="space-y-8 max-w-lg">
+              {/* Logo */}
+              <div className="space-y-3">
+                <label className="text-sm font-medium text-gray-700">Agency logo</label>
+                <div className="flex items-center gap-4">
+                  <div className="w-24 h-24 rounded-2xl border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden">
+                    {brand.logo_url
+                      ? <img src={brand.logo_url} alt="logo" className="max-w-full max-h-full object-contain" />
+                      : <span className="text-xs text-gray-400">No logo</span>}
+                  </div>
+                  <div className="space-y-2">
+                    <label className="inline-block px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-xl cursor-pointer hover:bg-black transition-colors">
+                      Upload
+                      <input type="file" accept="image/*" onChange={onLogoPick} className="hidden" />
+                    </label>
+                    {brand.logo_url && (
+                      <button onClick={() => setBrand((b) => ({ ...b, logo_url: null }))} className="block text-xs text-gray-500 hover:text-red-500">Remove logo</button>
+                    )}
+                    <p className="text-xs text-gray-400">PNG or SVG, under 500KB.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Accent colour */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Agency Name</label>
-                <input type="text" defaultValue="Acme Marketing" className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all" />
-              </div>
-
-              <div className="flex items-center justify-between p-5 border border-gray-100 rounded-2xl bg-gray-50/50">
-                <div>
-                  <h4 className="text-sm font-medium text-gray-900">White-labeling</h4>
-                  <p className="text-xs text-gray-500 mt-1">Remove ArbFlow branding from client reports.</p>
-                </div>
-                <div className="w-12 h-6 bg-black rounded-full relative cursor-pointer">
-                  <div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full"></div>
+                <label className="text-sm font-medium text-gray-700">Accent colour</label>
+                <div className="flex items-center gap-3">
+                  <input type="color" value={brand.accent_color} onChange={(e) => setBrand((b) => ({ ...b, accent_color: e.target.value }))} className="w-12 h-12 rounded-lg border border-gray-200 cursor-pointer bg-white" />
+                  <input type="text" value={brand.accent_color} onChange={(e) => setBrand((b) => ({ ...b, accent_color: e.target.value }))} className="w-32 px-3 py-2 text-sm border border-gray-200 rounded-xl outline-none focus:border-blue-400 font-mono" />
                 </div>
               </div>
 
-              <div className="pt-4 flex flex-col space-y-4">
-                <button className="px-6 py-3 bg-black text-white text-sm font-medium rounded-full hover:bg-gray-800 transition-all shadow-sm w-max">
-                  Update Workspace
+              {/* Report footer */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Report footer</label>
+                <input type="text" value={brand.report_footer} maxLength={300} onChange={(e) => setBrand((b) => ({ ...b, report_footer: e.target.value }))} placeholder="Prepared by Your Agency · hello@agency.com" className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all text-sm" />
+              </div>
+
+              {brandMsg && (
+                <div className={`text-sm px-4 py-3 rounded-xl ${brandMsg.kind === "ok" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-600"}`}>{brandMsg.text}</div>
+              )}
+
+              <div className="pt-2">
+                <button onClick={saveBranding} disabled={brandSaving} className="px-6 py-3 text-white text-sm font-medium rounded-full transition-all shadow-sm w-max disabled:opacity-50" style={{ background: brand.accent_color }}>
+                  {brandSaving ? "Saving…" : "Save branding"}
                 </button>
-                <button className="text-sm text-red-500 hover:text-red-700 font-medium w-max">Delete Workspace</button>
               </div>
             </div>
           </motion.div>
@@ -282,7 +355,7 @@ export default function SettingsPage() {
           <nav className="flex md:flex-col space-x-2 md:space-x-0 md:space-y-1 overflow-x-auto pb-4 md:pb-0 scrollbar-hide">
             {[
               { id: "profile", label: "Profile" },
-              { id: "workspace", label: "Workspace" },
+              { id: "branding", label: "Branding" },
               { id: "billing", label: "Billing" },
               { id: "api", label: "API Keys" }
             ].map((tab) => (
