@@ -8,7 +8,7 @@ import os
 from datetime import timedelta
 
 from app.db.database import get_db
-from app.db.models import User, Integration, VerificationToken, DashboardCache, AuditLog, RefreshToken, TeamMembership, TeamInvitation
+from app.db.models import User, Integration, VerificationToken, DashboardCache, AuditLog, RefreshToken, TeamMembership, TeamInvitation, BrandSettings
 from app.schemas import (
     UserCreate, UserLogin, UserResponse, AuthCodeExchange,
     EmailRequest, TokenPayload, PasswordResetPayload,
@@ -362,6 +362,7 @@ def delete_account(request: Request, current_user: User = Depends(get_current_us
         (TeamMembership.owner_id == user_id) | (TeamMembership.member_id == user_id)
     ).delete()
     db.query(TeamInvitation).filter(TeamInvitation.owner_id == user_id).delete()
+    db.query(BrandSettings).filter(BrandSettings.user_id == user_id).delete()
     db.query(AuditLog).filter(AuditLog.user_id == user_id).update({"email": None})
     db.delete(current_user)
     db.commit()

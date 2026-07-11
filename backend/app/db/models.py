@@ -145,3 +145,18 @@ class TeamInvitation(Base):
     email = Column(String, nullable=False, index=True)
     role = Column(String, nullable=False, default="member")
     created_at = Column(DateTime, default=utcnow, nullable=False)
+
+
+class BrandSettings(Base):
+    """Per-workspace white-label branding (logo, accent colour, report footer).
+
+    Keyed on the workspace owner's user id. Applied to the client-facing
+    dashboards and exported reports so an agency can present under its own brand.
+    """
+    __tablename__ = "brand_settings"
+
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    logo_url = Column(String, nullable=True)      # data: URL or https URL
+    accent_color = Column(String, nullable=True)  # hex, e.g. "#5b5bd6"
+    report_footer = Column(String, nullable=True)
+    updated_at = Column(DateTime, default=utcnow, nullable=False)

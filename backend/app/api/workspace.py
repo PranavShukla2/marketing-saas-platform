@@ -12,7 +12,7 @@ from app.core.team import (
     require_manage, resolve_workspace_owner,
 )
 from app.services.audit import record as audit
-from app.db.models import TeamInvitation, TeamMembership, User
+from app.db.models import BrandSettings, TeamInvitation, TeamMembership, User
 
 router = APIRouter()
 
@@ -172,3 +172,67 @@ def revoke_invite(request: Request, email: str = Query(...), workspace: int | No
     ).delete()
     db.commit()
     return None
+
+
+# ---------------- White-label branding ----------------
+
+import re as _re
+
+_LOGO_MAX = 700_000  # ~500KB image once base64-encoded
+_HEX = _re.compile(r"^#[0-9a-fA-F]{6}$")
+
+
+class BrandBody(BaseModel):
+    logo_url: str | None = None
+    accent_color: str | None = None
+    report_footer: str | None = None
+    workspace: int | None = None
+
+
+def _brand_dict(b: BrandSettings | None, owner: User) -> dict:
+    return {
+        "logo_url": b.logo_url if b else None,
+        "accent_color": (b.accent_color if b and b.accent_color else "#5b5bd6"),
+        "report_footer": (b.report_footer if b else None),
+        "company_name": owner.company_name,
+    }
+
+
+@router.get("/branding")
+def get_branding(workspace: int | None = Query(default=None), db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """The workspace's branding (readable by any member, for client-facing display)."""
+    owner, _role = resolve_workspace_owner(current_user, workspace, db)
+    b = db.get(BrandSettings, owner.id)
+    return _brand_dict(b, owner)
+
+
+@router.put("/branding")
+def update_branding(body: BrandBody, request: Request, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    owner, role = resolve_workspace_owner(current_user, body.workspace, db)
+    require_manage(role)
+
+    logo = (body.logo_url or "").strip() or None
+    if logo is not None:
+        if not (logo.startswith("data:image/") or logo.startswith("https://")):
+            raise HTTPException(status_code=422, detail="Logo must be an uploaded image or an https URL.")
+        if len(logo) > _LOGO_MAX:
+            raise HTTPException(status_code=422, detail="Logo is too large — please use an image under 500KB.")
+
+    accent = (body.accent_color or "").strip() or None
+    if accent is not None and not _HEX.match(accent):
+        raise HTTPException(status_code=422, detail="Accent colour must be a hex value like #5b5bd6.")
+
+    footer = (body.report_footer or "").strip() or None
+    if footer is not None and len(footer) > 300:
+        raise HTTPException(status_code=422, detail="Footer is too long (max 300 characters).")
+
+    b = db.get(BrandSettings, owner.id)
+    if b is None:
+        b = BrandSettings(user_id=owner.id)
+        db.add(b)
+    b.logo_url, b.accent_color, b.report_footer = logo, accent, footer
+    from app.core.time import utcnow as _now
+    b.updated_at = _now()
+    db.commit()
+    audit(db, "workspace.branding_updated", request, user_id=current_user.id)
+    return _brand_dict(b, owner)
