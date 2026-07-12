@@ -2,12 +2,52 @@
 
 import { motion } from "framer-motion";
 import jsPDF from "jspdf";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { getApiUrl, apiFetch } from "../../../lib/auth";
 import { withWorkspace } from "../../../lib/workspace";
 
 export default function ReportsPage() {
   const [generating, setGenerating] = useState(false);
+
+  // Real scheduled-report settings (owner/admin only; others see a note).
+  const [sched, setSched] = useState<{ recipients: string; frequency: string; enabled: boolean; last_sent_at: string | null }>(
+    { recipients: "", frequency: "weekly", enabled: false, last_sent_at: null }
+  );
+  const [schedAllowed, setSchedAllowed] = useState(true);
+  const [schedSaving, setSchedSaving] = useState(false);
+  const [schedMsg, setSchedMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await apiFetch(withWorkspace(`${getApiUrl()}/api/v1/workspace/report-schedule`));
+        if (res.status === 403) { setSchedAllowed(false); return; }
+        if (res.ok) {
+          const s = await res.json();
+          setSched({ recipients: s.recipients || "", frequency: s.frequency || "weekly", enabled: !!s.enabled, last_sent_at: s.last_sent_at });
+        }
+      } catch {}
+    })();
+  }, []);
+
+  const saveSchedule = async () => {
+    setSchedSaving(true);
+    setSchedMsg(null);
+    try {
+      const res = await apiFetch(withWorkspace(`${getApiUrl()}/api/v1/workspace/report-schedule`), {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(sched),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || "Couldn't save the schedule.");
+      setSchedMsg({ kind: "ok", text: sched.enabled ? "Scheduled. Your clients get the next branded report automatically." : "Saved (schedule is off)." });
+    } catch (err) {
+      setSchedMsg({ kind: "err", text: err instanceof Error ? err.message : "Couldn't save the schedule." });
+    } finally {
+      setSchedSaving(false);
+    }
+  };
 
   const generatePDF = async () => {
     setGenerating(true);
@@ -124,24 +164,67 @@ export default function ReportsPage() {
         </button>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6 mb-12">
-        <div className="bg-gradient-to-r from-gray-900 to-black p-8 rounded-3xl text-white shadow-lg">
-          <h3 className="text-xl font-semibold mb-2">Automated Schedules</h3>
-          <p className="text-gray-400 text-sm mb-6 max-w-xs">You have 2 scheduled reports running every 1st of the month.</p>
-          <button className="px-5 py-2.5 bg-white/10 hover:bg-white/20 transition-colors rounded-lg text-sm font-medium">Manage Schedules</button>
-        </div>
-        <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-center">
-          <div className="flex items-center space-x-4">
-            <div className="w-14 h-14 bg-green-50 rounded-2xl flex items-center justify-center text-green-500">
-              <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            </div>
-            <div>
-              <p className="text-gray-500 text-sm font-medium">Last generation successful</p>
-              <p className="text-gray-900 font-semibold mt-1">Today at 9:00 AM</p>
-            </div>
+      {/* Scheduled reports — real settings, emailed automatically with the
+          workspace's white-label branding. */}
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+        className="bg-gradient-to-r from-gray-900 to-black p-8 rounded-3xl text-white shadow-lg mb-12">
+        <div className="flex items-start justify-between flex-wrap gap-4 mb-5">
+          <div>
+            <h3 className="text-xl font-semibold mb-1">Automated client reports</h3>
+            <p className="text-gray-400 text-sm max-w-md">A branded performance report (your logo, colour and footer) emailed to your client automatically.</p>
           </div>
+          {sched.last_sent_at && (
+            <span className="text-xs text-gray-400 bg-white/10 px-3 py-1.5 rounded-full">
+              Last sent {new Date(sched.last_sent_at).toLocaleDateString()}
+            </span>
+          )}
         </div>
-      </div>
+
+        {!schedAllowed ? (
+          <p className="text-sm text-gray-400">Only the workspace owner or an admin can manage the schedule.</p>
+        ) : (
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <input
+                type="text"
+                value={sched.recipients}
+                onChange={(e) => setSched((s) => ({ ...s, recipients: e.target.value }))}
+                placeholder="client@company.com, cmo@company.com"
+                className="flex-1 px-4 py-2.5 text-sm bg-white/10 border border-white/15 rounded-xl outline-none placeholder:text-gray-500 focus:border-white/40 transition-colors"
+              />
+              <select
+                value={sched.frequency}
+                onChange={(e) => setSched((s) => ({ ...s, frequency: e.target.value }))}
+                className="px-3 py-2.5 text-sm bg-white/10 border border-white/15 rounded-xl outline-none cursor-pointer [&>option]:text-gray-900"
+              >
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+              </select>
+            </div>
+
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <label className="flex items-center gap-3 cursor-pointer select-none">
+                <button
+                  onClick={() => setSched((s) => ({ ...s, enabled: !s.enabled }))}
+                  aria-label="Toggle scheduled reports"
+                  className={`w-12 h-6 rounded-full relative transition-colors ${sched.enabled ? "bg-emerald-400" : "bg-white/20"}`}
+                >
+                  <span className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${sched.enabled ? "right-1" : "left-1"}`} />
+                </button>
+                <span className="text-sm text-gray-300">{sched.enabled ? "Schedule is on" : "Schedule is off"}</span>
+              </label>
+              <button onClick={saveSchedule} disabled={schedSaving}
+                className="px-5 py-2.5 bg-white text-gray-900 hover:bg-gray-100 transition-colors rounded-xl text-sm font-semibold disabled:opacity-50">
+                {schedSaving ? "Saving…" : "Save schedule"}
+              </button>
+            </div>
+
+            {schedMsg && (
+              <p className={`text-sm ${schedMsg.kind === "ok" ? "text-emerald-300" : "text-red-300"}`}>{schedMsg.text}</p>
+            )}
+          </div>
+        )}
+      </motion.div>
 
       <h3 className="text-xl font-medium mb-6">Recent Reports</h3>
       <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
