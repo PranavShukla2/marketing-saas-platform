@@ -12,7 +12,8 @@ from app.core.team import (
     require_manage, resolve_workspace_owner,
 )
 from app.services.audit import record as audit
-from app.db.models import BrandSettings, TeamInvitation, TeamMembership, User
+from app.services.notify import webhook_url_allowed
+from app.db.models import BrandSettings, NotificationSettings, TeamInvitation, TeamMembership, User
 
 router = APIRouter()
 
@@ -236,3 +237,48 @@ def update_branding(body: BrandBody, request: Request, db: Session = Depends(get
     db.commit()
     audit(db, "workspace.branding_updated", request, user_id=current_user.id)
     return _brand_dict(b, owner)
+
+
+# ---------------- Notification preferences ----------------
+
+class NotificationBody(BaseModel):
+    slack_webhook_url: str | None = None
+    digest_enabled: bool = True
+    workspace: int | None = None
+
+
+def _notif_dict(s: NotificationSettings | None) -> dict:
+    return {
+        "slack_webhook_url": s.slack_webhook_url if s else None,
+        "digest_enabled": s.digest_enabled if s else True,
+    }
+
+
+@router.get("/notifications")
+def get_notifications(workspace: int | None = Query(default=None), db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    owner, role = resolve_workspace_owner(current_user, workspace, db)
+    require_manage(role)  # delivery settings are owner/admin territory
+    return _notif_dict(db.get(NotificationSettings, owner.id))
+
+
+@router.put("/notifications")
+def update_notifications(body: NotificationBody, request: Request, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    owner, role = resolve_workspace_owner(current_user, body.workspace, db)
+    require_manage(role)
+
+    url = (body.slack_webhook_url or "").strip() or None
+    if url is not None and not webhook_url_allowed(url):
+        raise HTTPException(
+            status_code=422,
+            detail="Webhook must be a Slack (hooks.slack.com) or Discord (discord.com/api/webhooks) URL.",
+        )
+
+    s = db.get(NotificationSettings, owner.id)
+    if s is None:
+        s = NotificationSettings(user_id=owner.id)
+        db.add(s)
+    s.slack_webhook_url = url
+    s.digest_enabled = bool(body.digest_enabled)
+    db.commit()
+    audit(db, "workspace.notifications_updated", request, user_id=current_user.id)
+    return _notif_dict(s)

@@ -72,6 +72,10 @@ def store_and_alert(db: Session, user: User, property_id: str | None, payload: d
         message = payload["anomaly"].get("message", "")
         if send_anomaly_email(user.email, message):
             log.info(f"Anomaly alert emailed to user {user.id}: {new_anomaly_key}")
+        # Same message to the workspace's Slack/Discord webhook, if configured.
+        # (Imported here to keep the module import graph flat.)
+        from app.services.notify import notify_anomaly
+        notify_anomaly(db, user.id, message)
         # Record the key even if the send was logged-only/failed — the banner is
         # visible in-app either way, and retry-spamming a broken mailer is worse.
         row.last_anomaly_key = new_anomaly_key

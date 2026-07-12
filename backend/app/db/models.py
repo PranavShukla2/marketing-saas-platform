@@ -160,3 +160,18 @@ class BrandSettings(Base):
     accent_color = Column(String, nullable=True)  # hex, e.g. "#5b5bd6"
     report_footer = Column(String, nullable=True)
     updated_at = Column(DateTime, default=utcnow, nullable=False)
+
+
+class NotificationSettings(Base):
+    """Per-workspace alert delivery preferences.
+
+    Keyed on the workspace owner's user id. The Slack/Discord webhook gets the
+    same anomaly messages as email; the weekly digest is a summary email built
+    from the cached dashboard (no extra Google calls).
+    """
+    __tablename__ = "notification_settings"
+
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    slack_webhook_url = Column(String, nullable=True)
+    digest_enabled = Column(Boolean, nullable=False, default=True, server_default="1")
+    digest_last_sent_at = Column(DateTime, nullable=True)
