@@ -40,6 +40,44 @@ export default function SettingsPage() {
     })();
   }, []);
 
+  // Notifications — Slack/Discord webhook + weekly digest toggle.
+  const [notif, setNotif] = useState<{ slack_webhook_url: string; digest_enabled: boolean }>(
+    { slack_webhook_url: "", digest_enabled: true }
+  );
+  const [notifSaving, setNotifSaving] = useState(false);
+  const [notifMsg, setNotifMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await apiFetch(withWorkspace(`${getApiUrl()}/api/v1/workspace/notifications`));
+        if (res.ok) {
+          const n = await res.json();
+          setNotif({ slack_webhook_url: n.slack_webhook_url || "", digest_enabled: !!n.digest_enabled });
+        }
+      } catch {}
+    })();
+  }, []);
+
+  const saveNotifications = async () => {
+    setNotifSaving(true);
+    setNotifMsg(null);
+    try {
+      const res = await apiFetch(withWorkspace(`${getApiUrl()}/api/v1/workspace/notifications`), {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(notif),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || "Couldn't save notification settings.");
+      setNotifMsg({ kind: "ok", text: "Saved. Alerts will also go to your webhook; the digest lands weekly." });
+    } catch (err) {
+      setNotifMsg({ kind: "err", text: err instanceof Error ? err.message : "Couldn't save notification settings." });
+    } finally {
+      setNotifSaving(false);
+    }
+  };
+
   const onLogoPick = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -256,6 +294,54 @@ export default function SettingsPage() {
           </motion.div>
         );
 
+      case "notifications":
+        return (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} key="notifications">
+            <h2 className="text-2xl font-medium mb-1 tracking-tight">Notifications</h2>
+            <p className="text-gray-500 text-sm mb-8 border-b border-gray-100 pb-6">Where ArbFlow pings you when something changes in this workspace&apos;s numbers.</p>
+
+            <div className="space-y-8 max-w-lg">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Slack or Discord webhook</label>
+                <input
+                  type="url"
+                  value={notif.slack_webhook_url}
+                  onChange={(e) => setNotif((n) => ({ ...n, slack_webhook_url: e.target.value }))}
+                  placeholder="https://hooks.slack.com/services/…"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all text-sm font-mono"
+                />
+                <p className="text-xs text-gray-400 leading-relaxed">
+                  Anomaly alerts (and the weekly digest) are posted here as well as emailed.
+                  Create one under Slack → Apps → Incoming Webhooks, or Discord → Channel settings → Integrations → Webhooks.
+                </p>
+              </div>
+
+              <div className="flex items-center justify-between p-5 border border-gray-100 rounded-2xl bg-gray-50/50">
+                <div>
+                  <h4 className="text-sm font-medium text-gray-900">Weekly digest</h4>
+                  <p className="text-xs text-gray-500 mt-1">A Monday-morning style summary: last 7 days vs the week before.</p>
+                </div>
+                <button
+                  onClick={() => setNotif((n) => ({ ...n, digest_enabled: !n.digest_enabled }))}
+                  aria-label="Toggle weekly digest"
+                  className={`w-12 h-6 rounded-full relative transition-colors ${notif.digest_enabled ? "bg-black" : "bg-gray-300"}`}
+                >
+                  <span className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${notif.digest_enabled ? "right-1" : "left-1"}`} />
+                </button>
+              </div>
+
+              {notifMsg && (
+                <div className={`text-sm px-4 py-3 rounded-xl ${notifMsg.kind === "ok" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-600"}`}>{notifMsg.text}</div>
+              )}
+
+              <button onClick={saveNotifications} disabled={notifSaving}
+                className="px-6 py-3 bg-black text-white text-sm font-medium rounded-full hover:bg-gray-800 transition-all shadow-sm w-max disabled:opacity-50">
+                {notifSaving ? "Saving…" : "Save notifications"}
+              </button>
+            </div>
+          </motion.div>
+        );
+
       case "billing":
         return (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} key="billing">
@@ -356,6 +442,7 @@ export default function SettingsPage() {
             {[
               { id: "profile", label: "Profile" },
               { id: "branding", label: "Branding" },
+              { id: "notifications", label: "Notifications" },
               { id: "billing", label: "Billing" },
               { id: "api", label: "API Keys" }
             ].map((tab) => (
