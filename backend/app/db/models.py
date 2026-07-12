@@ -175,3 +175,19 @@ class NotificationSettings(Base):
     slack_webhook_url = Column(String, nullable=True)
     digest_enabled = Column(Boolean, nullable=False, default=True, server_default="1")
     digest_last_sent_at = Column(DateTime, nullable=True)
+
+
+class ReportSchedule(Base):
+    """Recurring client-facing report emails, one schedule per workspace.
+
+    Recipients are the agency's client contacts (comma-separated) — this is the
+    'send my client a branded weekly report automatically' feature. Sent by the
+    background sync pass from the cached payload, styled with BrandSettings.
+    """
+    __tablename__ = "report_schedules"
+
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    recipients = Column(String, nullable=False, default="")  # comma-separated emails
+    frequency = Column(String, nullable=False, default="weekly")  # weekly | monthly
+    enabled = Column(Boolean, nullable=False, default=False, server_default="0")
+    last_sent_at = Column(DateTime, nullable=True)
