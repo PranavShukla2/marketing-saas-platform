@@ -13,7 +13,8 @@ from app.core.team import (
 )
 from app.services.audit import record as audit
 from app.services.notify import webhook_url_allowed
-from app.db.models import BrandSettings, NotificationSettings, TeamInvitation, TeamMembership, User
+from app.services.reports import FREQUENCIES, parse_recipients
+from app.db.models import BrandSettings, NotificationSettings, ReportSchedule, TeamInvitation, TeamMembership, User
 
 router = APIRouter()
 
@@ -282,3 +283,55 @@ def update_notifications(body: NotificationBody, request: Request, db: Session =
     db.commit()
     audit(db, "workspace.notifications_updated", request, user_id=current_user.id)
     return _notif_dict(s)
+
+
+# ---------------- Scheduled reports ----------------
+
+class ReportScheduleBody(BaseModel):
+    recipients: str = ""            # comma-separated emails
+    frequency: str = "weekly"       # weekly | monthly
+    enabled: bool = False
+    workspace: int | None = None
+
+
+def _schedule_dict(s: ReportSchedule | None) -> dict:
+    return {
+        "recipients": s.recipients if s else "",
+        "frequency": s.frequency if s else "weekly",
+        "enabled": s.enabled if s else False,
+        "last_sent_at": (s.last_sent_at.isoformat() + "Z") if s and s.last_sent_at else None,
+    }
+
+
+@router.get("/report-schedule")
+def get_report_schedule(workspace: int | None = Query(default=None), db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    owner, role = resolve_workspace_owner(current_user, workspace, db)
+    require_manage(role)  # recipients are client emails — owner/admin only
+    return _schedule_dict(db.get(ReportSchedule, owner.id))
+
+
+@router.put("/report-schedule")
+def update_report_schedule(body: ReportScheduleBody, request: Request, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    owner, role = resolve_workspace_owner(current_user, body.workspace, db)
+    require_manage(role)
+
+    if body.frequency not in FREQUENCIES:
+        raise HTTPException(status_code=422, detail="Frequency must be weekly or monthly.")
+    try:
+        recipients = parse_recipients(body.recipients)
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    if body.enabled and not recipients:
+        raise HTTPException(status_code=422, detail="Add at least one recipient before enabling the schedule.")
+
+    s = db.get(ReportSchedule, owner.id)
+    if s is None:
+        s = ReportSchedule(user_id=owner.id)
+        db.add(s)
+    s.recipients = ",".join(recipients)
+    s.frequency = body.frequency
+    s.enabled = bool(body.enabled)
+    db.commit()
+    audit(db, "workspace.report_schedule_updated", request, user_id=current_user.id,
+          detail=f"{body.frequency}, {len(recipients)} recipient(s), enabled={body.enabled}")
+    return _schedule_dict(s)

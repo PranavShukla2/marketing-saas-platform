@@ -105,3 +105,36 @@ def test_send_respects_schedule(client, monkeypatch):
         assert reports.maybe_send_report(db, user, payload) is False
     finally:
         db.close()
+
+
+def test_schedule_endpoints_validation_and_access(client, monkeypatch):
+    import app.api.workspace as ws
+
+    email = _email()
+    _register_login(client, email)
+
+    # invalid frequency / bad recipient / enable-without-recipients
+    assert client.put("/api/v1/workspace/report-schedule",
+                      json={"frequency": "daily"}).status_code == 422
+    assert client.put("/api/v1/workspace/report-schedule",
+                      json={"recipients": "nope", "frequency": "weekly"}).status_code == 422
+    assert client.put("/api/v1/workspace/report-schedule",
+                      json={"recipients": "", "frequency": "weekly", "enabled": True}).status_code == 422
+
+    # valid save + read back (recipients normalized)
+    r = client.put("/api/v1/workspace/report-schedule",
+                   json={"recipients": " Client@X.com , boss@y.io ", "frequency": "monthly", "enabled": True})
+    assert r.status_code == 200, r.text
+    got = client.get("/api/v1/workspace/report-schedule").json()
+    assert got["recipients"] == "client@x.com,boss@y.io"
+    assert got["frequency"] == "monthly" and got["enabled"] is True
+
+    # a plain member can't see or edit the owner's schedule
+    box = {}
+    monkeypatch.setattr(ws, "send_team_invite_email", lambda to, c, r, t: box.update({to: t}) or True)
+    owner_id = client.get("/api/v1/auth/me").json()["id"]
+    member_email = _email()
+    client.post("/api/v1/workspace/team/invite", json={"email": member_email, "role": "member"})
+    _register_login(client, member_email)
+    client.post("/api/v1/workspace/team/accept", json={"token": box[member_email]})
+    assert client.get(f"/api/v1/workspace/report-schedule?workspace={owner_id}").status_code == 403
