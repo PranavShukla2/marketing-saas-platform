@@ -35,6 +35,7 @@ def run_sync_pass() -> int:
     from app.db.models import Integration, User
     from app.services.dashboard_cache import store_and_alert
     from app.services.notify import maybe_send_digest
+    from app.services.reports import maybe_send_report
     import time as _time
 
     synced = 0
@@ -51,9 +52,10 @@ def run_sync_pass() -> int:
                 result = _build_dashboard_payload(None, db, user)
                 payload = result.get("data", {})
                 store_and_alert(db, user, None, payload)
-                # Weekly digest rides the same pass — built from the payload we
-                # just fetched, so it costs no extra Google calls.
+                # Weekly digest + scheduled client reports ride the same pass —
+                # built from the payload we just fetched, zero extra Google calls.
                 maybe_send_digest(db, user, payload)
+                maybe_send_report(db, user, payload)
                 synced += 1
             except Exception as e:
                 log.warning(f"Sync failed for user {integration.user_id}: {e}")
