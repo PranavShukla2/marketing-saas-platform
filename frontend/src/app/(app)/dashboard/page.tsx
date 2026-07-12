@@ -16,6 +16,7 @@ import { getActiveWorkspace, withWorkspace } from "../../../lib/workspace";
 import { demoData } from "../../../lib/demoData";
 import { KpiCard, SectionCard, BarList, Sparkline, PALETTE } from "../../../components/workspace/primitives";
 import FloAssistant from "../../../components/workspace/FloAssistant";
+import OnboardingChecklist from "../../../components/workspace/OnboardingChecklist";
 
 const SECTIONS = [
   { id: "overview", label: "Overview" },
@@ -329,6 +330,9 @@ export default function Dashboard() {
           </button>
         </div>
       </header>
+
+      {/* ---------------- First-run checklist (own workspace only) ---------------- */}
+      <OnboardingChecklist onConnectGoogle={handleConnectGoogle} />
 
       {/* ---------------- Demo banner ---------------- */}
       {isDemo && activePlatform === "google" && (
