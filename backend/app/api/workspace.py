@@ -14,7 +14,10 @@ from app.core.team import (
 from app.services.audit import record as audit
 from app.services.notify import webhook_url_allowed
 from app.services.reports import FREQUENCIES, parse_recipients
-from app.db.models import BrandSettings, NotificationSettings, ReportSchedule, TeamInvitation, TeamMembership, User
+from app.db.models import (
+    BrandSettings, Integration, NotificationSettings, ReportSchedule,
+    TeamInvitation, TeamMembership, User,
+)
 
 router = APIRouter()
 
@@ -69,6 +72,35 @@ def get_billing(workspace: int | None = Query(default=None), db: Session = Depen
         # Honest: nothing has ever been billed, so there are no invoices.
         "invoices": []
     }
+
+
+# ---------------- Onboarding ----------------
+
+@router.get("/onboarding")
+def get_onboarding(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """First-run checklist state, derived from what actually exists in the DB —
+    steps check themselves off, no separate 'completed' bookkeeping to drift.
+    Always about the caller's OWN workspace (onboarding is per account)."""
+    uid = current_user.id
+    connected_ga = db.query(Integration).filter(
+        Integration.user_id == uid, Integration.provider == "google_analytics"
+    ).first() is not None
+    invited_team = (
+        db.query(TeamMembership).filter(TeamMembership.owner_id == uid).first() is not None
+        or db.query(TeamInvitation).filter(TeamInvitation.owner_id == uid).first() is not None
+    )
+    b = db.get(BrandSettings, uid)
+    set_branding = b is not None and any((b.logo_url, b.accent_color, b.report_footer))
+    s = db.get(ReportSchedule, uid)
+    scheduled_report = s is not None and s.enabled
+
+    steps = {
+        "connect_ga": connected_ga,
+        "invite_team": invited_team,
+        "set_branding": set_branding,
+        "schedule_report": scheduled_report,
+    }
+    return {"steps": steps, "complete": all(steps.values())}
 
 
 # ---------------- Teams / multi-user workspaces ----------------
