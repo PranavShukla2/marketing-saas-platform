@@ -8,8 +8,9 @@ export default function MarketingLayout({
 }>) {
   return (
     <div className="pt-16">
+      <a href="#main" className="skip-link">Skip to content</a>
       <Navbar />
-      <main>{children}</main>
+      <main id="main">{children}</main>
       <Footer />
     </div>
   );

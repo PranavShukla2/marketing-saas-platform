@@ -252,3 +252,28 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+/* ---------------- Accessibility ---------------- */
+
+/* Visible keyboard focus everywhere (WCAG 2.4.7) without affecting mouse users. */
+:focus-visible {
+  outline: 2px solid var(--indigo, #5b5bd6);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Skip-to-content link: visually hidden until keyboard-focused. */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+  background: var(--ink, #15132e);
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+.skip-link:focus {
+  left: 0;
+}
