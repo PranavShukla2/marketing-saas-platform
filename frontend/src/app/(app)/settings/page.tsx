@@ -251,7 +251,7 @@ export default function SettingsPage() {
                   <div className="w-24 h-24 rounded-2xl border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden">
                     {brand.logo_url
                       ? <img src={brand.logo_url} alt="logo" className="max-w-full max-h-full object-contain" />
-                      : <span className="text-xs text-gray-400">No logo</span>}
+                      : <span className="text-xs text-gray-500">No logo</span>}
                   </div>
                   <div className="space-y-2">
                     <label className="inline-block px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-xl cursor-pointer hover:bg-black transition-colors">
@@ -261,7 +261,7 @@ export default function SettingsPage() {
                     {brand.logo_url && (
                       <button onClick={() => setBrand((b) => ({ ...b, logo_url: null }))} className="block text-xs text-gray-500 hover:text-red-500">Remove logo</button>
                     )}
-                    <p className="text-xs text-gray-400">PNG or SVG, under 500KB.</p>
+                    <p className="text-xs text-gray-500">PNG or SVG, under 500KB.</p>
                   </div>
                 </div>
               </div>
@@ -310,7 +310,7 @@ export default function SettingsPage() {
                   placeholder="https://hooks.slack.com/services/…"
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all text-sm font-mono"
                 />
-                <p className="text-xs text-gray-400 leading-relaxed">
+                <p className="text-xs text-gray-500 leading-relaxed">
                   Anomaly alerts (and the weekly digest) are posted here as well as emailed.
                   Create one under Slack → Apps → Incoming Webhooks, or Discord → Channel settings → Integrations → Webhooks.
                 </p>
@@ -354,13 +354,13 @@ export default function SettingsPage() {
 
               <div className="flex justify-between items-start mb-8 relative z-10">
                 <div>
-                  <p className="text-xs text-gray-400 font-medium tracking-widest uppercase mb-2">Current Plan</p>
+                  <p className="text-xs text-gray-500 font-medium tracking-widest uppercase mb-2">Current Plan</p>
                   <h4 className="text-4xl font-light">Enterprise</h4>
                 </div>
                 <span className="px-3 py-1 bg-white/10 text-xs font-medium rounded-full backdrop-blur-sm border border-white/20">Active</span>
               </div>
               <div className="flex justify-between items-end relative z-10">
-                <p className="text-sm text-gray-400">Renews on Oct 24, 2026</p>
+                <p className="text-sm text-gray-500">Renews on Oct 24, 2026</p>
                 <button className="text-sm font-medium bg-white text-black px-5 py-2.5 rounded-full hover:bg-gray-200 transition-colors shadow-lg">Manage Plan</button>
               </div>
             </div>

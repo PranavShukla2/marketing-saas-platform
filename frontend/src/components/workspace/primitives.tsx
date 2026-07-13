@@ -69,7 +69,9 @@ export function KpiCard({
           <span
             className="text-[11px] font-semibold px-1.5 py-0.5 rounded-md"
             style={{
-              color: up ? "var(--teal)" : "var(--coral)",
+              // Darker than the brand teal/coral so the tiny chip text passes
+              // WCAG AA contrast on its tinted background.
+              color: up ? "#0b766c" : "#c2372a",
               background: up ? "rgba(20,184,166,.12)" : "rgba(255,107,94,.12)",
             }}
           >

@@ -110,8 +110,9 @@ export default function Sidebar() {
       {/* Workspace switcher — shown only when the user belongs to a team. */}
       {workspaces.length > 1 && (
         <div className="px-1 mb-6">
-          <label className="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5 px-2">Workspace</label>
+          <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5 px-2">Workspace</label>
           <select
+            aria-label="Switch workspace"
             value={activeWs}
             onChange={(e) => switchWorkspace(e.target.value)}
             className="w-full text-sm font-medium text-gray-800 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 outline-none cursor-pointer hover:bg-gray-100 transition-colors"
@@ -150,7 +151,7 @@ export default function Sidebar() {
       <div className="mt-auto px-4">
         <Link href="/billing">
           <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 mb-4 block cursor-pointer transition-transform hover:scale-[1.02]">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Workspace limit</p>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Workspace limit</p>
             <div className="w-full bg-gray-200 rounded-full h-1.5 mb-2"><div className="bg-blue-500 h-1.5 rounded-full" style={{ width: `${usage.percentage}%` }}></div></div>
             <p className="text-xs text-gray-500">{Math.floor(usage.current).toLocaleString()} / {Math.floor(usage.limit / 1000)}k views</p>
           </div>

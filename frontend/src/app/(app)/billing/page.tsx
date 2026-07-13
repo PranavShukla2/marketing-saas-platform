@@ -28,7 +28,7 @@ export default function BillingPage() {
     fetchBilling();
   }, []);
 
-  if (loading || !billing) return <div className="p-10 font-light text-gray-400">Loading billing info...</div>;
+  if (loading || !billing) return <div className="p-10 font-light text-gray-500">Loading billing info...</div>;
   return (
     <div className="w-full max-w-4xl mx-auto py-8">
       <div className="mb-10">
@@ -40,7 +40,7 @@ export default function BillingPage() {
         <div className="col-span-2 bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
           <div className="flex justify-between items-start mb-6">
             <div>
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Current Plan</p>
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Current Plan</p>
               <h2 className="text-2xl font-semibold">{billing.plan}</h2>
             </div>
             <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-sm font-medium border border-blue-100">{billing.billing_cycle}</span>

@@ -15,7 +15,7 @@ html {
   /* Landing page (Flo / ArbFlow) design tokens */
   --ink: #15132e;
   --ink-2: #5b5f7a;
-  --ink-3: #9499b0;
+  --ink-3: #6e7389; /* was #9499b0 — darkened to pass WCAG AA 4.5:1 on white */
   --line: #edecf6;
   --page: #fbfaff;
   --surface: #ffffff;

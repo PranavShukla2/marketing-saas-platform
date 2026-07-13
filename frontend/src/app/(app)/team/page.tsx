@@ -72,7 +72,7 @@ export default function TeamPage() {
     load();
   };
 
-  if (loading) return <div className="p-10 font-light text-gray-400">Loading team…</div>;
+  if (loading) return <div className="p-10 font-light text-gray-500">Loading team…</div>;
 
   return (
     <div className="w-full max-w-5xl mx-auto py-8">
@@ -114,7 +114,7 @@ export default function TeamPage() {
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
         className="bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-sm">
         <table className="w-full text-left">
-          <thead className="bg-gray-50/50 text-xs font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100">
+          <thead className="bg-gray-50/50 text-xs font-bold text-gray-500 uppercase tracking-widest border-b border-gray-100">
             <tr>
               <th className="px-8 py-5">Member</th>
               <th className="px-8 py-5">Role</th>
@@ -142,7 +142,7 @@ export default function TeamPage() {
                 </td>
                 <td className="px-8 py-5 text-right">
                   {m.removable
-                    ? <button onClick={() => removeMember(m.member_id)} className="text-sm font-medium text-gray-400 hover:text-red-500 transition">Remove</button>
+                    ? <button onClick={() => removeMember(m.member_id)} className="text-sm font-medium text-gray-500 hover:text-red-500 transition">Remove</button>
                     : <span className="text-xs text-gray-300">—</span>}
                 </td>
               </tr>
@@ -155,7 +155,7 @@ export default function TeamPage() {
                     <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 font-semibold">✉</div>
                     <div>
                       <p className="font-medium text-gray-900">{inv.email}</p>
-                      <p className="text-sm text-gray-400">Invitation sent</p>
+                      <p className="text-sm text-gray-500">Invitation sent</p>
                     </div>
                   </div>
                 </td>
@@ -164,7 +164,7 @@ export default function TeamPage() {
                   <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700">Pending</span>
                 </td>
                 <td className="px-8 py-5 text-right">
-                  {canManage && <button onClick={() => revokeInvite(inv.email)} className="text-sm font-medium text-gray-400 hover:text-red-500 transition">Revoke</button>}
+                  {canManage && <button onClick={() => revokeInvite(inv.email)} className="text-sm font-medium text-gray-500 hover:text-red-500 transition">Revoke</button>}
                 </td>
               </tr>
             ))}

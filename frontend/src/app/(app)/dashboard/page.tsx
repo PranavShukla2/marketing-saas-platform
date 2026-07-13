@@ -296,6 +296,7 @@ export default function Dashboard() {
             </div>
             {activePlatform === "google" && view.properties?.length > 0 && (
               <select
+                aria-label="Select Google Analytics property"
                 value={selectedProperty}
                 onChange={handlePropertyChange}
                 disabled={isDemo}

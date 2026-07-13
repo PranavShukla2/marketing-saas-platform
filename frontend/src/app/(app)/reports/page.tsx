@@ -172,17 +172,17 @@ export default function ReportsPage() {
         <div className="flex items-start justify-between flex-wrap gap-4 mb-5">
           <div>
             <h3 className="text-xl font-semibold mb-1">Automated client reports</h3>
-            <p className="text-gray-400 text-sm max-w-md">A branded performance report (your logo, colour and footer) emailed to your client automatically.</p>
+            <p className="text-gray-500 text-sm max-w-md">A branded performance report (your logo, colour and footer) emailed to your client automatically.</p>
           </div>
           {sched.last_sent_at && (
-            <span className="text-xs text-gray-400 bg-white/10 px-3 py-1.5 rounded-full">
+            <span className="text-xs text-gray-500 bg-white/10 px-3 py-1.5 rounded-full">
               Last sent {new Date(sched.last_sent_at).toLocaleDateString()}
             </span>
           )}
         </div>
 
         {!schedAllowed ? (
-          <p className="text-sm text-gray-400">Only the workspace owner or an admin can manage the schedule.</p>
+          <p className="text-sm text-gray-500">Only the workspace owner or an admin can manage the schedule.</p>
         ) : (
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row gap-3">
