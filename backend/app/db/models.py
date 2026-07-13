@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, Integer, String, ForeignKey, DateTime, false, UniqueConstraint
+from sqlalchemy import Boolean, Column, Index, Integer, String, ForeignKey, DateTime, false, UniqueConstraint
 from sqlalchemy.orm import relationship
 from app.db.database import Base
 from app.core.time import utcnow
@@ -31,6 +31,10 @@ class Integration(Base):
     created_at = Column(DateTime, default=utcnow)
 
     owner = relationship("User", back_populates="integrations")
+
+    # The hottest lookup in the app: every dashboard load / sync pass filters
+    # on (user_id, provider). Without this it's a full-table scan.
+    __table_args__ = (Index("ix_integrations_user_provider", "user_id", "provider"),)
 
 
 class AuthCode(Base):
