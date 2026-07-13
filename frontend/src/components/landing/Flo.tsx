@@ -1,7 +1,8 @@
 "use client";
 
 import { useId, useRef, useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
+import { useReducedMotionSafe } from "../../lib/useReducedMotionSafe";
 
 const STAR_COLORS = ["#5b5bd6", "#8b5cf6", "#ff6b5e", "#f5a623", "#14b8a6"];
 
@@ -27,7 +28,7 @@ export default function Flo({ size = 80, variant = "full", className = "", tappa
   const uid = useId().replace(/:/g, "");
   const bodyGradId = `floBody-${uid}`;
   const tailGradId = `floTail-${uid}`;
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = useReducedMotionSafe();
   const [phase, setPhase] = useState<"idle" | "windup" | "spin">("idle");
   const [stars, setStars] = useState<Star[]>([]);
   const hostRef = useRef<HTMLDivElement>(null);

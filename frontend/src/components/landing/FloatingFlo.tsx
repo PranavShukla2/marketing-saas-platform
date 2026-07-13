@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
+import { useReducedMotionSafe } from "../../lib/useReducedMotionSafe";
 import { useRouter } from "next/navigation";
 
 const LINES = [
@@ -19,7 +20,7 @@ let seed = 0;
 
 export default function FloatingFlo() {
   const router = useRouter();
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = useReducedMotionSafe();
   const { scrollY } = useScroll();
   const sway = useTransform(scrollY, (v) => Math.sin(v / 90) * 9);
   const uid = useId().replace(/:/g, "");

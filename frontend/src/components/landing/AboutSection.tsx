@@ -1,6 +1,7 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
+import { useReducedMotionSafe } from "../../lib/useReducedMotionSafe";
 import Flo from "./Flo";
 import GlowBlobs from "./GlowBlobs";
 
@@ -12,7 +13,7 @@ const TECH = [
 ];
 
 export default function AboutSection() {
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = useReducedMotionSafe();
 
   return (
     <div className="relative max-w-5xl mx-auto px-6">

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
+import { useReducedMotionSafe } from "../../lib/useReducedMotionSafe";
 
 const FAQS = [
   {
@@ -79,7 +80,7 @@ function FaqItem({
 }
 
 export default function FaqSection() {
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = useReducedMotionSafe();
   const [open, setOpen] = useState<number | null>(0);
 
   return (

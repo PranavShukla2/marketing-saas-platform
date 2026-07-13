@@ -1,6 +1,7 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
+import { useReducedMotionSafe } from "../../lib/useReducedMotionSafe";
 
 type ArrowShape = "curl-down-right" | "curl-down-left" | "curl-up-right" | "swoop-left" | "swoop-right";
 
@@ -51,7 +52,7 @@ export default function Annotation({
   arrowFirst = false,
   textClassName = "text-xl",
 }: AnnotationProps) {
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = useReducedMotionSafe();
   const shape = ARROWS[arrow];
 
   const arrowEl = (

@@ -1,6 +1,7 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
+import { useReducedMotionSafe } from "../../lib/useReducedMotionSafe";
 
 const tileVariants = {
   hidden: { opacity: 0, y: 40, scale: 0.92 },
@@ -166,7 +167,7 @@ const TILES = [
 ];
 
 export default function BentoFeatures() {
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = useReducedMotionSafe();
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-6 sm:auto-rows-[150px] gap-3.5 max-w-5xl mx-auto px-6">

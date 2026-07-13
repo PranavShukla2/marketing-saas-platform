@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
+import { useReducedMotionSafe } from "../../lib/useReducedMotionSafe";
 
 const ICONS: Record<string, React.ReactNode> = {
   "trending-up": (
@@ -52,7 +53,7 @@ const CARDS = [
 ];
 
 export default function InsightCards() {
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = useReducedMotionSafe();
   const [highlighted, setHighlighted] = useState(0);
 
   useEffect(() => {

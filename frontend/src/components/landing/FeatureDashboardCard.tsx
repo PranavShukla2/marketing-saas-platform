@@ -1,7 +1,8 @@
 "use client";
 
 import { useRef } from "react";
-import { motion, useInView, useReducedMotion } from "framer-motion";
+import { motion, useInView } from "framer-motion";
+import { useReducedMotionSafe } from "../../lib/useReducedMotionSafe";
 import CountUp from "./CountUp";
 
 const BARS = [40, 65, 50, 80, 60, 95, 70];
@@ -9,7 +10,7 @@ const BARS = [40, 65, 50, 80, 60, 95, 70];
 export default function FeatureDashboardCard() {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-100px" });
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = useReducedMotionSafe();
 
   return (
     <div

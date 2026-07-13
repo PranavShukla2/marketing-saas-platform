@@ -1,7 +1,8 @@
 "use client";
 
 import { useRef } from "react";
-import { motion, useMotionValue, useReducedMotion, useSpring } from "framer-motion";
+import { motion, useMotionValue, useSpring } from "framer-motion";
+import { useReducedMotionSafe } from "../../lib/useReducedMotionSafe";
 import Flo from "./Flo";
 import Sticker from "./Sticker";
 import Annotation from "./Annotation";
@@ -25,7 +26,7 @@ const HOVER_ROTATE_Y = -5;
 const HOVER_ROTATE_X = 2;
 
 export default function PhoneChat() {
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = useReducedMotionSafe();
   const stageRef = useRef<HTMLDivElement>(null);
 
   const rotateY = useMotionValue(REST_ROTATE_Y);

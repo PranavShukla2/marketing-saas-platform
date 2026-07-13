@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
+import { useReducedMotionSafe } from "../../lib/useReducedMotionSafe";
 import Flo from "../../components/landing/Flo";
 import FloatingFlo from "../../components/landing/FloatingFlo";
 import GlowBlobs from "../../components/landing/GlowBlobs";
@@ -29,7 +30,7 @@ const sparklePositions = [
 ];
 
 export default function Home() {
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = useReducedMotionSafe();
 
   return (
     <div className="landing min-h-screen overflow-x-clip">
