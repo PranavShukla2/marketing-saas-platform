@@ -1,7 +1,6 @@
 "use client";
 
 import { motion } from "framer-motion";
-import jsPDF from "jspdf";
 import { useEffect, useState } from "react";
 import { getApiUrl, apiFetch } from "../../../lib/auth";
 import { withWorkspace } from "../../../lib/workspace";
@@ -64,6 +63,8 @@ export default function ReportsPage() {
       const campResult = await campRes.json();
       const campaigns = campResult.campaigns || [];
 
+      // Loaded on click so the PDF toolchain never rides the initial bundle.
+      const { default: jsPDF } = await import("jspdf");
       const doc = new jsPDF();
       doc.setFont("helvetica");
 

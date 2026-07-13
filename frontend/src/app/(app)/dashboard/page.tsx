@@ -6,11 +6,13 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell,
 } from "recharts";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
-import MetaDashboard from "../../../components/MetaDashboard";
-import LinkedInDashboard from "../../../components/LinkedInDashboard";
+import dynamic from "next/dynamic";
 import PlatformLoader from "../../../components/PlatformLoader";
+
+// Heavy tabs load on demand — most sessions never open Meta/LinkedIn, and the
+// PDF libs (~350KB) are only needed the moment someone clicks Export.
+const MetaDashboard = dynamic(() => import("../../../components/MetaDashboard"), { ssr: false });
+const LinkedInDashboard = dynamic(() => import("../../../components/LinkedInDashboard"), { ssr: false });
 import { getApiUrl, apiFetch } from "../../../lib/auth";
 import { getActiveWorkspace, withWorkspace } from "../../../lib/workspace";
 import { demoData } from "../../../lib/demoData";
@@ -193,7 +195,12 @@ export default function Dashboard() {
     a.click();
   };
 
-  const downloadPDF = () => {
+  const downloadPDF = async () => {
+    // Loaded on click so the PDF toolchain never rides the initial bundle.
+    const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+      import("jspdf"),
+      import("jspdf-autotable"),
+    ]);
     const doc = new jsPDF();
     const accent = brand.accent_color || "#5b5bd6";
     const logo = brand.logo_url || agencyLogo;
