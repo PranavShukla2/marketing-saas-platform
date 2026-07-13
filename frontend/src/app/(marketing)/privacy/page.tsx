@@ -53,6 +53,18 @@ export default function PrivacyPage() {
           ),
         },
         {
+          heading: "Cookies",
+          body: (
+            <p>
+              ArbFlow uses only <strong>strictly necessary</strong> cookies: a
+              short-lived session cookie and a refresh cookie that keep you signed
+              in. Both are httpOnly and Secure. We set no advertising, tracking, or
+              third-party cookies — which is why you don&apos;t see a cookie banner.
+              Signing out removes them.
+            </p>
+          ),
+        },
+        {
           heading: "Data retention & deletion",
           body: (
             <p>
