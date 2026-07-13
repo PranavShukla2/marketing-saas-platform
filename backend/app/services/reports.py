@@ -114,13 +114,27 @@ def maybe_send_report(db: Session, owner: User, payload: dict) -> bool:
 
     html = build_report_html(payload, brand, period_days)
     if html is None:
-        return False  # not enough data yet; try next pass
+        return False  # not enough data yet; try next pass (window unclaimed)
+
+    # Atomically claim the send window (UPDATE ... WHERE still-due), so two app
+    # instances running the sync pass concurrently can't both email the client.
+    cutoff = utcnow() - timedelta(days=period_days)
+    claimed = (
+        db.query(ReportSchedule)
+        .filter(
+            ReportSchedule.user_id == owner.id,
+            ReportSchedule.enabled.is_(True),
+            (ReportSchedule.last_sent_at.is_(None)) | (ReportSchedule.last_sent_at < cutoff),
+        )
+        .update({"last_sent_at": utcnow()}, synchronize_session=False)
+    )
+    db.commit()
+    if claimed == 0:
+        return False  # another instance got here first
 
     subject = f"{payload.get('company_name', 'Your')} performance report"
     for r in recipients:
         send_email(r.strip(), subject, html)
 
-    sched.last_sent_at = utcnow()
-    db.commit()
     log.info(f"Scheduled report sent for workspace {owner.id} to {len(recipients)} recipient(s)")
     return True

@@ -117,7 +117,12 @@ def send_digest_email(to: str, digest: dict) -> bool:
 
 
 def maybe_send_digest(db: Session, owner: User, payload: dict) -> bool:
-    """Send the weekly digest if this workspace is due. Returns True if sent."""
+    """Send the weekly digest if this workspace is due. Returns True if sent.
+
+    The send window is *claimed atomically* (UPDATE ... WHERE still-due) so two
+    app instances running the sync pass concurrently can't both send — the
+    same single-spend pattern as refresh tokens.
+    """
     s = get_settings(db, owner.id)
     if s is not None and not s.digest_enabled:
         return False
@@ -127,10 +132,37 @@ def maybe_send_digest(db: Session, owner: User, payload: dict) -> bool:
 
     digest = build_digest(payload)
     if digest is None:
-        return False  # not enough data yet; try again next pass
+        return False  # not enough data yet; try again next pass (window unclaimed)
+
+    # Ensure the row exists so the claim has something to lock onto. A racing
+    # insert loses on the PK and just means the other instance owns the row.
+    if s is None:
+        try:
+            db.add(NotificationSettings(user_id=owner.id))
+            db.commit()
+        except Exception:
+            db.rollback()
+        s = get_settings(db, owner.id)
+        if s is None:
+            return False
+
+    cutoff = utcnow() - timedelta(days=DIGEST_INTERVAL_DAYS)
+    claimed = (
+        db.query(NotificationSettings)
+        .filter(
+            NotificationSettings.user_id == owner.id,
+            NotificationSettings.digest_enabled.is_(True),
+            (NotificationSettings.digest_last_sent_at.is_(None))
+            | (NotificationSettings.digest_last_sent_at < cutoff),
+        )
+        .update({"digest_last_sent_at": utcnow()}, synchronize_session=False)
+    )
+    db.commit()
+    if claimed == 0:
+        return False  # another instance got here first
 
     send_digest_email(owner.email, digest)
-    if s and s.slack_webhook_url:
+    if s.slack_webhook_url:
         m = digest["metrics"]
         send_webhook(
             s.slack_webhook_url,
@@ -140,11 +172,5 @@ def maybe_send_digest(db: Session, owner: User, payload: dict) -> bool:
                 v=m["views"]["current"], vp=_fmt_pct(m["views"]["pct"]),
             ),
         )
-
-    if s is None:
-        s = NotificationSettings(user_id=owner.id)
-        db.add(s)
-    s.digest_last_sent_at = utcnow()
-    db.commit()
     log.info(f"Weekly digest sent for workspace {owner.id}")
     return True

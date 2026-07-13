@@ -141,3 +141,45 @@ def test_member_cannot_touch_notifications(client, monkeypatch):
     assert client.get(f"/api/v1/workspace/notifications?workspace={owner_id}").status_code == 403
     r = client.put("/api/v1/workspace/notifications", json={"digest_enabled": False, "workspace": owner_id})
     assert r.status_code == 403
+
+
+def test_digest_claim_is_atomic(client, monkeypatch):
+    """The stale-window claim only succeeds once — the second 'instance' loses."""
+    from datetime import timedelta
+    from app.db.database import SessionLocal
+    from app.db.models import NotificationSettings, User
+    from app.core.time import utcnow
+
+    email = _email()
+    _register_login(client, email)
+    sent = []
+    monkeypatch.setattr(notify, "send_digest_email", lambda to, d: sent.append(to) or True)
+
+    db = SessionLocal()
+    try:
+        user = db.query(User).filter(User.email == email).first()
+        payload = _active_payload(days=16)
+        assert notify.maybe_send_digest(db, user, payload) is True
+
+        # Make it look due again, then simulate instance B having already
+        # claimed it (fresh timestamp) between A's read and A's claim.
+        s = db.get(NotificationSettings, user.id)
+        s.digest_last_sent_at = utcnow() - timedelta(days=8)
+        db.commit()
+
+        real_build = notify.build_digest
+        def race_then_build(p):
+            db2 = SessionLocal()
+            try:
+                s2 = db2.get(NotificationSettings, user.id)
+                s2.digest_last_sent_at = utcnow()  # instance B wins the claim
+                db2.commit()
+            finally:
+                db2.close()
+            return real_build(p)
+        monkeypatch.setattr(notify, "build_digest", race_then_build)
+
+        assert notify.maybe_send_digest(db, user, payload) is False  # A loses
+        assert len(sent) == 1  # only one email ever went out
+    finally:
+        db.close()
