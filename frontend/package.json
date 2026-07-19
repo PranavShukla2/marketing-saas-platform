@@ -9,7 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@sentry/nextjs": "^10.63.0",
+    "@sentry/nextjs": "^10.66.0",
     "framer-motion": "^12.34.2",
     "jspdf": "^4.2.0",
     "jspdf-autotable": "^5.0.7",
