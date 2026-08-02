@@ -9,15 +9,15 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@sentry/nextjs": "^10.63.0",
-    "framer-motion": "^12.34.2",
+    "@sentry/nextjs": "^10.69.0",
+    "framer-motion": "^12.43.0",
     "jspdf": "^4.2.0",
     "jspdf-autotable": "^5.0.7",
     "matter-js": "^0.20.0",
-    "next": "^16.2.10",
-    "react": "19.2.7",
-    "react-dom": "19.2.7",
-    "recharts": "^3.7.0"
+    "next": "^16.2.12",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "recharts": "^3.10.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -26,7 +26,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9.39.4",
-    "eslint-config-next": "^16.1.6",
+    "eslint-config-next": "^16.2.12",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
