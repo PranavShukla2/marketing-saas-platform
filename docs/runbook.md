@@ -52,6 +52,38 @@ doesn't have (this happened with `users.is_verified`).
    `alembic stamp <baseline> && alembic upgrade head`.
 3. Confirm: `curl -X POST .../api/v1/auth/login` with bogus creds → expect 401, not 500.
 
+### Custom domain is down, but the *.vercel.app URL works
+Symptom: `arbflow.pranavmshukla.in` won't load; the Vercel URL is fine.
+Almost always a **missing DNS record**, not a Vercel or app fault — easy to do
+by accident while adding another subdomain to the same domain.
+
+Diagnose in this order (30 seconds):
+
+```bash
+dig +short arbflow.pranavmshukla.in           # empty = no DNS record. That's it.
+# Is the domain still attached in Vercel? Bypass DNS and ask Vercel directly:
+VIP=$(dig +short marketing-saas-platform-pi.vercel.app | head -1)
+curl -sI --resolve "arbflow.pranavmshukla.in:443:$VIP" https://arbflow.pranavmshukla.in | head -1
+```
+
+- Empty `dig` + `200` from the forced request → **DNS only**. Vercel config and
+  the TLS cert are intact; just re-add the record (below).
+- Empty `dig` + 404 / "deployment not found" → the domain was also removed from
+  the Vercel project. Re-add it under Project → Settings → Domains first.
+
+**Fix:** in the DNS host for `pranavmshukla.in` (Cloudflare), add for `arbflow`
+whatever Vercel shows under Project → Settings → Domains — normally
+`CNAME arbflow → cname.vercel-dns.com`. On Cloudflare set it **DNS-only (grey
+cloud)** so Vercel terminates TLS; proxying (orange cloud) needs SSL mode
+Full (strict) or you get redirect loops / cert errors. Propagation is minutes.
+
+**Don't forget the knock-on:** Render's `FRONTEND_URL` is this domain, and the
+Google OAuth callback redirects there — so while the domain is dead, **Google
+sign-in is broken from every frontend URL**, including the working Vercel one
+(email/password login still works). Restoring DNS fixes it automatically. If
+you instead decide to *abandon* the custom domain, change `FRONTEND_URL` on
+Render to the Vercel URL, or OAuth keeps redirecting users into the void.
+
 ### /health returns "degraded"
 The DB ping failed. Usually Neon cold-start or a dropped idle connection —
 the pool's `pre_ping` self-heals on the next request. If it persists:
