@@ -40,7 +40,11 @@ export default function NotFound() {
         }
 
         // 1. Setup Matter.js Engine and World
-        const engine = Matter.Engine.create();
+        // enableSleeping is what lets a settled pill actually stop. Without it
+        // the bodies jitter forever: the "Take me home" button never holds
+        // still enough to click comfortably, and the rAF loop rewrites
+        // transforms every frame for eternity.
+        const engine = Matter.Engine.create({ enableSleeping: true });
         const world = engine.world;
         engineRef.current = engine;
 
@@ -218,9 +222,13 @@ export default function NotFound() {
 
             {/* These elements start perfectly centered, then Matter.js takes over their transform styles */}
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-20">
+                {/* pointer-events stay off so the pointer reaches the Matter
+                    canvas underneath — that's what makes the pill draggable.
+                    Catching the event here instead would swallow it and the
+                    physics would never see the grab. */}
                 <h1
                     ref={headerRef}
-                    className="rounded-full bg-white px-10 py-4 text-6xl sm:px-14 sm:py-5 sm:text-8xl font-black tracking-tight text-[var(--ink)] pointer-events-auto cursor-grab active:cursor-grabbing select-none shadow-2xl"
+                    className="rounded-full bg-white px-10 py-4 text-6xl sm:px-14 sm:py-5 sm:text-8xl font-black tracking-tight text-[var(--ink)] select-none shadow-2xl"
                 >
                     404
                 </h1>
@@ -229,7 +237,7 @@ export default function NotFound() {
                     the viewport gets its ends clipped and reads as a rectangle. */}
                 <p
                     ref={textRef}
-                    className="mt-5 sm:mt-6 rounded-full bg-white/10 px-5 py-3 text-sm sm:px-8 sm:py-4 sm:text-xl font-light text-slate-200 pointer-events-auto cursor-grab active:cursor-grabbing select-none whitespace-nowrap backdrop-blur-sm"
+                    className="mt-5 sm:mt-6 rounded-full bg-white/10 px-5 py-3 text-sm sm:px-8 sm:py-4 sm:text-xl font-light text-slate-200 select-none whitespace-nowrap backdrop-blur-sm"
                 >
                     Looks like gravity broke on this page.
                 </p>
