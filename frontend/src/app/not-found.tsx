@@ -40,13 +40,36 @@ export default function NotFound() {
         // rectangle, which is what put stray squares behind the pills.
         const invisible = { render: { visible: false } };
 
-        // Add boundaries (walls and floor)
-        const walls = [
-            Matter.Bodies.rectangle(window.innerWidth / 2, window.innerHeight + 25, window.innerWidth, 50, { isStatic: true, ...invisible }), // Floor
-            Matter.Bodies.rectangle(-25, window.innerHeight / 2, 50, window.innerHeight, { isStatic: true, ...invisible }), // Left wall
-            Matter.Bodies.rectangle(window.innerWidth + 25, window.innerHeight / 2, 50, window.innerHeight, { isStatic: true, ...invisible }), // Right wall
+        // Leave a margin so the pills come to rest inside the viewport instead of
+        // hugging (and half-hiding under) the bottom edge.
+        const FLOOR_INSET = 72;
+
+        // Boundaries. A ceiling matters: without one, a hard upward throw sends a
+        // pill off the top of the world and it never comes back.
+        const buildWalls = (w: number, h: number) => [
+            Matter.Bodies.rectangle(w / 2, h - FLOOR_INSET + 25, w * 2, 50, { isStatic: true, ...invisible }), // Floor
+            Matter.Bodies.rectangle(w / 2, -200, w * 2, 50, { isStatic: true, ...invisible }),                 // Ceiling (well above the fold)
+            Matter.Bodies.rectangle(-25, h / 2, 50, h * 4, { isStatic: true, ...invisible }),                  // Left wall
+            Matter.Bodies.rectangle(w + 25, h / 2, 50, h * 4, { isStatic: true, ...invisible }),               // Right wall
         ];
+
+        let walls = buildWalls(window.innerWidth, window.innerHeight);
         Matter.World.add(world, walls);
+
+        // Rebuild the box on resize, otherwise the pills fall through where the
+        // old floor used to be (or get trapped behind a stale wall).
+        const handleResize = () => {
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            Matter.World.remove(world, walls);
+            walls = buildWalls(w, h);
+            Matter.World.add(world, walls);
+            render.canvas.width = w;
+            render.canvas.height = h;
+            render.options.width = w;
+            render.options.height = h;
+        };
+        window.addEventListener("resize", handleResize);
 
         // 3. Create physics bodies for our DOM elements
         // We delay slightly to ensure DOM elements have rendered and got their dimensions
@@ -102,10 +125,11 @@ export default function NotFound() {
         };
 
         // Need a tiny timeout to ensure React has fully painted the DOM nodes at their original positions
-        setTimeout(createBodies, 50);
+        const bodyTimer = setTimeout(createBodies, 50);
 
         // 4. Start the engine and renderer
-        Matter.Runner.run(Matter.Runner.create(), engine);
+        const runner = Matter.Runner.create();
+        Matter.Runner.run(runner, engine);
         Matter.Render.run(render);
 
         // 5. Update DOM elements to match Physics bodies
@@ -127,13 +151,18 @@ export default function NotFound() {
                     domElement.style.margin = '0';
                 }
             });
-            requestAnimationFrame(updateDOM);
+            frameId = requestAnimationFrame(updateDOM);
         };
 
-        requestAnimationFrame(updateDOM);
+        let frameId = requestAnimationFrame(updateDOM);
 
-        // Cleanup
+        // Cleanup — the rAF loop and the runner both outlive the component
+        // otherwise, and keep ticking a dead engine on every route change.
         return () => {
+            cancelAnimationFrame(frameId);
+            clearTimeout(bodyTimer);
+            window.removeEventListener("resize", handleResize);
+            Matter.Runner.stop(runner);
             Matter.Render.stop(render);
             Matter.Engine.clear(engine);
             if (render.canvas) {
