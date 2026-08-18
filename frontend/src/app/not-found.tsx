@@ -145,7 +145,20 @@ export default function NotFound() {
     }, []);
 
     return (
-        <div className="relative min-h-screen w-full overflow-hidden bg-slate-950 text-slate-200 font-sans selection:bg-indigo-500/30">
+        <div className="relative min-h-screen w-full overflow-hidden bg-[var(--ink)] text-slate-200 font-sans selection:bg-[var(--violet)]/30">
+            {/* Ambient brand glow — same indigo/violet wash as the landing page,
+                so a wrong URL still feels like ArbFlow. */}
+            <div aria-hidden className="pointer-events-none absolute inset-0 z-0">
+                <div
+                    className="absolute -top-40 -left-32 h-[38rem] w-[38rem] rounded-full opacity-30 blur-3xl"
+                    style={{ background: "radial-gradient(circle, var(--indigo), transparent 65%)" }}
+                />
+                <div
+                    className="absolute -bottom-52 -right-24 h-[34rem] w-[34rem] rounded-full opacity-25 blur-3xl"
+                    style={{ background: "radial-gradient(circle, var(--violet), transparent 65%)" }}
+                />
+            </div>
+
             {/* Matter.js will inject a canvas here to handle mouse events, but it will be transparent */}
             <div
                 ref={sceneRef}
@@ -171,13 +184,20 @@ export default function NotFound() {
                 <Link
                     href="/"
                     ref={buttonRef}
-                    className="mt-10 rounded-full bg-indigo-600 px-8 py-4 text-lg font-medium text-white shadow-lg shadow-indigo-500/30 hover:bg-indigo-500 transition-colors pointer-events-auto cursor-pointer inline-block"
+                    className="mt-6 rounded-full px-8 py-4 text-lg font-semibold text-white shadow-lg shadow-[var(--indigo)]/40 hover:opacity-90 transition-opacity pointer-events-auto cursor-pointer inline-block"
+                    style={{ background: "linear-gradient(100deg, var(--indigo), var(--violet))" }}
                     // We need to stop propagation so clicking the link actually navigates instead of just being dragged by matter-js
                     onMouseDown={(e) => e.stopPropagation()}
                 >
-                    Take Me Home
+                    Take me home
                 </Link>
             </div>
+
+            {/* Nobody discovers the physics unless you tell them. Pinned to the
+                top — the pills pile up along the bottom, which would cover it. */}
+            <p className="absolute inset-x-0 top-10 z-20 text-center text-xs uppercase tracking-[0.2em] text-slate-500 pointer-events-none">
+                Grab the pills and throw them around
+            </p>
         </div>
     );
 }
