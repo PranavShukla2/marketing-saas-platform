@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import Link from "next/link";
 import Matter from "matter-js";
+import { useReducedMotionSafe } from "../lib/useReducedMotionSafe";
 
 export default function NotFound() {
     const sceneRef = useRef<HTMLDivElement>(null);
@@ -14,8 +15,29 @@ export default function NotFound() {
     const textRef = useRef<HTMLParagraphElement>(null);
     const buttonRef = useRef<HTMLAnchorElement>(null);
 
+    // This whole page is motion, so reduced-motion users get a still one.
+    const reduceMotion = useReducedMotionSafe();
+
     useEffect(() => {
         if (!sceneRef.current) return;
+
+        if (reduceMotion) {
+            // The hook resolves a tick after mount, so physics may have already
+            // stamped inline transforms on. Hand the elements back to normal
+            // flow instead of freezing them mid-fall. Clear only the properties
+            // the physics loop writes — wiping the whole style attribute would
+            // also take the button's gradient, which React sets inline.
+            [headerRef, textRef, buttonRef].forEach((r) => {
+                const el = r.current;
+                if (!el) return;
+                el.style.transform = "";
+                el.style.position = "";
+                el.style.top = "";
+                el.style.left = "";
+                el.style.margin = "";
+            });
+            return;
+        }
 
         // 1. Setup Matter.js Engine and World
         const engine = Matter.Engine.create();
@@ -171,7 +193,7 @@ export default function NotFound() {
             // Remove all elements from the world before throwing away
             Matter.World.clear(world, false);
         };
-    }, []);
+    }, [reduceMotion]);
 
     return (
         <div className="relative min-h-screen w-full overflow-hidden bg-[var(--ink)] text-slate-200 font-sans selection:bg-[var(--violet)]/30">
@@ -223,10 +245,13 @@ export default function NotFound() {
             </div>
 
             {/* Nobody discovers the physics unless you tell them. Pinned to the
-                top — the pills pile up along the bottom, which would cover it. */}
-            <p className="absolute inset-x-0 top-10 z-20 text-center text-xs uppercase tracking-[0.2em] text-slate-500 pointer-events-none">
-                Grab the pills and throw them around
-            </p>
+                top — the pills pile up along the bottom, which would cover it.
+                Suppressed when there's no physics to discover. */}
+            {!reduceMotion && (
+                <p className="absolute inset-x-0 top-10 z-20 text-center text-xs uppercase tracking-[0.2em] text-slate-500 pointer-events-none">
+                    Grab the pills and throw them around
+                </p>
+            )}
         </div>
     );
 }
