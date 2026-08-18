@@ -35,11 +35,16 @@ export default function NotFound() {
         });
         renderRef.current = render;
 
+        // The DOM elements *are* the visuals — the canvas only exists to catch
+        // mouse events. Without this, Matter draws every body as a random-coloured
+        // rectangle, which is what put stray squares behind the pills.
+        const invisible = { render: { visible: false } };
+
         // Add boundaries (walls and floor)
         const walls = [
-            Matter.Bodies.rectangle(window.innerWidth / 2, window.innerHeight + 25, window.innerWidth, 50, { isStatic: true }), // Floor
-            Matter.Bodies.rectangle(-25, window.innerHeight / 2, 50, window.innerHeight, { isStatic: true }), // Left wall
-            Matter.Bodies.rectangle(window.innerWidth + 25, window.innerHeight / 2, 50, window.innerHeight, { isStatic: true }), // Right wall
+            Matter.Bodies.rectangle(window.innerWidth / 2, window.innerHeight + 25, window.innerWidth, 50, { isStatic: true, ...invisible }), // Floor
+            Matter.Bodies.rectangle(-25, window.innerHeight / 2, 50, window.innerHeight, { isStatic: true, ...invisible }), // Left wall
+            Matter.Bodies.rectangle(window.innerWidth + 25, window.innerHeight / 2, 50, window.innerHeight, { isStatic: true, ...invisible }), // Right wall
         ];
         Matter.World.add(world, walls);
 
@@ -68,6 +73,7 @@ export default function NotFound() {
                         density: 0.001,
                         // Give them slightly different starting angles/forces to make it look chaotic
                         angle: (Math.random() - 0.5) * 0.2,
+                        ...invisible,
                     }
                 );
 
@@ -150,17 +156,16 @@ export default function NotFound() {
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-20">
                 <h1
                     ref={headerRef}
-                    className="text-9xl font-black text-white pointer-events-auto cursor-pointer drop-shadow-2xl"
-                    style={{ transition: 'color 0.3s' }}
+                    className="rounded-full bg-white px-14 py-5 text-8xl font-black tracking-tight text-[var(--ink)] pointer-events-auto cursor-grab active:cursor-grabbing select-none shadow-2xl"
                 >
                     404
                 </h1>
 
                 <p
                     ref={textRef}
-                    className="mt-6 text-2xl font-light text-slate-300 pointer-events-auto cursor-pointer max-w-md text-center"
+                    className="mt-6 rounded-full bg-white/10 px-8 py-4 text-xl font-light text-slate-200 pointer-events-auto cursor-grab active:cursor-grabbing select-none whitespace-nowrap backdrop-blur-sm"
                 >
-                    Oops! Looks like gravity broke on this page...
+                    Looks like gravity broke on this page.
                 </p>
 
                 <Link
