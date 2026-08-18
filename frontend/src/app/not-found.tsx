@@ -220,14 +220,16 @@ export default function NotFound() {
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-20">
                 <h1
                     ref={headerRef}
-                    className="rounded-full bg-white px-14 py-5 text-8xl font-black tracking-tight text-[var(--ink)] pointer-events-auto cursor-grab active:cursor-grabbing select-none shadow-2xl"
+                    className="rounded-full bg-white px-10 py-4 text-6xl sm:px-14 sm:py-5 sm:text-8xl font-black tracking-tight text-[var(--ink)] pointer-events-auto cursor-grab active:cursor-grabbing select-none shadow-2xl"
                 >
                     404
                 </h1>
 
+                {/* Sized to stay narrower than a phone screen — a pill wider than
+                    the viewport gets its ends clipped and reads as a rectangle. */}
                 <p
                     ref={textRef}
-                    className="mt-6 rounded-full bg-white/10 px-8 py-4 text-xl font-light text-slate-200 pointer-events-auto cursor-grab active:cursor-grabbing select-none whitespace-nowrap backdrop-blur-sm"
+                    className="mt-5 sm:mt-6 rounded-full bg-white/10 px-5 py-3 text-sm sm:px-8 sm:py-4 sm:text-xl font-light text-slate-200 pointer-events-auto cursor-grab active:cursor-grabbing select-none whitespace-nowrap backdrop-blur-sm"
                 >
                     Looks like gravity broke on this page.
                 </p>
@@ -248,7 +250,7 @@ export default function NotFound() {
                 top — the pills pile up along the bottom, which would cover it.
                 Suppressed when there's no physics to discover. */}
             {!reduceMotion && (
-                <p className="absolute inset-x-0 top-10 z-20 text-center text-xs uppercase tracking-[0.2em] text-slate-500 pointer-events-none">
+                <p className="absolute inset-x-0 top-10 z-20 px-6 text-center text-[10px] tracking-[0.15em] sm:text-xs sm:tracking-[0.2em] uppercase text-slate-500 pointer-events-none">
                     Grab the pills and throw them around
                 </p>
             )}
