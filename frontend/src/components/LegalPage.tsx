@@ -33,12 +33,12 @@ export default function LegalPage({
 
         <div className="mt-14 pt-8 border-t border-[var(--line)] text-sm text-[var(--ink-3)]">
           Questions? Email{" "}
-          <a href="mailto:pranavmshukla@gmail.com" className="text-[var(--indigo)] hover:underline">
+          <a href="mailto:pranavmshukla@gmail.com" className="text-[var(--accent)] hover:underline">
             pranavmshukla@gmail.com
           </a>
           . See also our{" "}
-          <Link href="/privacy" className="text-[var(--indigo)] hover:underline">Privacy Policy</Link> and{" "}
-          <Link href="/terms" className="text-[var(--indigo)] hover:underline">Terms of Service</Link>.
+          <Link href="/privacy" className="text-[var(--accent)] hover:underline">Privacy Policy</Link> and{" "}
+          <Link href="/terms" className="text-[var(--accent)] hover:underline">Terms of Service</Link>.
         </div>
       </div>
     </div>

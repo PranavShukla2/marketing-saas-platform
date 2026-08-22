@@ -61,7 +61,7 @@ export function KpiCard({
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: index * 0.05, ease: "easeOut" }}
-      className="rounded-2xl bg-white border border-[var(--line)] p-5 shadow-[0_1px_2px_rgba(20,18,46,.04)] hover:shadow-[0_10px_30px_rgba(20,18,46,.08)] transition-shadow"
+      className="rounded-2xl bg-[var(--surface)] border border-[var(--line)] p-5 shadow-[0_1px_2px_rgba(20,18,46,.04)] hover:shadow-[0_10px_30px_rgba(20,18,46,.08)] transition-shadow"
     >
       <div className="flex items-start justify-between">
         <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--ink-3)]">{label}</p>
@@ -110,7 +110,7 @@ export function SectionCard({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.2 }}
       transition={{ duration: 0.45, ease: "easeOut" }}
-      className={`rounded-3xl bg-white border border-[var(--line)] p-6 sm:p-7 shadow-[0_1px_2px_rgba(20,18,46,.04)] ${className}`}
+      className={`rounded-3xl bg-[var(--surface)] border border-[var(--line)] p-6 sm:p-7 shadow-[0_1px_2px_rgba(20,18,46,.04)] ${className}`}
     >
       {(title || right) && (
         <div className="flex items-start justify-between mb-5">

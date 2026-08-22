@@ -48,7 +48,7 @@ function FaqItem({
         aria-expanded={isOpen}
         className="w-full flex items-center justify-between gap-4 py-5 text-left group"
       >
-        <span className="text-lg font-medium text-[var(--ink)] group-hover:text-[var(--indigo)] transition-colors">
+        <span className="text-lg font-medium text-[var(--ink)] group-hover:text-[var(--accent)] transition-colors">
           {q}
         </span>
         <span

@@ -54,7 +54,7 @@ export default function Navbar() {
           <Flo variant="mark" size={28} />
         </motion.div>
         <span className="text-xl font-bold tracking-tight text-[var(--ink)] group-hover:opacity-80 transition-opacity">
-          ArbFlow<span className="text-[var(--indigo)]">.</span>
+          ArbFlow<span className="text-[var(--accent)]">.</span>
         </span>
       </div>
 

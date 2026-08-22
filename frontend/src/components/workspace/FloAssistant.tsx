@@ -83,7 +83,7 @@ export default function FloAssistant() {
             animate={{ opacity: 1, scale: 1, y: 0, borderRadius: "24px" }}
             exit={dropExit}
             transition={{ type: "spring", stiffness: 320, damping: 26 }}
-            className="pointer-events-auto w-[300px] bg-white border border-[var(--line)] shadow-[0_20px_60px_rgba(20,18,46,0.18)] p-5 origin-bottom-right"
+            className="pointer-events-auto w-[300px] bg-[var(--surface)] border border-[var(--line)] shadow-[0_20px_60px_rgba(20,18,46,0.18)] p-5 origin-bottom-right"
             style={{ borderRadius: 24 }}
           >
             <div className="flex items-start gap-3">
@@ -155,7 +155,7 @@ export default function FloAssistant() {
               setOpen(true);
             }}
             aria-label="Open Flo's guide"
-            className="pointer-events-auto w-14 h-14 rounded-full bg-white border border-[var(--line)] shadow-[0_10px_30px_rgba(20,18,46,0.16)] flex items-center justify-center hover:shadow-[0_14px_40px_rgba(139,92,246,0.3)] transition-shadow"
+            className="pointer-events-auto w-14 h-14 rounded-full bg-[var(--surface)] border border-[var(--line)] shadow-[0_10px_30px_rgba(20,18,46,0.16)] flex items-center justify-center hover:shadow-[0_14px_40px_rgba(139,92,246,0.3)] transition-shadow"
           >
             <Flo size={40} />
           </motion.button>

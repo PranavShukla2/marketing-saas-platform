@@ -46,7 +46,7 @@ export default function PlatformLoader({ platform }: { platform: string }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white/95 backdrop-blur-xl"
+      className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[var(--surface)]/95 backdrop-blur-xl"
     >
       {/* Animated rings */}
       <div className="relative flex items-center justify-center">
@@ -61,7 +61,7 @@ export default function PlatformLoader({ platform }: { platform: string }) {
           initial={{ scale: 0.5, opacity: 0 }}
           animate={{ scale: [0.5, 1.1, 0.9, 1], opacity: 1 }}
           transition={{ duration: 0.6, ease: [0.34, 1.56, 0.64, 1] }}
-          className="relative z-10 w-20 h-20 bg-white rounded-3xl shadow-2xl flex items-center justify-center"
+          className="relative z-10 w-20 h-20 bg-[var(--surface)] rounded-3xl shadow-2xl flex items-center justify-center"
         >
           {config.icon}
         </motion.div>
@@ -72,7 +72,7 @@ export default function PlatformLoader({ platform }: { platform: string }) {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="mt-8 text-lg font-semibold text-gray-900 tracking-tight"
+        className="mt-8 text-lg font-semibold text-[var(--ink)] tracking-tight"
       >
         {config.name}
       </motion.p>
@@ -82,7 +82,7 @@ export default function PlatformLoader({ platform }: { platform: string }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.4 }}
-        className="mt-4 w-48 h-1 bg-gray-100 rounded-full overflow-hidden"
+        className="mt-4 w-48 h-1 bg-[var(--page)] rounded-full overflow-hidden"
       >
         <motion.div
           initial={{ x: "-100%" }}
@@ -96,7 +96,7 @@ export default function PlatformLoader({ platform }: { platform: string }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5 }}
-        className="mt-3 text-xs text-gray-400 font-medium"
+        className="mt-3 text-xs text-[var(--ink-3)] font-medium"
       >
         Loading dashboard...
       </motion.p>

@@ -45,25 +45,25 @@ export default function OnboardingChecklist({ onConnectGoogle }: { onConnectGoog
       key: "connect_ga", done: steps.connect_ga,
       title: "Connect Google Analytics",
       desc: "Swap the sample data for your real numbers.",
-      cta: <button onClick={onConnectGoogle} className="text-xs font-semibold text-[var(--indigo)] hover:underline">Connect →</button>,
+      cta: <button onClick={onConnectGoogle} className="text-xs font-semibold text-[var(--accent)] hover:underline">Connect →</button>,
     },
     {
       key: "invite_team", done: steps.invite_team,
       title: "Invite your team",
       desc: "Teammates get their own login and see this workspace.",
-      cta: <Link href="/team" className="text-xs font-semibold text-[var(--indigo)] hover:underline">Invite →</Link>,
+      cta: <Link href="/team" className="text-xs font-semibold text-[var(--accent)] hover:underline">Invite →</Link>,
     },
     {
       key: "set_branding", done: steps.set_branding,
       title: "Add your branding",
       desc: "Your logo, colour and footer on dashboards and reports.",
-      cta: <Link href="/settings" className="text-xs font-semibold text-[var(--indigo)] hover:underline">Set up →</Link>,
+      cta: <Link href="/settings" className="text-xs font-semibold text-[var(--accent)] hover:underline">Set up →</Link>,
     },
     {
       key: "schedule_report", done: steps.schedule_report,
       title: "Schedule a client report",
       desc: "A branded summary emailed to your client on autopilot.",
-      cta: <Link href="/reports" className="text-xs font-semibold text-[var(--indigo)] hover:underline">Schedule →</Link>,
+      cta: <Link href="/reports" className="text-xs font-semibold text-[var(--accent)] hover:underline">Schedule →</Link>,
     },
   ];
   const doneCount = items.filter((i) => i.done).length;
@@ -81,7 +81,7 @@ export default function OnboardingChecklist({ onConnectGoogle }: { onConnectGoog
         exit={{ opacity: 0, y: -8 }}
         className="max-w-7xl mx-auto mb-6"
       >
-        <div className="rounded-2xl border border-[var(--line)] bg-white shadow-[0_2px_20px_rgba(20,18,46,.04)] p-5">
+        <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] shadow-[0_2px_20px_rgba(20,18,46,.04)] p-5">
           <div className="flex items-start justify-between gap-4 mb-4">
             <div>
               <h3 className="text-sm font-semibold text-[var(--ink)]">Get set up — {doneCount} of {items.length} done</h3>
@@ -93,7 +93,7 @@ export default function OnboardingChecklist({ onConnectGoogle }: { onConnectGoog
           </div>
 
           {/* progress */}
-          <div className="w-full h-1.5 bg-gray-100 rounded-full mb-4 overflow-hidden">
+          <div className="w-full h-1.5 bg-[var(--page)] rounded-full mb-4 overflow-hidden">
             <div
               className="h-full rounded-full bg-[linear-gradient(100deg,var(--indigo),var(--violet))] transition-all duration-500"
               style={{ width: `${(doneCount / items.length) * 100}%` }}
@@ -102,9 +102,9 @@ export default function OnboardingChecklist({ onConnectGoogle }: { onConnectGoog
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {items.map((item) => (
-              <div key={item.key} className={`rounded-xl border p-3.5 ${item.done ? "border-teal-100 bg-teal-50/40" : "border-[var(--line)] bg-[var(--page)]/40"}`}>
+              <div key={item.key} className={`rounded-xl border p-3.5 ${item.done ? "border-teal-100 dark:border-teal-500/25 bg-teal-50/40 dark:bg-teal-500/10" : "border-[var(--line)] bg-[var(--page)]/40"}`}>
                 <div className="flex items-center gap-2 mb-1.5">
-                  <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${item.done ? "bg-[var(--teal)] text-white" : "border border-gray-300 text-transparent"}`}>✓</span>
+                  <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${item.done ? "bg-[var(--teal)] text-white" : "border border-[var(--line)] text-transparent"}`}>✓</span>
                   <p className={`text-xs font-semibold ${item.done ? "text-[var(--ink-2)] line-through decoration-[var(--teal)]/40" : "text-[var(--ink)]"}`}>{item.title}</p>
                 </div>
                 <p className="text-[11px] text-[var(--ink-3)] leading-relaxed mb-1.5 pl-7">{item.desc}</p>
