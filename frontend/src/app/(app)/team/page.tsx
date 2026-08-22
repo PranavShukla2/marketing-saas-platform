@@ -149,7 +149,7 @@ export default function TeamPage() {
             ))}
 
             {invites.map((inv) => (
-              <tr key={`inv-${inv.email}`} className="border-b border-[var(--line)] last:border-0 bg-amber-50 dark:bg-amber-500/10/30">
+              <tr key={`inv-${inv.email}`} className="border-b border-[var(--line)] last:border-0 bg-amber-50/30 dark:bg-amber-500/10">
                 <td className="px-8 py-5">
                   <div className="flex items-center space-x-4">
                     <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-500/15 flex items-center justify-center text-amber-600 dark:text-amber-400 font-semibold">✉</div>

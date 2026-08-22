@@ -221,7 +221,7 @@ export default function SettingsPage() {
 
             {/* Danger zone — real, irreversible account deletion (GDPR erasure). */}
             <div className="mt-6 border border-red-200 dark:border-red-500/30 rounded-2xl overflow-hidden max-w-lg">
-              <div className="px-6 py-4 bg-red-50 dark:bg-red-500/10/60 border-b border-red-100 dark:border-red-500/25">
+              <div className="px-6 py-4 bg-red-50/60 dark:bg-red-500/10 border-b border-red-100 dark:border-red-500/25">
                 <h3 className="text-sm font-semibold text-red-700 dark:text-red-400">Danger zone</h3>
               </div>
               <div className="p-6 flex items-start justify-between gap-4">
@@ -416,7 +416,7 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            <div className="mt-8 p-4 bg-blue-50 dark:bg-blue-500/10/80 border border-blue-100 dark:border-blue-500/25 rounded-2xl flex items-start space-x-3">
+            <div className="mt-8 p-4 bg-blue-50/80 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/25 rounded-2xl flex items-start space-x-3">
               <span className="text-blue-500 dark:text-blue-400 mt-0.5">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
