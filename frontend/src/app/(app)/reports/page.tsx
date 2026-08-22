@@ -172,17 +172,17 @@ export default function ReportsPage() {
         <div className="flex items-start justify-between flex-wrap gap-4 mb-5">
           <div>
             <h3 className="text-xl font-semibold mb-1">Automated client reports</h3>
-            <p className="text-[var(--ink-2)] text-sm max-w-md">A branded performance report (your logo, colour and footer) emailed to your client automatically.</p>
+            <p className="text-gray-400 text-sm max-w-md">A branded performance report (your logo, colour and footer) emailed to your client automatically.</p>
           </div>
           {sched.last_sent_at && (
-            <span className="text-xs text-[var(--ink-2)] bg-[var(--surface)]/10 px-3 py-1.5 rounded-full">
+            <span className="text-xs text-gray-400 bg-[var(--surface)]/10 px-3 py-1.5 rounded-full">
               Last sent {new Date(sched.last_sent_at).toLocaleDateString()}
             </span>
           )}
         </div>
 
         {!schedAllowed ? (
-          <p className="text-sm text-[var(--ink-2)]">Only the workspace owner or an admin can manage the schedule.</p>
+          <p className="text-sm text-gray-400">Only the workspace owner or an admin can manage the schedule.</p>
         ) : (
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row gap-3">
@@ -191,7 +191,7 @@ export default function ReportsPage() {
                 value={sched.recipients}
                 onChange={(e) => setSched((s) => ({ ...s, recipients: e.target.value }))}
                 placeholder="client@company.com, cmo@company.com"
-                className="flex-1 px-4 py-2.5 text-sm bg-[var(--surface)]/10 border border-white/15 rounded-xl outline-none placeholder:text-[var(--ink-2)] focus:border-white/40 transition-colors"
+                className="flex-1 px-4 py-2.5 text-sm bg-[var(--surface)]/10 border border-white/15 rounded-xl outline-none placeholder:text-gray-400 focus:border-white/40 transition-colors"
               />
               <select
                 value={sched.frequency}
@@ -212,7 +212,7 @@ export default function ReportsPage() {
                 >
                   <span className={`absolute top-1 w-4 h-4 bg-[var(--surface)] rounded-full transition-all ${sched.enabled ? "right-1" : "left-1"}`} />
                 </button>
-                <span className="text-sm text-[var(--ink-3)]">{sched.enabled ? "Schedule is on" : "Schedule is off"}</span>
+                <span className="text-sm text-gray-400">{sched.enabled ? "Schedule is on" : "Schedule is off"}</span>
               </label>
               <button onClick={saveSchedule} disabled={schedSaving}
                 className="px-5 py-2.5 bg-[var(--surface)] text-[var(--ink)] hover:bg-[var(--page)] transition-colors rounded-xl text-sm font-semibold disabled:opacity-50">
