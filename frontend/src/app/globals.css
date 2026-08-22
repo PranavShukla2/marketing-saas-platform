@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* Class-based dark mode: the <html> element carries .dark. A tiny script in
+   the layout sets it before first paint, defaulting to the OS preference. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 html {
   scroll-behavior: smooth;
 }
@@ -26,6 +30,36 @@ html {
   --amber: #f5a623;
   --teal: #14b8a6;
   --pink: #ec4899;
+
+  /* Brand colour used as text/icons. Indigo only reaches 3.3:1 on a dark
+     surface, so dark mode brightens this while buttons keep the real indigo
+     (white-on-indigo is 5.4:1 either way). */
+  --accent: #5b5bd6;
+
+  color-scheme: light;
+}
+
+/* ---------------- Dark theme ----------------
+   Only the semantic tokens change; every component reads through them.
+   Contrast on the dark surface: ink 16.2:1, ink-2 9.2:1, ink-3 5.9:1 — all
+   comfortably past WCAG AA. */
+.dark {
+  --background: #0e0d18;
+  --foreground: #f4f3fa;
+  --color-muted: #9491ad;
+  --color-border: #292741;
+  --color-surface: #16152a;
+
+  --ink: #f4f3fa;
+  --ink-2: #b9b7d0;
+  --ink-3: #9491ad;
+  --line: #292741;
+  --page: #0e0d18;
+  --surface: #16152a;
+
+  --accent: #9b9bf5;
+
+  color-scheme: dark;
 }
 
 @theme inline {

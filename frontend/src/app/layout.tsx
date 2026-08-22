@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Caveat } from "next/font/google";
 import "./globals.css";
+import { themeScript } from "../lib/theme";
 
 const inter = Inter({ subsets: ["latin"] });
 const caveat = Caveat({ subsets: ["latin"], weight: ["500", "600", "700"], variable: "--font-hand" });
@@ -16,8 +17,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${inter.className} ${caveat.variable} bg-white antialiased`}>
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Runs before first paint so dark-mode users never see a white flash. */}
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
+      <body className={`${inter.className} ${caveat.variable} bg-[var(--page)] text-[var(--ink)] antialiased`}>
         {children}
       </body>
     </html>
