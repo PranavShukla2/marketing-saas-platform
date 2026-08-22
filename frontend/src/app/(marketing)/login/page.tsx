@@ -117,26 +117,26 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-[#fafafa] p-6 font-sans text-gray-900">
+    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-[var(--page)] p-6 font-sans text-[var(--ink)]">
       <motion.div 
         initial={{ opacity: 0, y: 20, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className="w-full max-w-md bg-white p-10 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100"
+        className="w-full max-w-md bg-[var(--surface)] p-10 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-[var(--line)]"
       >
         <div className="text-center mb-8">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-md flex items-center justify-center text-white font-bold text-xl mx-auto mb-4">
             A
           </div>
           <h1 className="text-3xl font-semibold tracking-tight mb-2">Welcome back</h1>
-          <p className="text-gray-500 text-sm">Sign in to access your analytics workspace.</p>
+          <p className="text-[var(--ink-2)] text-sm">Sign in to access your analytics workspace.</p>
         </div>
 
         {notice && !error && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-4 p-3 bg-green-50 text-green-700 text-sm rounded-xl border border-green-100 text-center"
+            className="mb-4 p-3 bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-400 text-sm rounded-xl border border-green-100 dark:border-green-500/25 text-center"
           >
             {notice}
           </motion.div>
@@ -146,7 +146,7 @@ export default function LoginPage() {
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-xl border border-red-100 text-center"
+            className="mb-4 p-3 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 text-sm rounded-xl border border-red-100 dark:border-red-500/25 text-center"
           >
             {error}
           </motion.div>
@@ -157,12 +157,12 @@ export default function LoginPage() {
           type="button" 
           onClick={handleGoogleSignIn}
           disabled={googleLoading}
-          className="w-full flex items-center justify-center space-x-3 py-3.5 mb-6 rounded-2xl border border-gray-200 hover:bg-gray-50 hover:border-gray-300 active:scale-[0.98] transition-all disabled:opacity-50"
+          className="w-full flex items-center justify-center space-x-3 py-3.5 mb-6 rounded-2xl border border-[var(--line)] hover:bg-[var(--page)] hover:border-[var(--line)] active:scale-[0.98] transition-all disabled:opacity-50"
         >
           {googleLoading ? (
             <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
-              <span className="text-sm font-medium text-gray-600">Connecting...</span>
+              <div className="w-4 h-4 border-2 border-[var(--line)] border-t-gray-600 rounded-full animate-spin"></div>
+              <span className="text-sm font-medium text-[var(--ink-2)]">Connecting...</span>
             </div>
           ) : (
             <>
@@ -178,36 +178,36 @@ export default function LoginPage() {
         </button>
 
         <div className="relative flex items-center mb-6">
-          <div className="flex-grow border-t border-gray-100"></div>
-          <span className="flex-shrink-0 mx-4 text-gray-400 text-xs uppercase tracking-wider">Or sign in with email</span>
-          <div className="flex-grow border-t border-gray-100"></div>
+          <div className="flex-grow border-t border-[var(--line)]"></div>
+          <span className="flex-shrink-0 mx-4 text-[var(--ink-3)] text-xs uppercase tracking-wider">Or sign in with email</span>
+          <div className="flex-grow border-t border-[var(--line)]"></div>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+            <label className="block text-sm font-medium text-[var(--ink-2)] mb-1.5">Email</label>
             <input 
               type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-sm bg-gray-50/50"
+              className="w-full px-4 py-3 rounded-xl border border-[var(--line)] focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-sm bg-[var(--page)]/50"
               placeholder="name@company.com"
             />
           </div>
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-sm font-medium text-gray-700">Password</label>
-              <Link href="/forgot-password" className="text-xs text-blue-600 font-medium hover:underline">Forgot?</Link>
+              <label className="block text-sm font-medium text-[var(--ink-2)]">Password</label>
+              <Link href="/forgot-password" className="text-xs text-blue-600 dark:text-blue-400 font-medium hover:underline">Forgot?</Link>
             </div>
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"} required value={password} onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 pr-11 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-sm bg-gray-50/50"
+                className="w-full px-4 py-3 pr-11 rounded-xl border border-[var(--line)] focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-sm bg-[var(--page)]/50"
                 placeholder="••••••••"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((s) => !s)}
                 aria-label={showPassword ? "Hide password" : "Show password"}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--ink-3)] hover:text-[var(--ink-2)] transition-colors"
               >
                 {showPassword ? (
                   <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>
@@ -218,13 +218,13 @@ export default function LoginPage() {
             </div>
           </div>
           
-          <button type="submit" disabled={loading} className="w-full py-3.5 mt-2 rounded-xl bg-gray-900 text-white text-sm font-medium hover:bg-black active:scale-[0.98] transition-all duration-200 disabled:opacity-50 shadow-sm">
+          <button type="submit" disabled={loading} className="w-full py-3.5 mt-2 rounded-xl bg-[var(--ink)] text-[var(--page)] text-sm font-medium hover:bg-[var(--ink)] active:scale-[0.98] transition-all duration-200 disabled:opacity-50 shadow-sm">
             {loading ? "Signing In..." : "Sign In"}
           </button>
         </form>
 
-        <div className="mt-8 text-center text-sm text-gray-500">
-          Don&apos;t have an account? <Link href="/register" className="text-blue-600 font-medium hover:underline cursor-pointer">Create one</Link>
+        <div className="mt-8 text-center text-sm text-[var(--ink-2)]">
+          Don&apos;t have an account? <Link href="/register" className="text-blue-600 dark:text-blue-400 font-medium hover:underline cursor-pointer">Create one</Link>
         </div>
       </motion.div>
     </div>
