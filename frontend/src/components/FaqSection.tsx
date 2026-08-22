@@ -33,7 +33,7 @@ const faqs: FAQItem[] = [
 
 const FaqItem = ({ item, isOpen, toggleOpen }: { item: FAQItem; isOpen: boolean; toggleOpen: () => void }) => {
     return (
-        <div className="border border-[#E5E5E5] rounded-2xl bg-white overflow-hidden">
+        <div className="border border-[#E5E5E5] rounded-2xl bg-[var(--surface)] overflow-hidden">
             <button
                 onClick={toggleOpen}
                 className="flex justify-between items-center w-full px-5 py-4 text-left focus:outline-none"

@@ -14,7 +14,7 @@ function WorkspaceStackVisual(_props: { reduceMotion: boolean | null }) {
       {[0, 1, 2].map((i) => (
         <div
           key={i}
-          className="absolute w-32 h-16 rounded-xl bg-white border border-[var(--line)] shadow-[0_8px_20px_rgba(20,18,46,0.08)]"
+          className="absolute w-32 h-16 rounded-xl bg-[var(--surface)] border border-[var(--line)] shadow-[0_8px_20px_rgba(20,18,46,0.08)]"
           style={{
             left: `${i * 18}px`,
             top: `${i * 10}px`,

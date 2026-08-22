@@ -121,9 +121,9 @@ export default function FloatingFlo() {
       style={reduceMotion ? undefined : { rotate: sway }}
     >
       {showBubble && (
-        <div className="absolute bottom-[calc(100%+10px)] right-0 max-w-[220px] rounded-2xl bg-white border border-[var(--line)] shadow-[0_10px_30px_rgba(20,18,46,0.12)] px-4 py-2.5 text-sm text-[var(--ink)]">
+        <div className="absolute bottom-[calc(100%+10px)] right-0 max-w-[220px] rounded-2xl bg-[var(--surface)] border border-[var(--line)] shadow-[0_10px_30px_rgba(20,18,46,0.12)] px-4 py-2.5 text-sm text-[var(--ink)]">
           {LINES[lineIndex]}
-          <div className="absolute -bottom-1.5 right-6 w-3 h-3 bg-white border-r border-b border-[var(--line)] rotate-45" />
+          <div className="absolute -bottom-1.5 right-6 w-3 h-3 bg-[var(--surface)] border-r border-b border-[var(--line)] rotate-45" />
         </div>
       )}
 

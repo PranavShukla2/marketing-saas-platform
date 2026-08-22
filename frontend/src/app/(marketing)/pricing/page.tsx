@@ -44,7 +44,7 @@ export default function PricingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white text-[#1D1D1F] flex flex-col items-center px-6 py-20 sm:py-28">
+    <div className="min-h-screen bg-[var(--surface)] text-[#1D1D1F] flex flex-col items-center px-6 py-20 sm:py-28">
       <motion.div
         initial="hidden"
         animate="visible"
@@ -69,7 +69,7 @@ export default function PricingPage() {
         <button
           onClick={() => setAnnual(false)}
           className={`px-5 py-2 rounded-full text-sm font-medium transition-colors duration-300 ${
-            !annual ? "bg-white text-[#1D1D1F] shadow-sm" : "text-[#6E6E73]"
+            !annual ? "bg-[var(--surface)] text-[#1D1D1F] shadow-sm" : "text-[#6E6E73]"
           }`}
         >
           Monthly
@@ -77,7 +77,7 @@ export default function PricingPage() {
         <button
           onClick={() => setAnnual(true)}
           className={`flex items-center gap-2 px-5 py-2 rounded-full text-sm font-medium transition-colors duration-300 ${
-            annual ? "bg-white text-[#1D1D1F] shadow-sm" : "text-[#6E6E73]"
+            annual ? "bg-[var(--surface)] text-[#1D1D1F] shadow-sm" : "text-[#6E6E73]"
           }`}
         >
           Annual
@@ -102,7 +102,7 @@ export default function PricingPage() {
               className={`p-10 rounded-3xl flex flex-col relative ${
                 plan.popular
                   ? "border-2 border-[#0071E3] bg-[#EEF2FF] shadow-xl md:-translate-y-2"
-                  : "border border-[#E5E5E5] bg-white"
+                  : "border border-[#E5E5E5] bg-[var(--surface)]"
               }`}
             >
               {plan.popular && (
@@ -135,7 +135,7 @@ export default function PricingPage() {
                   className={`w-full py-3 rounded-full font-medium transition-colors duration-300 ${
                     plan.popular
                       ? "bg-[#0071E3] text-white hover:bg-[#0061c3]"
-                      : "bg-white text-[#1D1D1F] border border-[#E5E5E5] hover:bg-[#F5F5F7]"
+                      : "bg-[var(--surface)] text-[#1D1D1F] border border-[#E5E5E5] hover:bg-[#F5F5F7]"
                   }`}
                 >
                   {plan.cta}

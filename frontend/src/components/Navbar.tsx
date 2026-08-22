@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Flo from "./landing/Flo";
+import ThemeToggle from "./ThemeToggle";
 import { fetchSession, logout } from "../lib/auth";
 
 export default function Navbar() {
@@ -77,6 +78,7 @@ export default function Navbar() {
 
       {/* Dynamic Auth Buttons */}
       <div className="flex items-center space-x-4">
+        <span className="hidden sm:block"><ThemeToggle compact /></span>
         {isAuthenticated ? (
           <motion.button
             whileHover={{ scale: 1.03 }}

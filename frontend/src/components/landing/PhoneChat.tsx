@@ -144,7 +144,7 @@ export default function PhoneChat() {
             }
             className="relative rounded-[38px] bg-[#15132e] p-[7px] shadow-[24px_30px_60px_rgba(20,18,46,0.28)]"
           >
-            <div className="relative w-full h-full rounded-[30px] bg-white overflow-hidden">
+            <div className="relative w-full h-full rounded-[30px] bg-[var(--surface)] overflow-hidden">
               {/* sheen */}
               <div
                 aria-hidden="true"
@@ -155,7 +155,7 @@ export default function PhoneChat() {
                 }}
               />
 
-              <div className="relative flex items-center justify-center py-1.5 bg-white">
+              <div className="relative flex items-center justify-center py-1.5 bg-[var(--surface)]">
                 <div className="absolute top-1 w-16 h-4 rounded-full bg-[#15132e]" />
                 <div className="w-full flex items-center justify-between px-4 pt-2.5 text-[11px] font-medium text-[var(--ink)]">
                   <span>9:41</span>

@@ -12,7 +12,7 @@ export default function BentoBox() {
         visible: { transition: { staggerChildren: 0.15 } }
     };
 
-    const cardClass = "bg-white p-10 rounded-3xl border border-[#E5E5E5] shadow-[0_2px_20px_rgb(0,0,0,0.03)] flex flex-col justify-between hover:-translate-y-1 hover:shadow-xl transition-all duration-500 group";
+    const cardClass = "bg-[var(--surface)] p-10 rounded-3xl border border-[#E5E5E5] shadow-[0_2px_20px_rgb(0,0,0,0.03)] flex flex-col justify-between hover:-translate-y-1 hover:shadow-xl transition-all duration-500 group";
 
     return (
         <section id="features" className="w-full max-w-6xl mx-auto px-6 py-24 border-t border-[#E5E5E5]">
@@ -46,7 +46,7 @@ export default function BentoBox() {
                         whileHover={{ scale: 1.15, rotate: 10 }}
                         transition={{ type: "spring", stiffness: 200 }}
                     >
-                        <div className="w-40 h-40 bg-white rounded-full shadow-sm border border-[#E5E5E5] flex items-center justify-center">
+                        <div className="w-40 h-40 bg-[var(--surface)] rounded-full shadow-sm border border-[#E5E5E5] flex items-center justify-center">
                             <svg className="w-12 h-12 text-[#1D1D1F]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75M3.75 22.5h16.5a1.5 1.5 0 001.5-1.5V12a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 12v9a1.5 1.5 0 001.5 1.5z" />
                             </svg>
@@ -101,7 +101,7 @@ export default function BentoBox() {
                                     whileInView={{ opacity: 1, scale: 1 }}
                                     viewport={{ once: true }}
                                     transition={{ delay: 0.3 + i * 0.15, type: "spring", stiffness: 300 }}
-                                    className="px-3 py-1 rounded-full bg-white border border-[#E5E5E5] text-xs font-semibold text-[#6E6E73] shadow-sm"
+                                    className="px-3 py-1 rounded-full bg-[var(--surface)] border border-[#E5E5E5] text-xs font-semibold text-[#6E6E73] shadow-sm"
                                 >
                                     {platform}
                                 </motion.div>
