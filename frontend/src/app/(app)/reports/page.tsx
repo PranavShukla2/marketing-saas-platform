@@ -143,8 +143,8 @@ export default function ReportsPage() {
     <div className="w-full max-w-5xl mx-auto py-8">
       <div className="flex justify-between items-end mb-10">
         <div>
-          <h1 className="text-4xl font-semibold tracking-tight text-gray-900 mb-2">Reports Hub</h1>
-          <p className="text-gray-500 font-light text-lg">Generate, schedule, and download automated reports.</p>
+          <h1 className="text-4xl font-semibold tracking-tight text-[var(--ink)] mb-2">Reports Hub</h1>
+          <p className="text-[var(--ink-2)] font-light text-lg">Generate, schedule, and download automated reports.</p>
         </div>
         <button 
           onClick={generatePDF}
@@ -172,17 +172,17 @@ export default function ReportsPage() {
         <div className="flex items-start justify-between flex-wrap gap-4 mb-5">
           <div>
             <h3 className="text-xl font-semibold mb-1">Automated client reports</h3>
-            <p className="text-gray-500 text-sm max-w-md">A branded performance report (your logo, colour and footer) emailed to your client automatically.</p>
+            <p className="text-[var(--ink-2)] text-sm max-w-md">A branded performance report (your logo, colour and footer) emailed to your client automatically.</p>
           </div>
           {sched.last_sent_at && (
-            <span className="text-xs text-gray-500 bg-white/10 px-3 py-1.5 rounded-full">
+            <span className="text-xs text-[var(--ink-2)] bg-[var(--surface)]/10 px-3 py-1.5 rounded-full">
               Last sent {new Date(sched.last_sent_at).toLocaleDateString()}
             </span>
           )}
         </div>
 
         {!schedAllowed ? (
-          <p className="text-sm text-gray-500">Only the workspace owner or an admin can manage the schedule.</p>
+          <p className="text-sm text-[var(--ink-2)]">Only the workspace owner or an admin can manage the schedule.</p>
         ) : (
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row gap-3">
@@ -191,12 +191,12 @@ export default function ReportsPage() {
                 value={sched.recipients}
                 onChange={(e) => setSched((s) => ({ ...s, recipients: e.target.value }))}
                 placeholder="client@company.com, cmo@company.com"
-                className="flex-1 px-4 py-2.5 text-sm bg-white/10 border border-white/15 rounded-xl outline-none placeholder:text-gray-500 focus:border-white/40 transition-colors"
+                className="flex-1 px-4 py-2.5 text-sm bg-[var(--surface)]/10 border border-white/15 rounded-xl outline-none placeholder:text-[var(--ink-2)] focus:border-white/40 transition-colors"
               />
               <select
                 value={sched.frequency}
                 onChange={(e) => setSched((s) => ({ ...s, frequency: e.target.value }))}
-                className="px-3 py-2.5 text-sm bg-white/10 border border-white/15 rounded-xl outline-none cursor-pointer [&>option]:text-gray-900"
+                className="px-3 py-2.5 text-sm bg-[var(--surface)]/10 border border-white/15 rounded-xl outline-none cursor-pointer [&>option]:text-[var(--ink)]"
               >
                 <option value="weekly">Weekly</option>
                 <option value="monthly">Monthly</option>
@@ -208,14 +208,14 @@ export default function ReportsPage() {
                 <button
                   onClick={() => setSched((s) => ({ ...s, enabled: !s.enabled }))}
                   aria-label="Toggle scheduled reports"
-                  className={`w-12 h-6 rounded-full relative transition-colors ${sched.enabled ? "bg-emerald-400" : "bg-white/20"}`}
+                  className={`w-12 h-6 rounded-full relative transition-colors ${sched.enabled ? "bg-emerald-400" : "bg-[var(--surface)]/20"}`}
                 >
-                  <span className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${sched.enabled ? "right-1" : "left-1"}`} />
+                  <span className={`absolute top-1 w-4 h-4 bg-[var(--surface)] rounded-full transition-all ${sched.enabled ? "right-1" : "left-1"}`} />
                 </button>
-                <span className="text-sm text-gray-300">{sched.enabled ? "Schedule is on" : "Schedule is off"}</span>
+                <span className="text-sm text-[var(--ink-3)]">{sched.enabled ? "Schedule is on" : "Schedule is off"}</span>
               </label>
               <button onClick={saveSchedule} disabled={schedSaving}
-                className="px-5 py-2.5 bg-white text-gray-900 hover:bg-gray-100 transition-colors rounded-xl text-sm font-semibold disabled:opacity-50">
+                className="px-5 py-2.5 bg-[var(--surface)] text-[var(--ink)] hover:bg-[var(--page)] transition-colors rounded-xl text-sm font-semibold disabled:opacity-50">
                 {schedSaving ? "Saving…" : "Save schedule"}
               </button>
             </div>
@@ -228,9 +228,9 @@ export default function ReportsPage() {
       </motion.div>
 
       <h3 className="text-xl font-medium mb-6">Recent Reports</h3>
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-[var(--surface)] rounded-3xl border border-[var(--line)] shadow-sm overflow-hidden">
         <table className="w-full text-left">
-          <thead className="bg-gray-50 text-xs text-gray-500 uppercase tracking-wider">
+          <thead className="bg-[var(--page)] text-xs text-[var(--ink-2)] uppercase tracking-wider">
             <tr>
               <th className="px-6 py-5">Report Name</th>
               <th className="px-6 py-5">Date Generated</th>
@@ -240,18 +240,18 @@ export default function ReportsPage() {
           </thead>
           <tbody>
             {reports.map((report, i) => (
-              <tr key={i} className="border-t border-gray-50 hover:bg-gray-50 transition-colors">
-                <td className="px-6 py-4 font-medium text-gray-900 flex items-center space-x-3">
-                  <svg className={`w-5 h-5 ${report.type === 'PDF' ? 'text-red-400' : 'text-green-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+              <tr key={i} className="border-t border-[var(--line)] hover:bg-[var(--page)] transition-colors">
+                <td className="px-6 py-4 font-medium text-[var(--ink)] flex items-center space-x-3">
+                  <svg className={`w-5 h-5 ${report.type === 'PDF' ? 'text-red-400' : 'text-green-500 dark:text-green-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
                   <span>{report.name}</span>
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-500">{report.date}</td>
-                <td className="px-6 py-4 text-sm text-gray-500">
-                  <span className={`inline-block px-2 py-1 text-xs font-semibold rounded-md mr-2 ${report.type === 'PDF' ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}>{report.type}</span>
+                <td className="px-6 py-4 text-sm text-[var(--ink-2)]">{report.date}</td>
+                <td className="px-6 py-4 text-sm text-[var(--ink-2)]">
+                  <span className={`inline-block px-2 py-1 text-xs font-semibold rounded-md mr-2 ${report.type === 'PDF' ? 'bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400' : 'bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400'}`}>{report.type}</span>
                   {report.size}
                 </td>
                 <td className="px-6 py-4 text-right">
-                  <button onClick={generatePDF} className="text-blue-600 hover:text-blue-800 font-medium text-sm">Download</button>
+                  <button onClick={generatePDF} className="text-blue-600 dark:text-blue-400 hover:text-blue-800 font-medium text-sm">Download</button>
                 </td>
               </tr>
             ))}
