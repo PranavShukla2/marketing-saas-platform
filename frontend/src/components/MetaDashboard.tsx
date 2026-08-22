@@ -33,7 +33,7 @@ export default function MetaDashboard({ data }: { data?: MetaData }) {
     <div className="space-y-6">
       {/* sub-tab switcher */}
       <div className="flex items-center gap-3 flex-wrap sm:justify-between">
-        <div className="inline-flex gap-1 bg-white border border-[var(--line)] p-1 rounded-2xl shadow-sm">
+        <div className="inline-flex gap-1 bg-[var(--surface)] border border-[var(--line)] p-1 rounded-2xl shadow-sm">
           {SUBTABS.map((t) => {
             const active = sub === t.id;
             return (

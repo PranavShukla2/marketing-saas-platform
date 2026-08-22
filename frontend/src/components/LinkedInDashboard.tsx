@@ -14,11 +14,11 @@ export default function LinkedInDashboard() {
 
     // Layout Sub-components
     const Card = ({ children, className = "", title = "", subtitle = "" }: { children: React.ReactNode, className?: string, title?: string, subtitle?: string }) => (
-        <div className={`bg-white/80 backdrop-blur-xl border border-white/40 shadow-[0_4px_24px_rgba(0,0,0,0.04)] rounded-[20px] p-6 lg:p-8 hover:shadow-[0_8px_32px_rgba(0,0,0,0.06)] transition-all duration-500 overflow-hidden flex flex-col ${className}`}>
+        <div className={`bg-[var(--surface)]/80 backdrop-blur-xl border border-white/40 shadow-[0_4px_24px_rgba(0,0,0,0.04)] rounded-[20px] p-6 lg:p-8 hover:shadow-[0_8px_32px_rgba(0,0,0,0.06)] transition-all duration-500 overflow-hidden flex flex-col ${className}`}>
             {(title || subtitle) && (
                 <div className="mb-6">
-                    {title && <h3 className="text-xl font-semibold text-gray-900 tracking-tight">{title}</h3>}
-                    {subtitle && <p className="text-sm font-medium text-gray-500 mt-1">{subtitle}</p>}
+                    {title && <h3 className="text-xl font-semibold text-[var(--ink)] tracking-tight">{title}</h3>}
+                    {subtitle && <p className="text-sm font-medium text-[var(--ink-2)] mt-1">{subtitle}</p>}
                 </div>
             )}
             <div className="flex-grow flex flex-col">{children}</div>
@@ -29,10 +29,10 @@ export default function LinkedInDashboard() {
         <Card className="!p-5">
             <div className="flex justify-between items-start mb-4">
                 <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">{title}</p>
-                    <div className="text-3xl font-bold tracking-tight text-gray-900">{value}</div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-[var(--ink-3)] mb-1">{title}</p>
+                    <div className="text-3xl font-bold tracking-tight text-[var(--ink)]">{value}</div>
                 </div>
-                <div className={`px-2.5 py-1 rounded-full text-xs font-semibold ${isPositive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                <div className={`px-2.5 py-1 rounded-full text-xs font-semibold ${isPositive ? 'bg-green-100 dark:bg-green-500/15 text-green-700 dark:text-green-400' : 'bg-red-100 dark:bg-red-500/15 text-red-700 dark:text-red-400'}`}>
                     {isPositive ? '↑' : '↓'} {change}
                 </div>
             </div>
@@ -60,10 +60,10 @@ export default function LinkedInDashboard() {
 
             <div className="flex justify-between items-center mb-8">
                  <div>
-                    <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Company Page Analytics</h2>
-                    <p className="text-sm text-gray-500 mt-1">Professional network performance</p>
+                    <h2 className="text-2xl font-bold text-[var(--ink)] tracking-tight">Company Page Analytics</h2>
+                    <p className="text-sm text-[var(--ink-2)] mt-1">Professional network performance</p>
                 </div>
-                <button className="flex items-center space-x-2 px-4 py-2 rounded-xl border bg-white text-gray-700 border-gray-200 hover:shadow-sm hover:bg-gray-50 transition-all">
+                <button className="flex items-center space-x-2 px-4 py-2 rounded-xl border bg-[var(--surface)] text-[var(--ink-2)] border-[var(--line)] hover:shadow-sm hover:bg-[var(--page)] transition-all">
                     <svg className="w-4 h-4 text-[#0A66C2]" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" /></svg>
                     <span className="text-xs font-medium">Connect LinkedIn</span>
                 </button>
@@ -72,8 +72,8 @@ export default function LinkedInDashboard() {
             {/* LinkedIn Overview KPIs */}
             <section className="space-y-6">
                 <div className="flex items-center space-x-2">
-                    <span className="text-gray-400 font-semibold tracking-wider text-sm uppercase">1. Page KPIs</span>
-                    <div className="h-px bg-gray-200 flex-grow rounded-full"></div>
+                    <span className="text-[var(--ink-3)] font-semibold tracking-wider text-sm uppercase">1. Page KPIs</span>
+                    <div className="h-px bg-[var(--line)] flex-grow rounded-full"></div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <SparklineCard title="Total Followers" value="8,450" change="4.1%" isPositive={true} />
@@ -86,8 +86,8 @@ export default function LinkedInDashboard() {
             {/* LinkedIn Follower Growth */}
             <section className="space-y-6">
                 <div className="flex items-center space-x-2">
-                    <span className="text-gray-400 font-semibold tracking-wider text-sm uppercase">2. Follower Growth</span>
-                    <div className="h-px bg-gray-200 flex-grow rounded-full"></div>
+                    <span className="text-[var(--ink-3)] font-semibold tracking-wider text-sm uppercase">2. Follower Growth</span>
+                    <div className="h-px bg-[var(--line)] flex-grow rounded-full"></div>
                 </div>
                 <Card className="h-[350px]">
                     <ResponsiveContainer width="100%" height="100%">
@@ -111,18 +111,18 @@ export default function LinkedInDashboard() {
             {/* LinkedIn Content Engagement */}
             <section className="space-y-6">
                 <div className="flex items-center space-x-2">
-                    <span className="text-gray-400 font-semibold tracking-wider text-sm uppercase">3. Content Performance</span>
-                    <div className="h-px bg-gray-200 flex-grow rounded-full"></div>
+                    <span className="text-[var(--ink-3)] font-semibold tracking-wider text-sm uppercase">3. Content Performance</span>
+                    <div className="h-px bg-[var(--line)] flex-grow rounded-full"></div>
                 </div>
                 <Card className="!p-0 border-0 shadow-[0_4px_32px_rgba(0,0,0,0.06)] overflow-x-auto">
                     <table className="w-full text-left">
                         <thead className="bg-[#F5F5F7] sticky top-0 z-10 backdrop-blur-md">
                             <tr>
-                                <th className="px-8 py-5 text-xs font-bold text-gray-500 uppercase tracking-widest border-b border-gray-200">Post Title</th>
-                                <th className="px-8 py-5 text-center text-xs font-bold text-gray-500 uppercase tracking-widest border-b border-gray-200">Impressions</th>
-                                <th className="px-8 py-5 text-center text-xs font-bold text-gray-500 uppercase tracking-widest border-b border-gray-200">Clicks</th>
-                                <th className="px-8 py-5 text-center text-xs font-bold text-gray-500 uppercase tracking-widest border-b border-gray-200">CTR</th>
-                                <th className="px-8 py-5 text-right text-xs font-bold text-gray-500 uppercase tracking-widest border-b border-gray-200">Engagement Rate</th>
+                                <th className="px-8 py-5 text-xs font-bold text-[var(--ink-2)] uppercase tracking-widest border-b border-[var(--line)]">Post Title</th>
+                                <th className="px-8 py-5 text-center text-xs font-bold text-[var(--ink-2)] uppercase tracking-widest border-b border-[var(--line)]">Impressions</th>
+                                <th className="px-8 py-5 text-center text-xs font-bold text-[var(--ink-2)] uppercase tracking-widest border-b border-[var(--line)]">Clicks</th>
+                                <th className="px-8 py-5 text-center text-xs font-bold text-[var(--ink-2)] uppercase tracking-widest border-b border-[var(--line)]">CTR</th>
+                                <th className="px-8 py-5 text-right text-xs font-bold text-[var(--ink-2)] uppercase tracking-widest border-b border-[var(--line)]">Engagement Rate</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -133,17 +133,17 @@ export default function LinkedInDashboard() {
                                 { title: "Case Study: How Acme Corp increased ROI...", imp: "2,400", clicks: "180", ctr: "7.5%", er: "9.8%" },
                                 { title: "Join us at the upcoming SaaS Summit...", imp: "1,900", clicks: "120", ctr: "6.3%", er: "8.5%" }
                             ].map((row, i) => (
-                                <tr key={i} className="hover:bg-gray-50 transition-colors group cursor-default">
-                                    <td className="px-8 py-5 text-sm font-semibold text-gray-900 border-b border-gray-100 flex items-center space-x-3">
-                                        <div className="w-8 h-8 bg-blue-50 rounded-md flex items-center justify-center text-[#0A66C2]">
+                                <tr key={i} className="hover:bg-[var(--page)] transition-colors group cursor-default">
+                                    <td className="px-8 py-5 text-sm font-semibold text-[var(--ink)] border-b border-[var(--line)] flex items-center space-x-3">
+                                        <div className="w-8 h-8 bg-blue-50 dark:bg-blue-500/10 rounded-md flex items-center justify-center text-[#0A66C2]">
                                             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z" /></svg>
                                         </div>
                                         <span>{row.title}</span>
                                     </td>
-                                    <td className="px-8 py-5 text-center text-sm font-medium text-gray-900 border-b border-gray-100">{row.imp}</td>
-                                    <td className="px-8 py-5 text-center text-sm font-medium text-gray-900 border-b border-gray-100">{row.clicks}</td>
-                                    <td className="px-8 py-5 text-center text-sm font-bold text-[#0A66C2] border-b border-gray-100">{row.ctr}</td>
-                                    <td className="px-8 py-5 text-right text-sm font-bold text-gray-600 border-b border-gray-100">{row.er}</td>
+                                    <td className="px-8 py-5 text-center text-sm font-medium text-[var(--ink)] border-b border-[var(--line)]">{row.imp}</td>
+                                    <td className="px-8 py-5 text-center text-sm font-medium text-[var(--ink)] border-b border-[var(--line)]">{row.clicks}</td>
+                                    <td className="px-8 py-5 text-center text-sm font-bold text-[#0A66C2] border-b border-[var(--line)]">{row.ctr}</td>
+                                    <td className="px-8 py-5 text-right text-sm font-bold text-[var(--ink-2)] border-b border-[var(--line)]">{row.er}</td>
                                 </tr>
                             ))}
                         </tbody>
@@ -154,8 +154,8 @@ export default function LinkedInDashboard() {
             {/* LinkedIn Demographics & Ads */}
             <section className="space-y-6">
                 <div className="flex items-center space-x-2">
-                    <span className="text-gray-400 font-semibold tracking-wider text-sm uppercase">4. Demographics & Ads</span>
-                    <div className="h-px bg-gray-200 flex-grow rounded-full"></div>
+                    <span className="text-[var(--ink-3)] font-semibold tracking-wider text-sm uppercase">4. Demographics & Ads</span>
+                    <div className="h-px bg-[var(--line)] flex-grow rounded-full"></div>
                 </div>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <Card title="Visitor Demographics" subtitle="By Job Function" className="h-[400px]">
@@ -184,16 +184,16 @@ export default function LinkedInDashboard() {
 
                     <Card title="Ad Campaign Performance" subtitle="Trailing 30 Days (Mock)">
                         <div className="grid grid-cols-3 gap-4 mb-6">
-                            <div className="bg-gray-50 p-3 rounded-xl">
-                                <p className="text-[10px] text-gray-500 uppercase font-semibold">Total Spend</p>
+                            <div className="bg-[var(--page)] p-3 rounded-xl">
+                                <p className="text-[10px] text-[var(--ink-2)] uppercase font-semibold">Total Spend</p>
                                 <p className="text-xl font-bold">$2,850</p>
                             </div>
-                            <div className="bg-gray-50 p-3 rounded-xl">
-                                <p className="text-[10px] text-gray-500 uppercase font-semibold">Leads Gen</p>
+                            <div className="bg-[var(--page)] p-3 rounded-xl">
+                                <p className="text-[10px] text-[var(--ink-2)] uppercase font-semibold">Leads Gen</p>
                                 <p className="text-xl font-bold text-[#0A66C2]">145</p>
                             </div>
-                            <div className="bg-gray-50 p-3 rounded-xl">
-                                <p className="text-[10px] text-gray-500 uppercase font-semibold">CPL</p>
+                            <div className="bg-[var(--page)] p-3 rounded-xl">
+                                <p className="text-[10px] text-[var(--ink-2)] uppercase font-semibold">CPL</p>
                                 <p className="text-xl font-bold">$19.65</p>
                             </div>
                         </div>
@@ -217,33 +217,33 @@ export default function LinkedInDashboard() {
             {/* LinkedIn Deep Dive Metrics */}
             <section className="space-y-6">
                 <div className="flex items-center space-x-2">
-                    <span className="text-gray-400 font-semibold tracking-wider text-sm uppercase">5. Network & Lead Generation</span>
-                    <div className="h-px bg-gray-200 flex-grow rounded-full"></div>
+                    <span className="text-[var(--ink-3)] font-semibold tracking-wider text-sm uppercase">5. Network & Lead Generation</span>
+                    <div className="h-px bg-[var(--line)] flex-grow rounded-full"></div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <Card title="Lead Forms" subtitle="Conversion Metrics">
                         <div className="flex items-end justify-between mt-4">
-                            <div className="text-4xl font-bold text-gray-900">14.2%</div>
-                            <div className="text-sm font-medium text-green-600 bg-green-50 px-2 py-1 rounded-md">+2.1%</div>
+                            <div className="text-4xl font-bold text-[var(--ink)]">14.2%</div>
+                            <div className="text-sm font-medium text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-500/10 px-2 py-1 rounded-md">+2.1%</div>
                         </div>
-                        <p className="text-xs text-gray-500 mt-2 font-medium">Avg Completion Rate</p>
+                        <p className="text-xs text-[var(--ink-2)] mt-2 font-medium">Avg Completion Rate</p>
                         
                         <div className="mt-8 space-y-4">
                             <div>
-                                <div className="flex justify-between text-xs text-gray-500 mb-1"><span>Form Opens</span><span className="font-bold text-gray-900">1,021</span></div>
-                                <div className="w-full h-2 bg-gray-100 rounded-full"><div className="w-[100%] h-full bg-[#0A66C2] rounded-full"></div></div>
+                                <div className="flex justify-between text-xs text-[var(--ink-2)] mb-1"><span>Form Opens</span><span className="font-bold text-[var(--ink)]">1,021</span></div>
+                                <div className="w-full h-2 bg-[var(--page)] rounded-full"><div className="w-[100%] h-full bg-[#0A66C2] rounded-full"></div></div>
                             </div>
                             <div>
-                                <div className="flex justify-between text-xs text-gray-500 mb-1"><span>Submissions</span><span className="font-bold text-gray-900">145</span></div>
-                                <div className="w-full h-2 bg-gray-100 rounded-full"><div className="w-[14%] h-full bg-[#34C759] rounded-full"></div></div>
+                                <div className="flex justify-between text-xs text-[var(--ink-2)] mb-1"><span>Submissions</span><span className="font-bold text-[var(--ink)]">145</span></div>
+                                <div className="w-full h-2 bg-[var(--page)] rounded-full"><div className="w-[14%] h-full bg-[#34C759] rounded-full"></div></div>
                             </div>
                         </div>
                     </Card>
 
                     <Card title="Brand Mentions" subtitle="Across LinkedIn Network">
                         <div className="flex items-end justify-between mt-4">
-                            <div className="text-4xl font-bold text-gray-900">84</div>
-                            <div className="text-sm font-medium text-gray-600 bg-gray-100 px-2 py-1 rounded-md">Last 30 days</div>
+                            <div className="text-4xl font-bold text-[var(--ink)]">84</div>
+                            <div className="text-sm font-medium text-[var(--ink-2)] bg-[var(--page)] px-2 py-1 rounded-md">Last 30 days</div>
                         </div>
                         <div className="h-32 mt-6">
                             <ResponsiveContainer width="100%" height="100%">
@@ -264,10 +264,10 @@ export default function LinkedInDashboard() {
                             ].map((job, i) => (
                                 <div key={i}>
                                     <div className="flex justify-between text-xs mb-1">
-                                        <span className="font-medium text-gray-700">{job.title}</span>
+                                        <span className="font-medium text-[var(--ink-2)]">{job.title}</span>
                                         <span className="font-bold">{job.views}</span>
                                     </div>
-                                    <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                                    <div className="w-full bg-[var(--page)] rounded-full h-2 overflow-hidden">
                                         <div className="bg-[#0A66C2] h-full rounded-full" style={{ width: job.pct }}></div>
                                     </div>
                                 </div>
