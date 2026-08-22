@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { getApiUrl, logout, apiFetch } from "../lib/auth";
 import { withWorkspace, getActiveWorkspace, setActiveWorkspace } from "../lib/workspace";
+import ThemeToggle from "./ThemeToggle";
 
 const navItems = [
   { name: "Dashboard", href: "/dashboard", icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" },
@@ -75,21 +76,21 @@ export default function Sidebar() {
   return (
     <>
     {/* Mobile top bar */}
-    <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-md border-b border-gray-100 flex items-center justify-between px-4 z-40">
-      <button onClick={() => setOpen(true)} aria-label="Open menu" className="p-2 -ml-2 text-gray-600">
+    <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-[var(--surface)]/80 backdrop-blur-md border-b border-[var(--line)] flex items-center justify-between px-4 z-40">
+      <button onClick={() => setOpen(true)} aria-label="Open menu" className="p-2 -ml-2 text-[var(--ink-2)]">
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
       </button>
       <Link href="/" className="flex items-center space-x-2">
         <svg width="26" height="26" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="10" fill="url(#arbflow-topbar-gradient)" /><path d="M9 21V16" stroke="white" strokeWidth="2.5" strokeLinecap="round" /><path d="M16 21V10" stroke="white" strokeWidth="2.5" strokeLinecap="round" /><path d="M23 21V13" stroke="white" strokeWidth="2.5" strokeLinecap="round" /><circle cx="16" cy="10" r="2.5" fill="white" /><defs><linearGradient id="arbflow-topbar-gradient" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse"><stop stopColor="#2563EB" /><stop offset="1" stopColor="#8B5CF6" /></linearGradient></defs></svg>
-        <span className="text-lg font-semibold tracking-tight text-gray-900">ArbFlow</span>
+        <span className="text-lg font-semibold tracking-tight text-[var(--ink)]">ArbFlow</span>
       </Link>
       <span className="w-8" />
     </div>
 
     {/* Backdrop */}
-    {open && <div onClick={() => setOpen(false)} className="lg:hidden fixed inset-0 bg-black/30 z-40" />}
+    {open && <div onClick={() => setOpen(false)} className="lg:hidden fixed inset-0 bg-[var(--ink)]/30 z-40" />}
 
-    <div className={`w-64 h-screen bg-white/90 lg:bg-white/80 backdrop-blur-md border-r border-gray-100/80 fixed left-0 top-0 flex flex-col py-6 px-4 z-50 transition-transform duration-300 ${open ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}>
+    <div className={`w-64 h-screen bg-[var(--surface)]/90 lg:bg-[var(--surface)]/80 backdrop-blur-md border-r border-[var(--line)]/80 fixed left-0 top-0 flex flex-col py-6 px-4 z-50 transition-transform duration-300 ${open ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}>
       <Link href="/" className="flex items-center space-x-3 px-3 mb-12 hover:opacity-80 transition-opacity">
         <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="drop-shadow-sm">
           <rect width="32" height="32" rx="10" fill="url(#arbflow-sidebar-gradient)" />
@@ -104,18 +105,18 @@ export default function Sidebar() {
             </linearGradient>
           </defs>
         </svg>
-        <span className="text-xl font-semibold tracking-tight text-gray-900">ArbFlow</span>
+        <span className="text-xl font-semibold tracking-tight text-[var(--ink)]">ArbFlow</span>
       </Link>
 
       {/* Workspace switcher — shown only when the user belongs to a team. */}
       {workspaces.length > 1 && (
         <div className="px-1 mb-6">
-          <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5 px-2">Workspace</label>
+          <label className="block text-[10px] font-semibold text-[var(--ink-2)] uppercase tracking-wider mb-1.5 px-2">Workspace</label>
           <select
             aria-label="Switch workspace"
             value={activeWs}
             onChange={(e) => switchWorkspace(e.target.value)}
-            className="w-full text-sm font-medium text-gray-800 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 outline-none cursor-pointer hover:bg-gray-100 transition-colors"
+            className="w-full text-sm font-medium text-[var(--ink)] bg-[var(--page)] border border-[var(--line)] rounded-xl px-3 py-2.5 outline-none cursor-pointer hover:bg-[var(--page)] transition-colors"
           >
             {workspaces.map((w) => (
               <option key={w.id} value={w.is_own ? "" : String(w.id)}>
@@ -131,11 +132,11 @@ export default function Sidebar() {
           const isActive = pathname === item.href || pathname?.startsWith(`${item.href}/`);
           return (
             <Link key={item.name} href={item.href}>
-              <div className={`relative px-4 py-3 rounded-2xl flex items-center space-x-3 transition-colors ${isActive ? 'text-black' : 'text-gray-500 hover:text-gray-800'}`}>
+              <div className={`relative px-4 py-3 rounded-2xl flex items-center space-x-3 transition-colors ${isActive ? 'text-black' : 'text-[var(--ink-2)] hover:text-[var(--ink)]'}`}>
                 {isActive && (
                   <motion.div
                     layoutId="sidebar-active"
-                    className="absolute inset-0 bg-gray-100 rounded-2xl"
+                    className="absolute inset-0 bg-[var(--page)] rounded-2xl"
                     initial={false}
                     transition={{ type: "spring", stiffness: 400, damping: 30 }}
                   />
@@ -150,14 +151,19 @@ export default function Sidebar() {
 
       <div className="mt-auto px-4">
         <Link href="/billing">
-          <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 mb-4 block cursor-pointer transition-transform hover:scale-[1.02]">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Workspace limit</p>
-            <div className="w-full bg-gray-200 rounded-full h-1.5 mb-2"><div className="bg-blue-500 h-1.5 rounded-full" style={{ width: `${usage.percentage}%` }}></div></div>
-            <p className="text-xs text-gray-500">{Math.floor(usage.current).toLocaleString()} / {Math.floor(usage.limit / 1000)}k views</p>
+          <div className="p-4 bg-[var(--page)] rounded-2xl border border-[var(--line)] mb-4 block cursor-pointer transition-transform hover:scale-[1.02]">
+            <p className="text-xs font-semibold text-[var(--ink-2)] uppercase tracking-wider mb-2">Workspace limit</p>
+            <div className="w-full bg-[var(--line)] rounded-full h-1.5 mb-2"><div className="bg-blue-500 h-1.5 rounded-full" style={{ width: `${usage.percentage}%` }}></div></div>
+            <p className="text-xs text-[var(--ink-2)]">{Math.floor(usage.current).toLocaleString()} / {Math.floor(usage.limit / 1000)}k views</p>
           </div>
         </Link>
         
-        <div onClick={async () => { await logout(); window.location.href = "/login"; }} className="flex items-center space-x-3 text-sm font-medium text-gray-500 hover:text-gray-800 transition-colors px-3 py-2 cursor-pointer">
+        <div className="flex items-center justify-between px-3 py-2 mb-1">
+          <span className="text-xs font-medium text-[var(--ink-3)]">Theme</span>
+          <ThemeToggle compact />
+        </div>
+
+        <div onClick={async () => { await logout(); window.location.href = "/login"; }} className="flex items-center space-x-3 text-sm font-medium text-[var(--ink-2)] hover:text-[var(--ink)] transition-colors px-3 py-2 cursor-pointer">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
           <span>Log out</span>
         </div>
