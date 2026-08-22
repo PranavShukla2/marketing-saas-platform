@@ -116,7 +116,7 @@ export default function LinkedInDashboard() {
                 </div>
                 <Card className="!p-0 border-0 shadow-[0_4px_32px_rgba(0,0,0,0.06)] overflow-x-auto">
                     <table className="w-full text-left">
-                        <thead className="bg-[#F5F5F7] sticky top-0 z-10 backdrop-blur-md">
+                        <thead className="bg-[var(--page)] sticky top-0 z-10 backdrop-blur-md">
                             <tr>
                                 <th className="px-8 py-5 text-xs font-bold text-[var(--ink-2)] uppercase tracking-widest border-b border-[var(--line)]">Post Title</th>
                                 <th className="px-8 py-5 text-center text-xs font-bold text-[var(--ink-2)] uppercase tracking-widest border-b border-[var(--line)]">Impressions</th>

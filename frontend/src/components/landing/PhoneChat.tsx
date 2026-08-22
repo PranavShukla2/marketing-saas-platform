@@ -142,7 +142,7 @@ export default function PhoneChat() {
                 ? { rotateY: HOVER_ROTATE_Y, rotateX: HOVER_ROTATE_X, transition: { duration: 0.5, ease: "easeOut" } }
                 : {}
             }
-            className="relative rounded-[38px] bg-[#15132e] p-[7px] shadow-[24px_30px_60px_rgba(20,18,46,0.28)]"
+            className="relative rounded-[38px] bg-[var(--ink)] p-[7px] shadow-[24px_30px_60px_rgba(20,18,46,0.28)]"
           >
             <div className="relative w-full h-full rounded-[30px] bg-[var(--surface)] overflow-hidden">
               {/* sheen */}
@@ -156,7 +156,7 @@ export default function PhoneChat() {
               />
 
               <div className="relative flex items-center justify-center py-1.5 bg-[var(--surface)]">
-                <div className="absolute top-1 w-16 h-4 rounded-full bg-[#15132e]" />
+                <div className="absolute top-1 w-16 h-4 rounded-full bg-[var(--ink)]" />
                 <div className="w-full flex items-center justify-between px-4 pt-2.5 text-[11px] font-medium text-[var(--ink)]">
                   <span>9:41</span>
                   <span className="flex items-center gap-1">
@@ -177,7 +177,7 @@ export default function PhoneChat() {
                 </div>
               </div>
 
-              <div className="px-2.5 py-3 space-y-[9px] bg-[#fbfaff]" style={{ minHeight: "calc(100% - 80px)" }}>
+              <div className="px-2.5 py-3 space-y-[9px] bg-[var(--page)]" style={{ minHeight: "calc(100% - 80px)" }}>
                 {BUBBLES.map((bubble, i) => (
                   <motion.div
                     key={i}
@@ -191,7 +191,7 @@ export default function PhoneChat() {
                       className={`max-w-[78%] rounded-2xl px-2 py-[8px] text-[12px] leading-relaxed ${
                         bubble.from === "out"
                           ? "bg-gradient-to-r from-[var(--indigo)] to-[var(--violet)] text-white"
-                          : "bg-[#efeaff] text-[var(--ink)]"
+                          : "bg-[#efeaff] dark:bg-[var(--accent)]/12 text-[var(--ink)]"
                       }`}
                     >
                       {bubble.text}

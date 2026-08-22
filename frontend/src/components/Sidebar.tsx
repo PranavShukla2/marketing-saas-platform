@@ -132,7 +132,7 @@ export default function Sidebar() {
           const isActive = pathname === item.href || pathname?.startsWith(`${item.href}/`);
           return (
             <Link key={item.name} href={item.href}>
-              <div className={`relative px-4 py-3 rounded-2xl flex items-center space-x-3 transition-colors ${isActive ? 'text-black' : 'text-[var(--ink-2)] hover:text-[var(--ink)]'}`}>
+              <div className={`relative px-4 py-3 rounded-2xl flex items-center space-x-3 transition-colors ${isActive ? 'text-[var(--ink)]' : 'text-[var(--ink-2)] hover:text-[var(--ink)]'}`}>
                 {isActive && (
                   <motion.div
                     layoutId="sidebar-active"

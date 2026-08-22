@@ -44,7 +44,7 @@ export default function PricingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--surface)] text-[#1D1D1F] flex flex-col items-center px-6 py-20 sm:py-28">
+    <div className="min-h-screen bg-[var(--surface)] text-[var(--ink)] flex flex-col items-center px-6 py-20 sm:py-28">
       <motion.div
         initial="hidden"
         animate="visible"
@@ -54,7 +54,7 @@ export default function PricingPage() {
         <motion.h1 variants={fadeUp} className="text-5xl md:text-6xl font-bold tracking-[-0.02em] mb-4">
           Simple, transparent pricing.
         </motion.h1>
-        <motion.p variants={fadeUp} className="text-xl text-[#6E6E73] font-light">
+        <motion.p variants={fadeUp} className="text-xl text-[var(--ink-2)] font-light">
           Scale your marketing agency with secure, multi-tenant analytics.
         </motion.p>
       </motion.div>
@@ -64,12 +64,12 @@ export default function PricingPage() {
         initial="hidden"
         animate="visible"
         variants={fadeUp}
-        className="flex items-center gap-3 mb-16 px-1.5 py-1.5 rounded-full border border-[#E5E5E5] bg-[#F5F5F7]"
+        className="flex items-center gap-3 mb-16 px-1.5 py-1.5 rounded-full border border-[var(--line)] bg-[var(--page)]"
       >
         <button
           onClick={() => setAnnual(false)}
           className={`px-5 py-2 rounded-full text-sm font-medium transition-colors duration-300 ${
-            !annual ? "bg-[var(--surface)] text-[#1D1D1F] shadow-sm" : "text-[#6E6E73]"
+            !annual ? "bg-[var(--surface)] text-[var(--ink)] shadow-sm" : "text-[var(--ink-2)]"
           }`}
         >
           Monthly
@@ -77,7 +77,7 @@ export default function PricingPage() {
         <button
           onClick={() => setAnnual(true)}
           className={`flex items-center gap-2 px-5 py-2 rounded-full text-sm font-medium transition-colors duration-300 ${
-            annual ? "bg-[var(--surface)] text-[#1D1D1F] shadow-sm" : "text-[#6E6E73]"
+            annual ? "bg-[var(--surface)] text-[var(--ink)] shadow-sm" : "text-[var(--ink-2)]"
           }`}
         >
           Annual
@@ -101,8 +101,8 @@ export default function PricingPage() {
               variants={fadeUp}
               className={`p-10 rounded-3xl flex flex-col relative ${
                 plan.popular
-                  ? "border-2 border-[#0071E3] bg-[#EEF2FF] shadow-xl md:-translate-y-2"
-                  : "border border-[#E5E5E5] bg-[var(--surface)]"
+                  ? "border-2 border-[#0071E3] bg-[#EEF2FF] dark:bg-[var(--accent)]/12 shadow-xl md:-translate-y-2"
+                  : "border border-[var(--line)] bg-[var(--surface)]"
               }`}
             >
               {plan.popular && (
@@ -111,18 +111,18 @@ export default function PricingPage() {
                 </div>
               )}
               <h2 className="text-2xl font-medium mb-2 mt-2">{plan.name}</h2>
-              <p className="text-[#6E6E73] mb-6">{plan.desc}</p>
+              <p className="text-[var(--ink-2)] mb-6">{plan.desc}</p>
               <div className="flex items-baseline gap-1 mb-1">
                 <span className="text-5xl font-bold tracking-[-0.02em]">${monthlyPrice}</span>
-                <span className="text-lg text-[#6E6E73]">/mo</span>
+                <span className="text-lg text-[var(--ink-2)]">/mo</span>
               </div>
               {annual && (
-                <p className="text-xs text-[#6E6E73] mb-8">Billed annually at ${monthlyPrice * 12}/yr</p>
+                <p className="text-xs text-[var(--ink-2)] mb-8">Billed annually at ${monthlyPrice * 12}/yr</p>
               )}
               {!annual && <div className="mb-8" />}
               <ul className="space-y-4 mb-10 flex-grow">
                 {plan.features.map((feature) => (
-                  <li key={feature} className="flex items-center text-[#1D1D1F] text-sm">
+                  <li key={feature} className="flex items-center text-[var(--ink)] text-sm">
                     <svg className="w-4 h-4 text-[#0071E3] mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                     </svg>
@@ -135,7 +135,7 @@ export default function PricingPage() {
                   className={`w-full py-3 rounded-full font-medium transition-colors duration-300 ${
                     plan.popular
                       ? "bg-[#0071E3] text-white hover:bg-[#0061c3]"
-                      : "bg-[var(--surface)] text-[#1D1D1F] border border-[#E5E5E5] hover:bg-[#F5F5F7]"
+                      : "bg-[var(--surface)] text-[var(--ink)] border border-[var(--line)] hover:bg-[var(--page)]"
                   }`}
                 >
                   {plan.cta}

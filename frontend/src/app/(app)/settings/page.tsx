@@ -372,7 +372,7 @@ export default function SettingsPage() {
                 <p className="text-sm font-medium text-[var(--ink)]">•••• •••• •••• 4242</p>
                 <p className="text-xs text-gray-400">Expires 12/28</p>
               </div>
-              <button className="text-xs font-medium text-gray-400 hover:text-black bg-[var(--page)] px-3 py-1.5 rounded-md">Edit</button>
+              <button className="text-xs font-medium text-gray-400 hover:text-[var(--ink)] bg-[var(--page)] px-3 py-1.5 rounded-md">Edit</button>
             </div>
           </motion.div>
         );
@@ -396,7 +396,7 @@ export default function SettingsPage() {
                   <p className="text-xs font-mono text-[var(--ink-2)]">sk_live_••••••••••••9f2a</p>
                 </div>
                 <div className="flex space-x-2">
-                  <button className="px-3 py-1.5 bg-[var(--page)] text-xs font-medium text-[var(--ink-2)] rounded-md hover:bg-[var(--page)] hover:text-black transition-colors">Copy</button>
+                  <button className="px-3 py-1.5 bg-[var(--page)] text-xs font-medium text-[var(--ink-2)] rounded-md hover:bg-[var(--page)] hover:text-[var(--ink)] transition-colors">Copy</button>
                   <button className="px-3 py-1.5 bg-red-50 dark:bg-red-500/10 text-xs font-medium text-red-600 dark:text-red-400 rounded-md hover:bg-red-100 dark:bg-red-500/15 transition-colors">Revoke</button>
                 </div>
               </div>
@@ -410,7 +410,7 @@ export default function SettingsPage() {
                   <p className="text-xs font-mono text-[var(--ink-2)]">sk_test_••••••••••••4b8c</p>
                 </div>
                 <div className="flex space-x-2">
-                  <button className="px-3 py-1.5 bg-[var(--page)] text-xs font-medium text-[var(--ink-2)] rounded-md hover:bg-[var(--page)] hover:text-black transition-colors">Copy</button>
+                  <button className="px-3 py-1.5 bg-[var(--page)] text-xs font-medium text-[var(--ink-2)] rounded-md hover:bg-[var(--page)] hover:text-[var(--ink)] transition-colors">Copy</button>
                   <button className="px-3 py-1.5 bg-red-50 dark:bg-red-500/10 text-xs font-medium text-red-600 dark:text-red-400 rounded-md hover:bg-red-100 dark:bg-red-500/15 transition-colors">Revoke</button>
                 </div>
               </div>
@@ -450,8 +450,8 @@ export default function SettingsPage() {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex-shrink-0 flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all ${activeTab === tab.id
-                    ? "bg-[var(--surface)] text-black shadow-sm border border-[var(--line)]"
-                    : "text-[var(--ink-2)] hover:bg-[var(--page)] hover:text-black"
+                    ? "bg-[var(--surface)] text-[var(--ink)] shadow-sm border border-[var(--line)]"
+                    : "text-[var(--ink-2)] hover:bg-[var(--page)] hover:text-[var(--ink)]"
                   }`}
               >
                 {tab.label}
