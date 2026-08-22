@@ -92,7 +92,7 @@ export default function PhoneChat() {
           ))}
         </ul>
 
-        <button className="px-6 py-3 rounded-xl bg-[var(--ink)] text-white text-sm font-medium hover:opacity-90 transition-opacity">
+        <button className="px-6 py-3 rounded-xl bg-[var(--ink)] text-[var(--page)] text-sm font-medium hover:opacity-90 transition-opacity">
           Get the digest →
         </button>
       </motion.div>

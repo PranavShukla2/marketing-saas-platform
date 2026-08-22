@@ -91,7 +91,7 @@ export default function Navbar() {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="bg-[var(--ink)] text-white text-sm font-medium px-5 py-2 rounded-full hover:opacity-90 transition-opacity shadow-sm"
+              className="bg-[var(--ink)] text-[var(--page)] text-sm font-medium px-5 py-2 rounded-full hover:opacity-90 transition-opacity shadow-sm"
             >
               Start free
             </motion.button>

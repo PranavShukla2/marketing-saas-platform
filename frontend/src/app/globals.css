@@ -302,7 +302,7 @@ body {
   top: 0;
   z-index: 100;
   background: var(--ink, #15132e);
-  color: #fff;
+  color: var(--page, #fff); /* inverts with --ink so it stays legible in both themes */
   padding: 10px 16px;
   border-radius: 0 0 12px 0;
   font-size: 14px;
