@@ -87,6 +87,30 @@ Revisit once the overhaul is stable.
 
 ---
 
+## Geography / "where your users are" map — `d3-geo` + `topojson-client`
+
+GA4 gives us country-level (and city-level) visitor counts, which is best read
+as a **choropleth** — countries shaded by traffic — not as a street map.
+
+| Alternative | Why not |
+|---|---|
+| **Mapbox GL / react-map-gl** | Built for pannable street maps with tiles. Needs an API key, bills per map load, and ships a large WebGL runtime — all wrong for shading ~200 static country shapes. |
+| **Leaflet / react-leaflet** | Also tile-based, so it inherits a tile provider dependency and cost, and a choropleth is fighting the library rather than using it. |
+| **react-simple-maps** | The closest fit and genuinely nice, but it wraps the same d3-geo we'd use, adds a dependency layer on top, and has lagged on React major versions before — a risk on React 19. |
+| **@nivo/geo / amCharts** | Heavy, opinionated styling that would fight our tokens; amCharts also has licensing conditions. |
+
+**Decision:** render the choropleth ourselves — `d3-geo` for the projection and
+`topojson-client` to decode a world atlas, drawn as plain SVG `<path>`s. Both
+are small, stable, and framework-agnostic.
+
+**Why this is the right amount of work:** it's roughly a hundred lines, and in
+return the map is *ours*: countries are SVG elements, so they take our theme
+tokens, our tooltip primitive, our motion and our focus styles for free — no
+API key, no tile bill, no WebGL, and it themes correctly in dark mode instead
+of being a bright rectangle pasted onto a dark page.
+
+---
+
 ## Toasts — `sonner`
 
 Replaces a bespoke toast that exists on exactly one page. Chosen over
