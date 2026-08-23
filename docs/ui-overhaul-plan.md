@@ -138,8 +138,8 @@ Landing, pricing, about, legal.
 ## Status
 
 - [x] **Phase 0** — foundation (tokens, motion, primitives, `/design`) ✅ *verified in both themes*
-- [ ] **Phase 1 — app shell** ← next
-- [ ] Phase 2 — workspace core
+- [x] **Phase 1** — app shell (glass rail, status island, Cmd-K) ✅ *verified signed-in*
+- [ ] **Phase 2 — workspace core** ← next
 - [ ] Phase 3 — workspace secondary
 - [ ] Phase 4 — auth
 - [ ] Phase 5 — marketing
