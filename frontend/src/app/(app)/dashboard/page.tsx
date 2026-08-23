@@ -19,6 +19,7 @@ import { demoData } from "../../../lib/demoData";
 import { KpiCard, SectionCard, BarList, Sparkline, PALETTE } from "../../../components/workspace/primitives";
 import FloAssistant from "../../../components/workspace/FloAssistant";
 import OnboardingChecklist from "../../../components/workspace/OnboardingChecklist";
+import { useStatusIsland } from "../../../components/shell/StatusIsland";
 
 const SECTIONS = [
   { id: "overview", label: "Overview" },
@@ -72,12 +73,15 @@ export default function Dashboard() {
   const [brand, setBrand] = useState<{ logo_url: string | null; accent_color: string; report_footer: string | null }>(
     { logo_url: null, accent_color: "#5b5bd6", report_footer: null }
   );
-  const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [isPlatformLoading, setIsPlatformLoading] = useState(false);
   const [targetPlatform, setTargetPlatform] = useState<string | null>(null);
+  const { setStatus, flash } = useStatusIsland();
 
   const fetchData = async (isManualSync = false, propId = selectedProperty) => {
-    if (isManualSync) setSyncing(true);
+    if (isManualSync) {
+      setSyncing(true);
+      setStatus({ kind: "busy", label: "Syncing with Google Analytics…" });
+    }
     try {
       // getApiUrl() is a same-origin path now, so give URL an explicit base.
       const url = new URL(`${getApiUrl()}/api/v1/analytics/dashboard`, window.location.origin);
@@ -96,7 +100,10 @@ export default function Dashboard() {
       console.error("Fetch error:", err);
     } finally {
       setLoading(false);
-      if (isManualSync) setTimeout(() => setSyncing(false), 800);
+      if (isManualSync) {
+        setTimeout(() => setSyncing(false), 800);
+        flash({ kind: "success", label: "Dashboard up to date" });
+      }
     }
   };
 
@@ -104,8 +111,7 @@ export default function Dashboard() {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       if (params.get("integration") === "success") {
-        setShowSuccessToast(true);
-        setTimeout(() => setShowSuccessToast(false), 5000);
+        flash({ kind: "success", label: "Google Analytics connected" }, 5000);
       }
       window.history.replaceState({}, document.title, window.location.pathname);
     }
@@ -169,6 +175,17 @@ export default function Dashboard() {
   const connected = !!(data && data.status === "active");
   const view: any = connected ? data : demoData;
   const isDemo = !connected;
+
+  // Surface a live anomaly in the island instead of a stacked banner. Only for
+  // real data — demo data always carries the same canned spike.
+  useEffect(() => {
+    if (isDemo || activePlatform !== "google") return;
+    const a = data?.anomaly;
+    if (a?.is_anomaly) {
+      setStatus({ kind: "alert", label: a.message });
+    }
+  }, [data, isDemo, activePlatform, setStatus]);
+
 
   // When we're not showing live data, explain *why* — so the workspace says
   // "GA4 isn't available for this account, here's sample data" instead of a
@@ -257,19 +274,6 @@ export default function Dashboard() {
         {isPlatformLoading && targetPlatform && <PlatformLoader platform={targetPlatform} />}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {showSuccessToast && (
-          <motion.div
-            initial={{ opacity: 0, y: -40 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -40 }}
-            className="fixed top-6 left-1/2 -translate-x-1/2 z-50 bg-[var(--surface)] border border-[var(--line)] text-[var(--ink)] px-5 py-3 rounded-full shadow-[0_12px_40px_rgba(20,18,46,.14)] flex items-center gap-2.5"
-          >
-            <span className="w-2 h-2 rounded-full bg-[var(--teal)]" />
-            <span className="font-medium text-sm">Google Analytics connected.</span>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* ---------------- Header ---------------- */}
       <header className="max-w-7xl mx-auto flex flex-col lg:flex-row lg:items-center justify-between gap-5 mb-8">
@@ -354,27 +358,6 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* ---------------- Anomaly alert (live data only) ---------------- */}
-      {!isDemo && activePlatform === "google" && data?.anomaly?.is_anomaly && (
-        <div className="max-w-7xl mx-auto mb-6">
-          <div
-            className="rounded-2xl border px-5 py-3.5 flex items-center gap-3"
-            style={{
-              borderColor: data.anomaly.direction === "dip" ? "rgba(255,107,94,.35)" : "rgba(20,184,166,.35)",
-              background: data.anomaly.direction === "dip" ? "rgba(255,107,94,.07)" : "rgba(20,184,166,.07)",
-            }}
-          >
-            <span
-              className="w-2.5 h-2.5 rounded-full animate-pulse flex-shrink-0"
-              style={{ background: data.anomaly.direction === "dip" ? "var(--coral)" : "var(--teal)" }}
-            />
-            <p className="text-sm text-[var(--ink)]">
-              <strong>{data.anomaly.direction === "dip" ? "Worth a look:" : "Nice spike:"}</strong>{" "}
-              {data.anomaly.message}
-            </p>
-          </div>
-        </div>
-      )}
 
       {/* ---------------- Source switcher ---------------- */}
       <div className="max-w-7xl mx-auto mb-6">
