@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Inter, Caveat } from "next/font/google";
 import "./globals.css";
 import { themeScript } from "../lib/theme";
+import { Toaster } from "../components/ui/toaster";
+import { TooltipProvider } from "../components/ui/tooltip";
 
 const inter = Inter({ subsets: ["latin"] });
 const caveat = Caveat({ subsets: ["latin"], weight: ["500", "600", "700"], variable: "--font-hand" });
@@ -23,7 +25,8 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className={`${inter.className} ${caveat.variable} bg-[var(--page)] text-[var(--ink)] antialiased`}>
-        {children}
+        <TooltipProvider delayDuration={200}>{children}</TooltipProvider>
+        <Toaster />
       </body>
     </html>
   );
