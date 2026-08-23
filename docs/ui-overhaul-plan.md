@@ -68,8 +68,11 @@ The vocabulary everything else is written in.
   theme-aware, extending the existing `--ink`/`--surface`/`--line` set.
 - **Motion vocabulary:** shared easings, durations and variants
   (`fadeUp`, `stagger`, `scaleIn`) so animation feels like one system.
-- Primitives: Button, Card, Input, Label, Badge, Tabs, Dialog, Tooltip,
-  Select, Switch, Skeleton, Toast.
+- Primitives: Button, Card, Input/Label/Field, Badge, Tabs, Dialog, Tooltip,
+  Switch, Skeleton, Toast.
+- **`/design`** — a living reference route showing every primitive and variant
+  in whichever theme you're viewing. Kept as a real route so it can't drift
+  from the components it documents.
 
 ## Phase 1 — App shell
 The frame every workspace page sits in.
@@ -134,8 +137,8 @@ Landing, pricing, about, legal.
 
 ## Status
 
-- [x] **Phase 0** — foundation (tokens, motion, primitives)
-- [ ] Phase 1 — app shell
+- [x] **Phase 0** — foundation (tokens, motion, primitives, `/design`) ✅ *verified in both themes*
+- [ ] **Phase 1 — app shell** ← next
 - [ ] Phase 2 — workspace core
 - [ ] Phase 3 — workspace secondary
 - [ ] Phase 4 — auth
