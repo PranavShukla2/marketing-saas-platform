@@ -123,6 +123,26 @@ html {
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
 }
 
+/* Overlay enter/exit, keyed off Radix's data-state.
+   Written by hand rather than pulling in tailwindcss-animate: it's ~20 lines,
+   and defining it here means the prefers-reduced-motion block below can switch
+   it off by name, which a plugin's generated utilities could not. */
+@keyframes af-overlay-in  { from { opacity: 0 } to { opacity: 1 } }
+@keyframes af-overlay-out { from { opacity: 1 } to { opacity: 0 } }
+@keyframes af-pop-in  { from { opacity: 0; transform: translate(-50%, -48%) scale(.96) }
+                        to   { opacity: 1; transform: translate(-50%, -50%) scale(1) } }
+@keyframes af-pop-out { from { opacity: 1; transform: translate(-50%, -50%) scale(1) }
+                        to   { opacity: 0; transform: translate(-50%, -48%) scale(.96) } }
+@keyframes af-fade-scale-in  { from { opacity: 0; transform: scale(.96) } to { opacity: 1; transform: scale(1) } }
+@keyframes af-fade-scale-out { from { opacity: 1; transform: scale(1) } to { opacity: 0; transform: scale(.96) } }
+
+[data-state="open"].af-overlay  { animation: af-overlay-in .18s ease-out }
+[data-state="closed"].af-overlay { animation: af-overlay-out .15s ease-in }
+[data-state="open"].af-pop  { animation: af-pop-in .22s cubic-bezier(.22,1,.36,1) }
+[data-state="closed"].af-pop { animation: af-pop-out .16s ease-in }
+[data-state="open"].af-pop-origin  { animation: af-fade-scale-in .16s cubic-bezier(.22,1,.36,1) }
+[data-state="closed"].af-pop-origin { animation: af-fade-scale-out .12s ease-in }
+
 /* Browsers without backdrop-filter would render the translucent background
    alone, leaving text on a washed-out panel — fall back to the solid surface. */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
@@ -302,7 +322,10 @@ body {
   .animate-pulse-dot,
   .animate-wiggle,
   .animate-float-soft,
-  .animate-draw-arrow {
+  .animate-draw-arrow,
+  .af-overlay,
+  .af-pop,
+  .af-pop-origin {
     animation: none !important;
   }
 }
