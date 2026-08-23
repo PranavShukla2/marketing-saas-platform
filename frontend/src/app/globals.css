@@ -36,6 +36,24 @@ html {
      (white-on-indigo is 5.4:1 either way). */
   --accent: #5b5bd6;
 
+  /* Elevation. Three steps, not a dozen: resting cards, raised/hovered, and
+     overlays. Tinted with the brand ink rather than pure black so shadows
+     don't look grey-brown on a warm page. */
+  --shadow-rest: 0 1px 2px rgba(20,18,46,.05), 0 1px 3px rgba(20,18,46,.04);
+  --shadow-raised: 0 8px 24px rgba(20,18,46,.10), 0 2px 6px rgba(20,18,46,.05);
+  --shadow-overlay: 0 24px 60px rgba(20,18,46,.20), 0 8px 20px rgba(20,18,46,.10);
+
+  /* Glass — chrome and overlays only. Opaque enough that text on top still
+     passes contrast; see DECISIONS.md. */
+  --glass-bg: rgba(255,255,255,.72);
+  --glass-border: rgba(20,18,46,.08);
+  --glass-blur: 16px;
+
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+
   color-scheme: light;
 }
 
@@ -59,6 +77,17 @@ html {
 
   --accent: #9b9bf5;
 
+  /* Dark elevation leans on lighter surfaces more than shadow (a shadow on a
+     dark background is nearly invisible), so these stay subtle and the
+     surface tokens do most of the lifting. */
+  --shadow-rest: 0 1px 2px rgba(0,0,0,.40);
+  --shadow-raised: 0 10px 28px rgba(0,0,0,.55), 0 2px 6px rgba(0,0,0,.35);
+  --shadow-overlay: 0 28px 70px rgba(0,0,0,.70), 0 10px 24px rgba(0,0,0,.45);
+
+  --glass-bg: rgba(22,21,42,.72);
+  --glass-border: rgba(255,255,255,.08);
+  --glass-blur: 16px;
+
   color-scheme: dark;
 }
 
@@ -81,6 +110,23 @@ html {
   --color-amber: var(--amber);
   --color-teal: var(--teal);
   --color-pink: var(--pink);
+  --color-accent: var(--accent);
+}
+
+/* Glass surface. A utility rather than a component so chrome, overlays and the
+   nav pill all share exactly one definition — and one place to disable it if a
+   device can't cope with backdrop-filter. */
+.glass {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+}
+
+/* Browsers without backdrop-filter would render the translucent background
+   alone, leaving text on a washed-out panel — fall back to the solid surface. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass { background: var(--surface); }
 }
 
 body {
