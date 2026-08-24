@@ -147,10 +147,14 @@ Landing, pricing, about, legal.
 - [x] **Phase 2** — workspace core (bento board, themed charts, the world map,
       count-up KPIs, skeletons, one connection state in the island)
       ✅ *verified signed-in, both themes, 1440 + 390, and under reduced motion*
-- [ ] **Phase 3 — workspace secondary** ← next
-      (`DataTable` and the `Select` / `DropdownMenu` primitives were built
-      during Phase 2, so the page conversions start with the kit in place)
-- [ ] Phase 4 — auth
+- [x] **Phase 3** — workspace secondary (Integrations, Campaigns, Reports,
+      Team, Billing, Settings — all six converted; `sonner` replaces the
+      bespoke toasts) ✅ *verified signed-in, both themes, 1440 + 390*
+      — the conversions removed four pieces of fabricated UI: Settings'
+      "Enterprise plan" with a saved VISA card, Settings' invented API keys,
+      Reports' four made-up report rows, and Campaigns' Pause/Delete controls
+      for GA4 traffic sources that nothing can pause or delete.
+- [ ] **Phase 4 — auth** ← next
 - [ ] Phase 5 — marketing
 - [ ] Phase 6 — motion & polish
 - [ ] Phase 7 — quality gate
