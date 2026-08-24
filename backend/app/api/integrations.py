@@ -37,6 +37,41 @@ LINKEDIN_REDIRECT_URI = f"{BACKEND_URL}/api/v1/integrations/linkedin/callback"
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+PROVIDERS = ("google_analytics", "meta_ads", "linkedin")
+
+
+@router.get("")
+@router.get("/")
+def list_integrations(
+    db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
+):
+    """What this account has actually connected.
+
+    The Integrations page had no way to ask: it rendered three identical cards
+    whose button read "Manage Connection" whenever *any* session existed, so a
+    user with only GA4 linked was told Meta and LinkedIn were connected too.
+
+    Deliberately returns a row per known provider rather than only the ones
+    present in the table, so the page can render the full directory from one
+    response. Credentials are never included -- only whether they exist.
+    """
+    rows = {
+        i.provider: i
+        for i in db.query(Integration).filter(Integration.user_id == current_user.id).all()
+    }
+    return {
+        "integrations": [
+            {
+                "provider": p,
+                "connected": p in rows,
+                "property_id": rows[p].property_id if p in rows else None,
+                "connected_at": rows[p].created_at.isoformat() + "Z" if p in rows and rows[p].created_at else None,
+            }
+            for p in PROVIDERS
+        ]
+    }
+
+
 @router.get("/google/link")
 def get_google_login_link(current_user: User = Depends(get_current_user)):
     """Generates a personalized Google OAuth URL for the logged-in user."""
