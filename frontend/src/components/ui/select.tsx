@@ -75,12 +75,12 @@ SelectContent.displayName = "SelectContent";
 
 export const SelectItem = React.forwardRef<
   React.ComponentRef<typeof SelectPrimitive.Item>,
-  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item>
->(({ className, children, ...props }, ref) => (
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item> & { description?: string }
+>(({ className, children, description, ...props }, ref) => (
   <SelectPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex cursor-pointer select-none items-center gap-2 rounded-[var(--radius-sm)] py-2 pl-8 pr-3",
+      "relative flex cursor-pointer select-none flex-col items-start rounded-[var(--radius-sm)] py-2 pl-8 pr-3",
       "text-sm text-[var(--ink)] outline-none",
       "data-[highlighted]:bg-[var(--accent)]/10 data-[highlighted]:text-[var(--ink)]",
       "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
@@ -88,10 +88,14 @@ export const SelectItem = React.forwardRef<
     )}
     {...props}
   >
-    <SelectPrimitive.ItemIndicator className="absolute left-2.5 flex items-center">
+    <SelectPrimitive.ItemIndicator className="absolute left-2.5 top-2.5 flex items-center">
       <Check className="size-3.5 text-[var(--accent)]" />
     </SelectPrimitive.ItemIndicator>
     <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
+    {/* Outside ItemText on purpose: Radix mirrors ItemText into the closed
+        trigger, so a description nested inside it would be rendered into a
+        one-line trigger and clipped. */}
+    {description && <span className="mt-0.5 text-xs text-[var(--ink-3)]">{description}</span>}
   </SelectPrimitive.Item>
 ));
 SelectItem.displayName = "SelectItem";

@@ -171,7 +171,7 @@ export default function ReportsPage() {
           </p>
         ) : (
           <div className="space-y-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
               <Field label="Recipients" htmlFor="recipients" hint="Comma-separated." className="flex-1">
                 <Input
                   id="recipients"

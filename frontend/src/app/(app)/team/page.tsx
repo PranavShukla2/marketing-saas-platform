@@ -126,7 +126,13 @@ export default function TeamPage() {
             ? "Invite people to this workspace and manage their access."
             : "People with access to this workspace."
         }
-        badge={!loading ? <Badge tone="neutral">{team.length + invites.length} people</Badge> : undefined}
+        badge={
+          !loading ? (
+            <Badge tone="neutral">
+              {team.length + invites.length === 1 ? "1 person" : `${team.length + invites.length} people`}
+            </Badge>
+          ) : undefined
+        }
       />
 
       {canManage && (
@@ -147,9 +153,8 @@ export default function TeamPage() {
                 <SelectTrigger id="invite-role" className="w-full"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {ROLES.map((r) => (
-                    <SelectItem key={r.id} value={r.id}>
-                      <span className="block">{r.label}</span>
-                      <span className="block text-xs text-[var(--ink-3)]">{r.hint}</span>
+                    <SelectItem key={r.id} value={r.id} description={r.hint}>
+                      {r.label}
                     </SelectItem>
                   ))}
                 </SelectContent>

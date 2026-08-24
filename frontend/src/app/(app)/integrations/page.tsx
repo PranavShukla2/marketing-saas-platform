@@ -159,7 +159,10 @@ export default function IntegrationsPage() {
                     <Skeleton className="h-10 w-full" />
                   ) : (
                     <Button
-                      variant={connected ? "outline" : "primary"}
+                      // An unavailable provider gets a neutral button, not a
+                      // faded brand gradient — a 50%-opacity primary still
+                      // reads as the loudest thing on the card.
+                      variant={connected || !p.available ? "outline" : "primary"}
                       className="w-full"
                       disabled={!p.available}
                       loading={connecting === p.id}
