@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { toast } from "sonner";
 import { Activity, Check, Download, Plus, Settings2, Trash2 } from "lucide-react";
 import {
@@ -8,6 +9,11 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
   CountUp, Field, Hint, Input, Skeleton, Switch, Tabs, TabsContent, TabsList, TabsTrigger,
 } from "../../../components/ui";
+
+const ChartShowcase = dynamic(() => import("./ChartShowcase"), {
+  ssr: false,
+  loading: () => <Skeleton className="h-[220px] w-full" />,
+});
 
 /**
  * Living reference for the design system — every primitive, every variant, in
@@ -150,6 +156,10 @@ export default function DesignSystemPage() {
               <Trash2 />Error toast
             </Button>
           </div>
+        </Section>
+
+        <Section title="Charts" desc="Wrapped so tooltips, axes and grids read from the tokens.">
+          <Card padding="lg"><ChartShowcase /></Card>
         </Section>
 
         <Section title="Numbers" desc="Counts up between values, not from zero every time.">
