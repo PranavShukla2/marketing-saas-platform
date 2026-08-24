@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Slot } from "@radix-ui/react-slot";
+import { Slot, Slottable } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../../lib/cn";
 
@@ -52,9 +52,32 @@ export interface ButtonProps
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, pill, asChild = false, loading = false, children, disabled, ...props }, ref) => {
-    const Comp = asChild ? Slot : "button";
+    const spinner = (
+      <span
+        aria-hidden="true"
+        className="size-4 rounded-full border-2 border-current border-t-transparent animate-spin"
+      />
+    );
+
+    // asChild has to hand Slot exactly one element. Rendering the spinner as a
+    // sibling gives it two — and because `{loading && …}` is `false` rather
+    // than nothing when idle, it was *always* two, so asChild threw on every
+    // use. Slottable lets the spinner sit inside the child element instead.
+    if (asChild) {
+      return (
+        <Slot
+          ref={ref}
+          className={cn(buttonVariants({ variant, size, pill }), className)}
+          aria-busy={loading || undefined}
+          {...props}
+        >
+          <Slottable>{children}</Slottable>
+        </Slot>
+      );
+    }
+
     return (
-      <Comp
+      <button
         ref={ref}
         className={cn(buttonVariants({ variant, size, pill }), className)}
         // A loading button must not be clickable, and must announce itself —
@@ -63,14 +86,9 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         aria-busy={loading || undefined}
         {...props}
       >
-        {loading && (
-          <span
-            aria-hidden="true"
-            className="size-4 rounded-full border-2 border-current border-t-transparent animate-spin"
-          />
-        )}
+        {loading && spinner}
         {children}
-      </Comp>
+      </button>
     );
   }
 );
