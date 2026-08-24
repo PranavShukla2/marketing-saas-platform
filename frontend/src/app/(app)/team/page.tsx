@@ -1,14 +1,35 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
-import { getApiUrl, apiFetch } from "../../../lib/auth";
+import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
+import { Mail, UserPlus, Users } from "lucide-react";
+import { PageHeader } from "../../../components/shell/PageHeader";
+import {
+  Badge, Button, Card, Dialog, DialogContent, DialogDescription, DialogFooter,
+  DialogHeader, DialogTitle, Field, Input, Select, SelectContent, SelectItem,
+  SelectTrigger, SelectValue, Skeleton,
+} from "../../../components/ui";
+import { DataTable } from "../../../components/workspace/DataTable";
+import { EmptyState } from "../../../components/workspace/primitives";
+import { apiFetch, getApiUrl } from "../../../lib/auth";
 import { withWorkspace } from "../../../lib/workspace";
 
-type Member = { member_id: number; name: string; email: string; role: string; status: string; avatar: string; removable: boolean };
+type Member = {
+  member_id: number; name: string; email: string;
+  role: string; status: string; avatar: string; removable: boolean;
+};
 type Invite = { email: string; role: string; status: string };
 
-const ROLES = ["admin", "member", "viewer"];
+/** One row shape for both, so members and pending invites share a table. */
+type Row =
+  | { kind: "member"; key: string; member: Member }
+  | { kind: "invite"; key: string; invite: Invite };
+
+const ROLES = [
+  { id: "admin", label: "Admin", hint: "Can manage the team and settings" },
+  { id: "member", label: "Member", hint: "Can view every dashboard and report" },
+  { id: "viewer", label: "Viewer", hint: "Read-only access" },
+];
 
 export default function TeamPage() {
   const [team, setTeam] = useState<Member[]>([]);
@@ -19,9 +40,9 @@ export default function TeamPage() {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("member");
   const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+  const [pendingRemoval, setPendingRemoval] = useState<Member | null>(null);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
       const res = await apiFetch(withWorkspace(`${getApiUrl()}/api/v1/workspace/team`));
       if (res.ok) {
@@ -31,18 +52,17 @@ export default function TeamPage() {
         setCanManage(!!data.can_manage);
       }
     } catch {
-      /* leave empty; UI shows nothing rather than crashing */
+      toast.error("Couldn't load the team", { description: "Check your connection and refresh." });
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [load]);
 
   const invite = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
-    setMsg(null);
     try {
       const res = await apiFetch(withWorkspace(`${getApiUrl()}/api/v1/workspace/team/invite`), {
         method: "POST",
@@ -51,126 +71,203 @@ export default function TeamPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.detail || "Couldn't send the invite.");
-      setMsg({ kind: "ok", text: data.detail || "Invite sent." });
+      toast.success(data.detail || `Invite sent to ${email}`);
       setEmail("");
       load();
     } catch (err) {
-      setMsg({ kind: "err", text: err instanceof Error ? err.message : "Couldn't send the invite." });
+      toast.error(err instanceof Error ? err.message : "Couldn't send the invite.");
     } finally {
       setBusy(false);
     }
   };
 
-  const removeMember = async (id: number) => {
-    await apiFetch(withWorkspace(`${getApiUrl()}/api/v1/workspace/team/member/${id}`), { method: "DELETE" });
+  const confirmRemove = async () => {
+    const member = pendingRemoval;
+    if (!member) return;
+    setPendingRemoval(null);
+    try {
+      const res = await apiFetch(
+        withWorkspace(`${getApiUrl()}/api/v1/workspace/team/member/${member.member_id}`),
+        { method: "DELETE" }
+      );
+      if (!res.ok) throw new Error();
+      toast.success(`${member.name} no longer has access`);
+    } catch {
+      toast.error(`Couldn't remove ${member.name}`);
+    }
     load();
   };
 
   const revokeInvite = async (inviteEmail: string) => {
-    const base = `${getApiUrl()}/api/v1/workspace/team/invite?email=${encodeURIComponent(inviteEmail)}`;
-    await apiFetch(withWorkspace(base), { method: "DELETE" });
+    try {
+      const res = await apiFetch(
+        withWorkspace(`${getApiUrl()}/api/v1/workspace/team/invite?email=${encodeURIComponent(inviteEmail)}`),
+        { method: "DELETE" }
+      );
+      if (!res.ok) throw new Error();
+      toast.success(`Invitation to ${inviteEmail} revoked`);
+    } catch {
+      toast.error("Couldn't revoke that invitation");
+    }
     load();
   };
 
-  if (loading) return <div className="p-10 font-light text-[var(--ink-2)]">Loading team…</div>;
+  const rows: Row[] = [
+    ...team.map((m) => ({ kind: "member" as const, key: `m-${m.member_id}`, member: m })),
+    ...invites.map((i) => ({ kind: "invite" as const, key: `i-${i.email}`, invite: i })),
+  ];
 
   return (
-    <div className="w-full max-w-5xl mx-auto py-8">
-      <div className="mb-10">
-        <h1 className="text-4xl font-semibold tracking-tight text-[var(--ink)] mb-2">Team</h1>
-        <p className="text-[var(--ink-2)] font-light text-lg">
-          {canManage ? "Invite people to this workspace and manage their access." : "People with access to this workspace."}
-        </p>
-      </div>
+    <div className="mx-auto max-w-5xl pb-16">
+      <PageHeader
+        title="Team"
+        description={
+          canManage
+            ? "Invite people to this workspace and manage their access."
+            : "People with access to this workspace."
+        }
+        badge={!loading ? <Badge tone="neutral">{team.length + invites.length} people</Badge> : undefined}
+      />
 
       {canManage && (
-        <motion.form
-          onSubmit={invite}
-          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-          className="bg-[var(--surface)] border border-[var(--line)] rounded-2xl shadow-sm p-4 mb-6 flex flex-col sm:flex-row items-stretch sm:items-center gap-3"
-        >
-          <input
-            type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
-            placeholder="teammate@company.com"
-            className="flex-1 px-4 py-2.5 text-sm border border-[var(--line)] rounded-xl outline-none focus:border-blue-400"
+        <Card padding="md" className="mb-5">
+          <form onSubmit={invite} className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <Field label="Email" htmlFor="invite-email" className="flex-1">
+              <Input
+                id="invite-email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="teammate@company.com"
+              />
+            </Field>
+            <Field label="Role" htmlFor="invite-role" className="sm:w-44">
+              <Select value={role} onValueChange={setRole}>
+                <SelectTrigger id="invite-role" className="w-full"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {ROLES.map((r) => (
+                    <SelectItem key={r.id} value={r.id}>
+                      <span className="block">{r.label}</span>
+                      <span className="block text-xs text-[var(--ink-3)]">{r.hint}</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+            <Button type="submit" loading={busy} className="sm:mb-0">
+              {!busy && <UserPlus />}Send invite
+            </Button>
+          </form>
+        </Card>
+      )}
+
+      <Card padding="lg" className="rounded-[var(--radius-xl)]">
+        {loading ? (
+          <div className="space-y-4">
+            {Array.from({ length: 3 }, (_, i) => (
+              <div key={i} className="flex items-center gap-4">
+                <Skeleton className="size-10 rounded-full" />
+                <div className="flex-1"><Skeleton className="h-3 w-40" /><Skeleton className="mt-2 h-3 w-56" /></div>
+              </div>
+            ))}
+          </div>
+        ) : rows.length === 0 ? (
+          <EmptyState
+            icon={<Users className="size-5" />}
+            title="Just you so far"
+            description="Invite a teammate and they get their own login to this workspace — the same dashboards, no shared password."
           />
-          <select value={role} onChange={(e) => setRole(e.target.value)}
-            className="px-3 py-2.5 text-sm border border-[var(--line)] rounded-xl outline-none cursor-pointer bg-[var(--surface)]">
-            {ROLES.map((r) => <option key={r} value={r}>{r[0].toUpperCase() + r.slice(1)}</option>)}
-          </select>
-          <button type="submit" disabled={busy}
-            className="bg-blue-600 text-white px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-blue-700 transition disabled:opacity-50">
-            {busy ? "Sending…" : "Send invite"}
-          </button>
-        </motion.form>
-      )}
-
-      {msg && (
-        <div className={`mb-6 text-sm px-4 py-3 rounded-xl ${msg.kind === "ok" ? "bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-400" : "bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400"}`}>
-          {msg.text}
-        </div>
-      )}
-
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-        className="bg-[var(--surface)] border border-[var(--line)] rounded-3xl overflow-hidden shadow-sm">
-        <table className="w-full text-left">
-          <thead className="bg-[var(--page)]/50 text-xs font-bold text-[var(--ink-2)] uppercase tracking-widest border-b border-[var(--line)]">
-            <tr>
-              <th className="px-8 py-5">Member</th>
-              <th className="px-8 py-5">Role</th>
-              <th className="px-8 py-5">Status</th>
-              <th className="px-8 py-5 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {team.map((m) => (
-              <tr key={m.member_id} className="border-b border-[var(--line)] last:border-0 hover:bg-[var(--page)]/50 transition-colors">
-                <td className="px-8 py-5">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-100 to-blue-200 flex items-center justify-center text-blue-700 dark:text-blue-400 font-semibold">{m.avatar}</div>
-                    <div>
-                      <p className="font-medium text-[var(--ink)]">{m.name}</p>
-                      <p className="text-sm text-[var(--ink-2)]">{m.email}</p>
+        ) : (
+          <DataTable
+            rows={rows}
+            getKey={(r) => r.key}
+            columns={[
+              {
+                key: "person",
+                header: "Member",
+                sortBy: (r) => (r.kind === "member" ? r.member.name : r.invite.email),
+                cell: (r) =>
+                  r.kind === "member" ? (
+                    <div className="flex items-center gap-3">
+                      <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,var(--indigo),var(--violet))] text-xs font-semibold text-white">
+                        {r.member.avatar}
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block truncate font-medium text-[var(--ink)]">{r.member.name}</span>
+                        <span className="block truncate text-xs text-[var(--ink-3)]">{r.member.email}</span>
+                      </span>
                     </div>
-                  </div>
-                </td>
-                <td className="px-8 py-5 text-sm font-medium text-[var(--ink-2)]">{m.role}</td>
-                <td className="px-8 py-5">
-                  <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-medium bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-400">
-                    <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span><span>{m.status}</span>
-                  </span>
-                </td>
-                <td className="px-8 py-5 text-right">
-                  {m.removable
-                    ? <button onClick={() => removeMember(m.member_id)} className="text-sm font-medium text-[var(--ink-2)] hover:text-red-500 dark:text-red-400 transition">Remove</button>
-                    : <span className="text-xs text-[var(--ink-3)]">—</span>}
-                </td>
-              </tr>
-            ))}
-
-            {invites.map((inv) => (
-              <tr key={`inv-${inv.email}`} className="border-b border-[var(--line)] last:border-0 bg-amber-50/30 dark:bg-amber-500/10">
-                <td className="px-8 py-5">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-500/15 flex items-center justify-center text-amber-600 dark:text-amber-400 font-semibold">✉</div>
-                    <div>
-                      <p className="font-medium text-[var(--ink)]">{inv.email}</p>
-                      <p className="text-sm text-[var(--ink-2)]">Invitation sent</p>
+                  ) : (
+                    <div className="flex items-center gap-3">
+                      <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400">
+                        <Mail className="size-4" />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block truncate font-medium text-[var(--ink)]">{r.invite.email}</span>
+                        <span className="block text-xs text-[var(--ink-3)]">Invitation sent</span>
+                      </span>
                     </div>
-                  </div>
-                </td>
-                <td className="px-8 py-5 text-sm font-medium text-[var(--ink-2)]">{inv.role}</td>
-                <td className="px-8 py-5">
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-amber-100 dark:bg-amber-500/15 text-amber-700 dark:text-amber-400">Pending</span>
-                </td>
-                <td className="px-8 py-5 text-right">
-                  {canManage && <button onClick={() => revokeInvite(inv.email)} className="text-sm font-medium text-[var(--ink-2)] hover:text-red-500 dark:text-red-400 transition">Revoke</button>}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </motion.div>
+                  ),
+              },
+              {
+                key: "role",
+                header: "Role",
+                sortBy: (r) => (r.kind === "member" ? r.member.role : r.invite.role),
+                cell: (r) => (
+                  <span className="capitalize">{r.kind === "member" ? r.member.role : r.invite.role}</span>
+                ),
+              },
+              {
+                key: "status",
+                header: "Status",
+                cell: (r) =>
+                  r.kind === "member" ? (
+                    <Badge tone="success" size="sm" dot>{r.member.status}</Badge>
+                  ) : (
+                    <Badge tone="warning" size="sm">Pending</Badge>
+                  ),
+              },
+              {
+                key: "actions",
+                header: "",
+                align: "right",
+                cell: (r) =>
+                  r.kind === "member" ? (
+                    r.member.removable ? (
+                      <Button variant="ghost" size="sm" onClick={() => setPendingRemoval(r.member)}>
+                        Remove
+                      </Button>
+                    ) : (
+                      <span className="text-xs text-[var(--ink-3)]">—</span>
+                    )
+                  ) : canManage ? (
+                    <Button variant="ghost" size="sm" onClick={() => revokeInvite(r.invite.email)}>
+                      Revoke
+                    </Button>
+                  ) : null,
+              },
+            ]}
+          />
+        )}
+      </Card>
+
+      {/* Removing someone's access is not undoable from this screen and the old
+          page did it on a single click, with no confirmation and no feedback. */}
+      <Dialog open={!!pendingRemoval} onOpenChange={(open) => !open && setPendingRemoval(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Remove {pendingRemoval?.name}?</DialogTitle>
+            <DialogDescription>
+              They lose access to this workspace immediately. You can invite them again at any time.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setPendingRemoval(null)}>Cancel</Button>
+            <Button variant="danger" onClick={confirmRemove}>Remove access</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
