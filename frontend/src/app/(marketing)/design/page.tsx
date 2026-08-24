@@ -7,7 +7,8 @@ import { Activity, Check, Download, Plus, Settings2, Trash2 } from "lucide-react
 import {
   Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle,
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
-  CountUp, Field, Hint, Input, Skeleton, Switch, Tabs, TabsContent, TabsList, TabsTrigger,
+  CountUp, Field, Hint, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Skeleton, Switch, Tabs, TabsContent, TabsList, TabsTrigger,
 } from "../../../components/ui";
 
 const ChartShowcase = dynamic(() => import("./ChartShowcase"), {
@@ -118,6 +119,18 @@ export default function DesignSystemPage() {
             </Field>
             <Field label="Email" htmlFor="em" error={invalid ? "Enter a valid email address." : undefined}>
               <Input id="em" type="email" placeholder="you@company.com" invalid={invalid} />
+            </Field>
+          </div>
+          <div className="max-w-xs">
+            <Field label="Property" htmlFor="prop" hint="Radix listbox — the OS one can't be themed.">
+              <Select defaultValue="web">
+                <SelectTrigger id="prop" className="w-full"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="web">Northwind Co. — Web</SelectItem>
+                  <SelectItem value="app">Northwind Co. — App</SelectItem>
+                  <SelectItem value="store">Northwind Store</SelectItem>
+                </SelectContent>
+              </Select>
             </Field>
           </div>
           <div className="flex items-center gap-6">

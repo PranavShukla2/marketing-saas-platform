@@ -11,5 +11,8 @@ export {
   DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "./dialog";
 export { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent, Hint } from "./tooltip";
+export {
+  Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue,
+} from "./select";
 export { Switch } from "./switch";
 export { Toaster } from "./toaster";
