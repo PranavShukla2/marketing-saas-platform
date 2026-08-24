@@ -44,17 +44,32 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
       # npm ci reaches the registry ~700 times and has no retry of its own, so
-      # a single dropped connection fails the whole job. Historically this was
-      # our only red build: the same commit would go red then green on a
-      # re-run, which trains people to ignore CI. Three attempts with a pause.
+      # a dropped connection fails the whole job. This has been the only red
+      # build this repo has ever had, and the same commit would go green on a
+      # re-run — which trains people to ignore CI.
+      #
+      # A plain retry was not enough: three attempts failed in a row on an
+      # unchanged lockfile that had passed an hour earlier. A restored-but-
+      # corrupt setup-node cache survives between attempts and fails each one
+      # identically, so each retry starts from a clean cache and a clean
+      # node_modules. The last attempt dumps npm's debug log, because a CI
+      # failure nobody can read is a CI failure nobody can fix.
       - name: Install dependencies
         working-directory: frontend
         run: |
+          set -o pipefail
           for attempt in 1 2 3; do
-            npm ci && exit 0
-            echo "npm ci failed (attempt $attempt/3) — retrying in 15s"
-            sleep 15
+            if npm ci --no-audit --no-fund; then
+              exit 0
+            fi
+            echo "::warning::npm ci failed (attempt $attempt/3)"
+            rm -rf node_modules
+            npm cache clean --force || true
+            sleep $((attempt * 10))
           done
+          echo "::group::npm debug log"
+          cat "$(npm config get cache)"/_logs/*.log 2>/dev/null | tail -100 || echo "(no npm log found)"
+          echo "::endgroup::"
           exit 1
       - name: Lint
         working-directory: frontend
