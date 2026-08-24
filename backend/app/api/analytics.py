@@ -427,7 +427,11 @@ def _build_dashboard_payload(property_id, db, current_user):
                     "users": int(row.metric_values[0].value),
                     "sessions": int(row.metric_values[1].value),
                 })
-            geo_data = sorted(geo_data, key=lambda x: x["users"], reverse=True)[:8]
+            # The choropleth shades the long tail, not just the podium, so
+            # keep well past the eight rows the ranked list shows; the frontend
+            # slices for the list. Capped so a global account can't balloon the
+            # cached payload.
+            geo_data = sorted(geo_data, key=lambda x: x["users"], reverse=True)[:80]
         except Exception as e:
             log.warning(f"Geo query error: {e}")
 
