@@ -274,7 +274,11 @@ export default function Dashboard() {
         </label>
 
         {activePlatform === "google" && properties.length > 0 && (
-          <Select value={selectedProperty} onValueChange={handlePropertyChange} disabled={!connection.live}>
+          <Select
+            value={selectedProperty || view.active_property_id || properties[0]?.id}
+            onValueChange={handlePropertyChange}
+            disabled={!connection.live}
+          >
             <SelectTrigger size="sm" aria-label="Google Analytics property" className="max-w-xs">
               <SelectValue />
             </SelectTrigger>
@@ -286,11 +290,6 @@ export default function Dashboard() {
           </Select>
         )}
 
-        {!connection.live && (
-          <Button variant="ghost" size="sm" onClick={handleConnectGoogle}>
-            {connection.cta}
-          </Button>
-        )}
       </div>
 
       <OnboardingChecklist onConnectGoogle={handleConnectGoogle} />
