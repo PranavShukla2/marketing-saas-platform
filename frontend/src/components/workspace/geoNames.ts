@@ -1,17 +1,15 @@
 /**
- * GA4 country names vs. Natural Earth country names.
+ * GA4 country names vs. the atlas's country names.
  *
- * The two datasets disagree in three ways: Natural Earth abbreviates to fit a
- * map label ("Dem. Rep. Congo", "Bosnia and Herz."), the two sides sit on
- * different sides of several renamings (Türkiye, North Macedonia, Eswatini),
- * and Google hands back a couple of dual names ("Myanmar (Burma)").
+ * The two disagree in three ways: the atlas abbreviates to fit a map label
+ * ("Dominican Rep.", "Bosnia and Herz."), the two sides sit on different sides
+ * of several renamings (Türkiye, Eswatini, Cabo Verde), and Google hands back
+ * a couple of dual names ("Myanmar (Burma)").
  *
  * `normalise` handles the boring half — case, accents, ampersands, punctuation
  * — so only genuine disagreements need an entry below. Anything that still
- * doesn't match is simply left unshaded, which is also what happens to the
- * ~40 microstates and city-states (Singapore, Hong Kong, Malta, Bahrain…) that
- * have no polygon at all at 1:110m. They still appear in the ranked list
- * beside the map, so their traffic is never hidden.
+ * doesn't match is left unshaded but keeps its row in the ranked list beside
+ * the map, so no traffic is ever hidden.
  */
 
 export function normalise(name: string): string {
@@ -24,37 +22,58 @@ export function normalise(name: string): string {
     .trim();
 }
 
-/** GA4 (normalised) → Natural Earth `properties.name`. */
+/**
+ * GA4 (normalised) → the atlas's `properties.name`.
+ *
+ * These are only the genuine disagreements; anything the normaliser already
+ * reconciles (case, accents, "&", punctuation) is deliberately absent. Several
+ * entries the standard Natural Earth build needed have gone: the India
+ * point-of-view file spells the United States, North Macedonia and both Congos
+ * the way GA4 does, so they now match without help.
+ */
 const ALIASES: Record<string, string> = {
-  "united states": "United States of America",
-  "usa": "United States of America",
-  "us": "United States of America",
+  usa: "United States",
+  us: "United States",
+  "united states of america": "United States",
   "bosnia and herzegovina": "Bosnia and Herz.",
   "central african republic": "Central African Rep.",
-  "democratic republic of the congo": "Dem. Rep. Congo",
-  "dr congo": "Dem. Rep. Congo",
-  "congo kinshasa": "Dem. Rep. Congo",
-  "republic of the congo": "Congo",
-  "congo brazzaville": "Congo",
+  "dr congo": "Democratic Republic of the Congo",
+  "congo kinshasa": "Democratic Republic of the Congo",
+  congo: "Republic of the Congo",
+  "congo brazzaville": "Republic of the Congo",
   "dominican republic": "Dominican Rep.",
   "equatorial guinea": "Eq. Guinea",
   "falkland islands": "Falkland Is.",
   "falkland islands islas malvinas": "Falkland Is.",
   "south sudan": "S. Sudan",
   "solomon islands": "Solomon Is.",
-  "western sahara": "W. Sahara",
-  "north macedonia": "Macedonia",
-  "macedonia fyrom": "Macedonia",
-  "swaziland": "eSwatini",
+  "marshall islands": "Marshall Is.",
+  "cayman islands": "Cayman Is.",
+  "british virgin islands": "British Virgin Is.",
+  "us virgin islands": "U.S. Virgin Is.",
+  "turks and caicos islands": "Turks and Caicos Is.",
+  "northern mariana islands": "N. Mariana Is.",
+  "cook islands": "Cook Is.",
+  // Both Koreas are spelled formally in this file.
+  "north korea": "Dem. Rep. Korea",
+  "south korea": "Republic of Korea",
+  korea: "Republic of Korea",
+  "macedonia fyrom": "North Macedonia",
+  swaziland: "eSwatini",
   "myanmar burma": "Myanmar",
-  "burma": "Myanmar",
+  burma: "Myanmar",
   "czech republic": "Czechia",
   "ivory coast": "Côte d'Ivoire",
-  "turkiye": "Turkey",
+  turkiye: "Turkey",
   "east timor": "Timor-Leste",
+  "cape verde": "Cabo Verde",
   "palestinian territories": "Palestine",
   "state of palestine": "Palestine",
-  "vatican city": "Italy", // no polygon of its own at 110m
+  "sao tome and principe": "Sao Tome and Principe",
+  // India's point of view draws these inside Serbia and Morocco respectively,
+  // so traffic from them shades the containing country rather than vanishing.
+  kosovo: "Serbia",
+  "western sahara": "Morocco",
 };
 
 /**

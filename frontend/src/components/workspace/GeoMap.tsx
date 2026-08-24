@@ -56,7 +56,7 @@ export function GeoMap({
         const [{ geoNaturalEarth1, geoPath }, { feature }, res] = await Promise.all([
           import("d3-geo"),
           import("topojson-client"),
-          fetch("/geo/countries-110m.json"),
+          fetch("/geo/countries-ind-110m.json"),
         ]);
         if (!res.ok) throw new Error(`atlas ${res.status}`);
         const topology = await res.json();
