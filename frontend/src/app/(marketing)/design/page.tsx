@@ -7,7 +7,9 @@ import { Activity, Check, Download, Plus, Settings2, Trash2 } from "lucide-react
 import {
   Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle,
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
-  CountUp, Field, Hint, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  CountUp, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
+  DropdownMenuSeparator, DropdownMenuTrigger,
+  Field, Hint, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
   Skeleton, Switch, Tabs, TabsContent, TabsList, TabsTrigger,
 } from "../../../components/ui";
 
@@ -168,6 +170,21 @@ export default function DesignSystemPage() {
             <Button variant="ghost" onClick={() => toast.error("Couldn't reach Google Analytics", { description: "Check the connection and retry." })}>
               <Trash2 />Error toast
             </Button>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild><Button variant="outline">Dropdown menu</Button></DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuLabel>
+                  <p className="text-sm font-semibold text-[var(--ink)]">Northwind Agency</p>
+                  <p className="text-xs text-[var(--ink-3)]">you@company.com</p>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem><Settings2 />Settings</DropdownMenuItem>
+                <DropdownMenuItem><Download />Export</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem tone="danger"><Trash2 />Delete workspace</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </Section>
 
