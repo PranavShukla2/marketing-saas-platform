@@ -25,9 +25,12 @@ export type IslandStatus =
 
 type Ctx = {
   status: IslandStatus;
+  /** Set the state the island rests in until something changes it. */
   setStatus: (s: IslandStatus) => void;
-  /** Show a transient state, then fall back to idle. */
+  /** Show a transient state, then fall back to whatever it was resting in. */
   flash: (s: IslandStatus, ms?: number) => void;
+  /** Drop back to the plain workspace label. */
+  clearStatus: () => void;
 };
 
 const StatusCtx = React.createContext<Ctx | null>(null);
@@ -36,25 +39,45 @@ export function StatusIslandProvider({
   idleLabel = "Workspace", children,
 }: { idleLabel?: string; children: React.ReactNode }) {
   const idle = React.useMemo<IslandStatus>(() => ({ kind: "idle", label: idleLabel }), [idleLabel]);
-  const [status, setStatus] = React.useState<IslandStatus>(idle);
+  const [status, setRawStatus] = React.useState<IslandStatus>(idle);
   const timer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Keep the resting label in step if the workspace is renamed/switched.
-  React.useEffect(() => {
-    setStatus((s) => (s.kind === "idle" ? idle : s));
+  // What the island falls back to once a flash expires. It is NOT always idle:
+  // "you're on demo data, connect Google Analytics" is a standing condition,
+  // and syncing shouldn't quietly erase it — before this, a Sync flashed
+  // "Dashboard up to date" and then dropped to the bare workspace name, losing
+  // the one prompt telling the user why their numbers were fictional.
+  const resting = React.useRef<IslandStatus>(idle);
+
+  const setStatus = React.useCallback((s: IslandStatus) => {
+    if (timer.current) clearTimeout(timer.current);
+    resting.current = s;
+    setRawStatus(s);
+  }, []);
+
+  const clearStatus = React.useCallback(() => {
+    if (timer.current) clearTimeout(timer.current);
+    resting.current = idle;
+    setRawStatus(idle);
   }, [idle]);
 
   const flash = React.useCallback((s: IslandStatus, ms = 4000) => {
     if (timer.current) clearTimeout(timer.current);
-    setStatus(s);
-    timer.current = setTimeout(() => setStatus(idle), ms);
-  }, [idle]);
+    setRawStatus(s);
+    timer.current = setTimeout(() => setRawStatus(resting.current), ms);
+  }, []);
 
   React.useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
 
-  return (
-    <StatusCtx.Provider value={{ status, setStatus, flash }}>{children}</StatusCtx.Provider>
+  // The idle label is derived rather than stored, so renaming or switching
+  // workspace re-labels the resting pill without an effect writing state back
+  // into itself on every change.
+  const value = React.useMemo(
+    () => ({ status: status.kind === "idle" ? idle : status, setStatus, flash, clearStatus }),
+    [status, idle, setStatus, flash, clearStatus]
   );
+
+  return <StatusCtx.Provider value={value}>{children}</StatusCtx.Provider>;
 }
 
 export function useStatusIsland(): Ctx {
