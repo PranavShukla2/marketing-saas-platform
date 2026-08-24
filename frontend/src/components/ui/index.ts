@@ -12,6 +12,10 @@ export {
 } from "./dialog";
 export { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent, Hint } from "./tooltip";
 export {
+  DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem,
+  DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
+} from "./dropdown-menu";
+export {
   Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue,
 } from "./select";
 export { Switch } from "./switch";
