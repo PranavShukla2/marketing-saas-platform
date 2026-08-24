@@ -54,11 +54,12 @@ export const SelectContent = React.forwardRef<
       sideOffset={6}
       className={cn(
         // Glass, because this is a floating panel — the one place DECISIONS.md
-        // says it belongs.
+        // says it belongs. The stronger variant: a listbox floats straight over
+        // page content with nothing dimming it behind.
         // af-pop-origin, not af-pop: the latter is the centred-dialog keyframe
         // and carries a translate(-50%, -50%) that would shove a popper-
         // positioned panel off its trigger.
-        "glass af-pop-origin z-50 overflow-hidden rounded-[var(--radius-md)] shadow-[var(--shadow-overlay)]",
+        "glass-strong af-pop-origin z-50 overflow-hidden rounded-[var(--radius-md)] shadow-[var(--shadow-overlay)]",
         // Never taller than the viewport, and never narrower than its trigger.
         "max-h-[min(24rem,var(--radix-select-content-available-height))]",
         "min-w-[var(--radix-select-trigger-width)]",

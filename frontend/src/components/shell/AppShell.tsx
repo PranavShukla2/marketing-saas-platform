@@ -1,6 +1,8 @@
 "use client";
 
 import * as React from "react";
+import { AccountMenu } from "./AccountMenu";
+import { Breadcrumbs } from "./Breadcrumbs";
 import { Sidebar } from "./Sidebar";
 import { CommandPalette } from "./CommandPalette";
 import { StatusIsland, StatusIslandProvider } from "./StatusIsland";
@@ -57,8 +59,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               the island itself looking like it floats. */}
           <div className="pointer-events-none sticky top-16 z-20 lg:top-0">
             <div className="bg-gradient-to-b from-[var(--page)] via-[var(--page)] to-transparent px-4 pb-5 pt-4 lg:px-10 lg:pt-6">
-              <div className="pointer-events-auto flex justify-center lg:justify-start">
-                <StatusIsland />
+              {/* Breadcrumbs sit left, the island centres itself in the space
+                  that's left, the account menu anchors right. On mobile the
+                  crumbs are dropped: the fixed bar above already names the
+                  app, and there isn't room for both. */}
+              <div className="pointer-events-auto flex items-center gap-3">
+                <Breadcrumbs className="hidden lg:block" />
+                <div className="flex min-w-0 flex-1 justify-center lg:justify-start">
+                  <StatusIsland />
+                </div>
+                <AccountMenu />
               </div>
             </div>
           </div>
