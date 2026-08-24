@@ -250,7 +250,7 @@ export function Sidebar() {
   return (
     <>
       {/* Mobile chrome */}
-      <div className="glass fixed inset-x-0 top-0 z-40 flex h-16 items-center justify-between px-4 lg:hidden">
+      <div className="glass-strong fixed inset-x-0 top-0 z-40 flex h-16 items-center justify-between px-4 lg:hidden">
         <button
           onClick={() => setMobileOpen(true)}
           aria-label="Open menu"

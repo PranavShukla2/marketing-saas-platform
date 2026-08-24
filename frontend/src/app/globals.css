@@ -46,6 +46,11 @@ html {
   /* Glass — chrome and overlays only. Opaque enough that text on top still
      passes contrast; see DECISIONS.md. */
   --glass-bg: rgba(255,255,255,.72);
+  /* Chrome that scrolling content passes *behind* — the mobile top bar. .72
+     is fine for an overlay sitting on a dimmed backdrop, but a dashboard's
+     3xl numerals read straight through it, and backdrop-filter is a hint the
+     browser is allowed to skip (it does, without GPU compositing). */
+  --glass-bg-strong: rgba(255,255,255,.94);
   --glass-border: rgba(20,18,46,.08);
   --glass-blur: 16px;
 
@@ -85,6 +90,7 @@ html {
   --shadow-overlay: 0 28px 70px rgba(0,0,0,.70), 0 10px 24px rgba(0,0,0,.45);
 
   --glass-bg: rgba(22,21,42,.72);
+  --glass-bg-strong: rgba(22,21,42,.94);
   --glass-border: rgba(255,255,255,.08);
   --glass-blur: 16px;
 
@@ -118,6 +124,14 @@ html {
    device can't cope with backdrop-filter. */
 .glass {
   background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+}
+
+/* Same treatment, opaque enough to sit over scrolling content. */
+.glass-strong {
+  background: var(--glass-bg-strong);
   border: 1px solid var(--glass-border);
   backdrop-filter: blur(var(--glass-blur)) saturate(180%);
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);

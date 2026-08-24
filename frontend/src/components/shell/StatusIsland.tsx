@@ -117,7 +117,7 @@ export function StatusIsland({ className }: { className?: string }) {
       transition={reduce ? { duration: 0 } : EASE_SPRING}
       className={cn(
         "glass inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 shadow-[var(--shadow-rest)]",
-        "max-w-[min(90vw,28rem)] overflow-hidden",
+        "max-w-[min(92vw,36rem)] overflow-hidden",
         className
       )}
       // Transient states are announced; the resting label is not, since it
