@@ -56,6 +56,14 @@ jobs:
       # failure nobody can read is a CI failure nobody can fix.
       - name: Install dependencies
         working-directory: frontend
+        env:
+          # @sentry/cli is a non-optional dependency whose postinstall
+          # downloads a ~20MB binary from Sentry's CDN — the one step in the
+          # install that reaches a host other than the npm registry, and the
+          # most likely reason a lockfile that installs fine locally fails
+          # repeatedly here. CI never needs the binary: next.config.ts disables
+          # source-map upload unless SENTRY_AUTH_TOKEN is set, and it isn't.
+          SENTRYCLI_SKIP_DOWNLOAD: "1"
         run: |
           set -o pipefail
           for attempt in 1 2 3; do
@@ -64,11 +72,14 @@ jobs:
             fi
             echo "::warning::npm ci failed (attempt $attempt/3)"
             rm -rf node_modules
-            npm cache clean --force || true
+            # Only wipe the cache before the last try. Clearing it every time
+            # forces every retry to re-download everything, which makes a
+            # network-flavoured failure *more* likely, not less.
+            if [ "$attempt" = "2" ]; then npm cache clean --force || true; fi
             sleep $((attempt * 10))
           done
           echo "::group::npm debug log"
-          cat "$(npm config get cache)"/_logs/*.log 2>/dev/null | tail -100 || echo "(no npm log found)"
+          cat "$(npm config get cache)"/_logs/*.log 2>/dev/null | tail -120 || echo "(no npm log found)"
           echo "::endgroup::"
           exit 1
       - name: Lint
