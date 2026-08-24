@@ -1,122 +1,185 @@
 "use client";
 
+import { useCallback, useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { fetchSession } from "../../../lib/auth";
+import { AlertTriangle, Check, Link2, ShieldCheck } from "lucide-react";
+import { PageHeader } from "../../../components/shell/PageHeader";
+import { Badge, Button, Card, Skeleton } from "../../../components/ui";
+import { apiFetch, getApiUrl } from "../../../lib/auth";
+import { DURATION, EASE_OUT } from "../../../lib/motion";
+import { useReducedMotionSafe } from "../../../lib/useReducedMotionSafe";
+
+type Row = { provider: string; connected: boolean; property_id: string | null; connected_at: string | null };
+
+/**
+ * The provider directory.
+ *
+ * `available: false` is deliberate and honest: the Meta and LinkedIn OAuth
+ * flows still store mock tokens server-side, so offering a Connect button
+ * would start something that cannot finish. Saying "coming soon" is better
+ * than a button that appears to work.
+ */
+const PROVIDERS = [
+  {
+    id: "google_analytics",
+    name: "Google Analytics 4",
+    description: "Live traffic, audience, acquisition and conversion data from your GA4 property.",
+    accent: "#E8710A",
+    available: true,
+    icon: (
+      <svg viewBox="0 0 24 24" fill="currentColor" className="size-6" aria-hidden="true">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-6h2v6zm4 0h-2V7h2v10z" />
+      </svg>
+    ),
+  },
+  {
+    id: "meta_ads",
+    name: "Meta",
+    description: "Facebook and Instagram reach, engagement and ad performance in one view.",
+    accent: "#1877F2",
+    available: false,
+    icon: (
+      <svg viewBox="0 0 24 24" fill="currentColor" className="size-6" aria-hidden="true">
+        <path d="M12 2.04C6.5 2.04 2 6.53 2 12.06C2 17.06 5.66 21.21 10.44 21.96V14.96H7.9V12.06H10.44V9.85C10.44 7.34 11.93 5.96 14.22 5.96C15.31 5.96 16.45 6.15 16.45 6.15V8.62H15.19C13.95 8.62 13.56 9.39 13.56 10.18V12.06H16.34L15.89 14.96H13.56V21.96A10 10 0 0 0 22 12.06C22 6.53 17.5 2.04 12 2.04Z" />
+      </svg>
+    ),
+  },
+  {
+    id: "linkedin",
+    name: "LinkedIn",
+    description: "B2B impressions, engagement rates and professional audience demographics.",
+    accent: "#0A66C2",
+    available: false,
+    icon: (
+      <svg viewBox="0 0 24 24" fill="currentColor" className="size-6" aria-hidden="true">
+        <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
+      </svg>
+    ),
+  },
+];
 
 export default function IntegrationsPage() {
-  const router = useRouter();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [rows, setRows] = useState<Record<string, Row> | null>(null);
+  const [failed, setFailed] = useState(false);
+  const [connecting, setConnecting] = useState<string | null>(null);
+  const reduce = useReducedMotionSafe();
 
-  // Check if the user is logged in as soon as the page loads. The session is
-  // an httpOnly cookie, so we ask the backend rather than read storage.
   useEffect(() => {
     let cancelled = false;
-    fetchSession().then((ok) => {
-      if (!cancelled) setIsAuthenticated(ok);
-    });
-    return () => {
-      cancelled = true;
-    };
+    (async () => {
+      try {
+        const res = await apiFetch(`${getApiUrl()}/api/v1/integrations/`);
+        if (!res.ok) throw new Error(String(res.status));
+        const body = await res.json();
+        if (!cancelled) {
+          setRows(Object.fromEntries((body.integrations as Row[]).map((r) => [r.provider, r])));
+        }
+      } catch {
+        // A failed lookup must not read as "nothing is connected" — that would
+        // invite a user to redo an OAuth flow they never lost. Say we don't
+        // know instead.
+        if (!cancelled) setFailed(true);
+      }
+    })();
+    return () => { cancelled = true; };
   }, []);
 
-  const handleConnectClick = () => {
-    if (isAuthenticated) {
-      // If they are signed in, send them straight to the Settings vault
-      // (Since "integrations" is your default tab there, this works perfectly!)
-      router.push("/settings");
-    } else {
-      // If they are a guest, send them to sign up so we can create a tenant for them
-      router.push("/register");
-    }
-  };
+  const connect = useCallback(async (provider: string) => {
+    if (provider !== "google_analytics") return;
+    setConnecting(provider);
+    try {
+      const res = await apiFetch(`${getApiUrl()}/api/v1/integrations/google/link`);
+      const body = await res.json();
+      if (body.url) { window.location.href = body.url; return; }
+    } catch {}
+    setConnecting(null);
+  }, []);
+
+  const connectedCount = rows ? Object.values(rows).filter((r) => r.connected).length : 0;
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-[var(--page)] p-6 md:p-10 font-sans text-[var(--ink)] flex flex-col items-center">
-      
-      {/* Header */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center max-w-2xl mt-10 mb-16">
-        <h1 className="text-4xl font-semibold tracking-tight mb-4">Integration Directory</h1>
-        <p className="text-lg text-[var(--ink-2)] font-light">
-          Connect your favorite marketing tools. All credentials are AES-256 encrypted at rest.
-        </p>
-      </motion.div>
+    <div className="pb-16">
+      <PageHeader
+        title="Integrations"
+        description="Connect a data source and its numbers flow into every dashboard and report."
+        badge={
+          rows && !failed ? (
+            <Badge tone={connectedCount > 0 ? "success" : "neutral"} dot>
+              {connectedCount} connected
+            </Badge>
+          ) : undefined
+        }
+      />
 
-      {/* Integrations Grid */}
-      <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        
-        {/* Google Analytics Card */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-          className="bg-[var(--surface)] p-8 rounded-3xl shadow-[0_2px_20px_rgb(0,0,0,0.03)] border border-[var(--line)] flex flex-col justify-between h-[300px] hover:-translate-y-1 transition-transform duration-300"
-        >
-          <div>
-            <div className="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center mb-6">
-              {/* Simple GA Icon */}
-              <svg className="w-6 h-6 text-orange-500" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-6h2v6zm4 0h-2V7h2v10z"/>
-              </svg>
-            </div>
-            <h3 className="text-xl font-medium mb-2">Google Analytics 4</h3>
-            <p className="text-[var(--ink-2)] text-sm">
-              Pull live time-series data, active users, and traffic metrics directly from GCP.
-            </p>
-          </div>
-          
-          <button 
-            onClick={handleConnectClick}
-            className="w-full py-3 mt-6 rounded-xl bg-[var(--ink)] text-[var(--page)] text-sm font-medium hover:opacity-90 transition-colors"
-          >
-            {isAuthenticated ? "Manage Connection" : "Connect GA4"}
-          </button>
-        </motion.div>
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+        {PROVIDERS.map((p, i) => {
+          const row = rows?.[p.id];
+          const connected = !!row?.connected;
+          return (
+            <motion.div
+              key={p.id}
+              initial={reduce ? false : { opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={reduce ? { duration: 0 } : { duration: DURATION.base, delay: i * 0.06, ease: EASE_OUT }}
+            >
+              <Card padding="lg" className="flex h-full flex-col rounded-[var(--radius-xl)]">
+                <div className="flex items-start justify-between gap-3">
+                  <span
+                    className="flex size-12 items-center justify-center rounded-[var(--radius-md)]"
+                    // A tint of the provider's own colour, so it reads as their
+                    // brand in either theme without a hardcoded pale background.
+                    style={{ background: `color-mix(in srgb, ${p.accent} 14%, transparent)`, color: p.accent }}
+                  >
+                    {p.icon}
+                  </span>
+                  {failed ? (
+                    <Badge tone="warning"><AlertTriangle className="size-3" />Unknown</Badge>
+                  ) : !rows ? (
+                    <Skeleton className="h-6 w-20 rounded-full" />
+                  ) : connected ? (
+                    <Badge tone="success"><Check className="size-3" />Connected</Badge>
+                  ) : p.available ? (
+                    <Badge tone="neutral">Not connected</Badge>
+                  ) : (
+                    <Badge tone="info">Coming soon</Badge>
+                  )}
+                </div>
 
-        {/* Meta Ads Card */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-          className="bg-[var(--surface)] p-8 rounded-3xl shadow-[0_2px_20px_rgb(0,0,0,0.03)] border border-[var(--line)] flex flex-col justify-between h-[300px] hover:-translate-y-1 transition-transform duration-300"
-        >
-          <div>
-            <div className="w-12 h-12 bg-blue-50 dark:bg-blue-500/10 rounded-xl flex items-center justify-center mb-6">
-              <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.04C6.5 2.04 2 6.53 2 12.06C2 17.06 5.66 21.21 10.44 21.96V14.96H7.9V12.06H10.44V9.85C10.44 7.34 11.93 5.96 14.22 5.96C15.31 5.96 16.45 6.15 16.45 6.15V8.62H15.19C13.95 8.62 13.56 9.39 13.56 10.18V12.06H16.34L15.89 14.96H13.56V21.96A10 10 0 0 0 22 12.06C22 6.53 17.5 2.04 12 2.04Z" /></svg>
-            </div>
-            <h3 className="text-xl font-medium mb-2">Meta Ads</h3>
-            <p className="text-[var(--ink-2)] text-sm">
-              Track ad spend, ROAS, and campaign performance across Facebook and Instagram.
-            </p>
-          </div>
-          <button 
-            onClick={handleConnectClick} 
-            className="w-full py-3 mt-6 rounded-xl bg-[var(--ink)] text-[var(--page)] text-sm font-medium hover:opacity-90 transition-colors"
-          >
-            {isAuthenticated ? "Manage Connection" : "Connect Meta"}
-          </button>
-        </motion.div>
+                <h2 className="mt-5 text-lg font-semibold text-[var(--ink)]">{p.name}</h2>
+                <p className="mt-1.5 flex-1 text-sm leading-relaxed text-[var(--ink-2)]">{p.description}</p>
 
-        {/* LinkedIn Card */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-          className="bg-[var(--surface)] p-8 rounded-3xl shadow-[0_2px_20px_rgb(0,0,0,0.03)] border border-[var(--line)] flex flex-col justify-between h-[300px] hover:-translate-y-1 transition-transform duration-300"
-        >
-          <div>
-            <div className="w-12 h-12 bg-sky-50 rounded-xl flex items-center justify-center mb-6">
-              <svg className="w-6 h-6 text-[#0A66C2]" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" /></svg>
-            </div>
-            <h3 className="text-xl font-medium mb-2">LinkedIn</h3>
-            <p className="text-[var(--ink-2)] text-sm">
-              Unify your B2B impressions, engagement rates, and professional audience demographics.
-            </p>
-          </div>
-          <button 
-            onClick={handleConnectClick} 
-            className="w-full py-3 mt-6 rounded-xl bg-[var(--ink)] text-[var(--page)] text-sm font-medium hover:opacity-90 transition-colors"
-          >
-            {isAuthenticated ? "Manage Connection" : "Connect LinkedIn"}
-          </button>
-        </motion.div>
+                {connected && row?.property_id && (
+                  <p className="mt-3 truncate font-mono text-xs text-[var(--ink-3)]" title={row.property_id}>
+                    {row.property_id}
+                  </p>
+                )}
 
+                <div className="mt-6">
+                  {!rows && !failed ? (
+                    <Skeleton className="h-10 w-full" />
+                  ) : (
+                    <Button
+                      variant={connected ? "outline" : "primary"}
+                      className="w-full"
+                      disabled={!p.available}
+                      loading={connecting === p.id}
+                      onClick={() => connect(p.id)}
+                    >
+                      {p.available && connecting !== p.id && <Link2 />}
+                      {!p.available ? "Not available yet" : connected ? "Reconnect" : `Connect ${p.name}`}
+                    </Button>
+                  )}
+                </div>
+              </Card>
+            </motion.div>
+          );
+        })}
       </div>
+
+      <p className="mt-8 flex items-center justify-center gap-2 text-xs text-[var(--ink-3)]">
+        <ShieldCheck className="size-4" />
+        Credentials are encrypted at rest and never leave our servers.
+      </p>
     </div>
   );
 }
