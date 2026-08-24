@@ -1,105 +1,135 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import { getApiUrl, apiFetch } from "../../../lib/auth";
+import { Receipt, Sparkles } from "lucide-react";
+import { PageHeader } from "../../../components/shell/PageHeader";
+import { Badge, Card, CountUp, Skeleton } from "../../../components/ui";
+import { DataTable } from "../../../components/workspace/DataTable";
+import { EmptyState } from "../../../components/workspace/primitives";
+import { apiFetch, getApiUrl } from "../../../lib/auth";
 import { withWorkspace } from "../../../lib/workspace";
 
+type Invoice = { date: string; amount: string; status: string };
+type Billing = {
+  plan: string;
+  billing_cycle: string;
+  price: string;
+  renewal_date: string;
+  usage: { current: number; limit: number; percentage: number };
+  invoices: Invoice[];
+};
+
 export default function BillingPage() {
-  const [billing, setBilling] = useState<any>(null);
+  const [billing, setBilling] = useState<Billing | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchBilling = async () => {
+    let cancelled = false;
+    (async () => {
       try {
-        const backendUrl = getApiUrl();
-        // Session rides in the httpOnly cookie — no header needed.
-        const res = await apiFetch(withWorkspace(`${backendUrl}/api/v1/workspace/billing`));
-        if (res.ok) {
-          const data = await res.json();
-          setBilling(data);
-        }
+        const res = await apiFetch(withWorkspace(`${getApiUrl()}/api/v1/workspace/billing`));
+        if (res.ok && !cancelled) setBilling(await res.json());
       } catch (err) {
         console.error("Failed to fetch billing", err);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
-    };
-    fetchBilling();
+    })();
+    return () => { cancelled = true; };
   }, []);
 
-  if (loading || !billing) return <div className="p-10 font-light text-[var(--ink-2)]">Loading billing info...</div>;
+  const usage = billing?.usage;
+  const invoices = billing?.invoices ?? [];
+  const pct = usage?.percentage ?? 0;
+  // Amber past 80%, red at the cap — a bar that is the same colour at 12% and
+  // 99% isn't telling anyone anything.
+  const usageTone = pct >= 100 ? "var(--coral)" : pct >= 80 ? "var(--amber)" : "var(--accent)";
+
   return (
-    <div className="w-full max-w-4xl mx-auto py-8">
-      <div className="mb-10">
-        <h1 className="text-4xl font-semibold tracking-tight text-[var(--ink)] mb-2">Billing & Usage</h1>
-        <p className="text-[var(--ink-2)] font-light text-lg">Manage your subscription and monitor workspace limits.</p>
+    <div className="mx-auto max-w-4xl pb-16">
+      <PageHeader
+        title="Billing & usage"
+        description="Your plan and this workspace's limits."
+        badge={billing ? <Badge tone="accent" dot>{billing.plan}</Badge> : undefined}
+      />
+
+      <div className="mb-5 grid grid-cols-1 gap-5 lg:grid-cols-3">
+        <Card padding="lg" className="rounded-[var(--radius-xl)] lg:col-span-2">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--ink-3)]">Current plan</p>
+          {loading ? (
+            <><Skeleton className="mt-3 h-10 w-40" /><Skeleton className="mt-4 h-4 w-72" /></>
+          ) : (
+            <>
+              <div className="mt-2 flex items-end gap-2">
+                <span className="text-5xl font-semibold tracking-[-0.03em] text-[var(--ink)]">{billing?.price}</span>
+                <span className="mb-1.5 text-[var(--ink-2)]">/ month</span>
+              </div>
+              <p className="mt-1 text-lg font-medium text-[var(--ink)]">{billing?.plan}</p>
+
+              <div className="mt-5 flex items-start gap-3 rounded-[var(--radius-md)] bg-[var(--accent)]/8 p-4">
+                <Sparkles className="mt-0.5 size-4 shrink-0 text-[var(--accent)]" />
+                <p className="text-sm leading-relaxed text-[var(--ink-2)]">
+                  Everything is free while ArbFlow is in beta — every dashboard, every
+                  integration, every report. There is no card on file and nothing to
+                  cancel. We&apos;ll give you plenty of notice before that changes.
+                </p>
+              </div>
+            </>
+          )}
+        </Card>
+
+        <Card padding="lg" className="rounded-[var(--radius-xl)]">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--ink-3)]">Workspace usage</p>
+          {loading || !usage ? (
+            <><Skeleton className="mt-3 h-9 w-28" /><Skeleton className="mt-6 h-2 w-full" /></>
+          ) : (
+            <>
+              <p className="mt-2 text-3xl font-semibold tracking-[-0.02em] text-[var(--ink)]">
+                <CountUp value={usage.current} />
+                <span className="ml-1 text-base font-normal text-[var(--ink-3)]">
+                  / {usage.limit.toLocaleString()}
+                </span>
+              </p>
+              <p className="mt-1 text-sm text-[var(--ink-2)]">Page views tracked this cycle</p>
+
+              <div
+                className="mt-5 h-2 overflow-hidden rounded-full bg-[var(--line)]"
+                role="progressbar"
+                aria-valuenow={pct}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label="Page views used"
+              >
+                <div className="h-full rounded-full transition-[width]" style={{ width: `${pct}%`, background: usageTone }} />
+              </div>
+              <p className="mt-2 text-right text-xs text-[var(--ink-3)]">{pct}% used</p>
+            </>
+          )}
+        </Card>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-6 mb-10">
-        <div className="col-span-2 bg-[var(--surface)] p-8 rounded-3xl border border-[var(--line)] shadow-sm">
-          <div className="flex justify-between items-start mb-6">
-            <div>
-              <p className="text-xs font-bold text-[var(--ink-2)] uppercase tracking-widest mb-1">Current Plan</p>
-              <h2 className="text-2xl font-semibold">{billing.plan}</h2>
-            </div>
-            <span className="bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 px-3 py-1 rounded-full text-sm font-medium border border-blue-100 dark:border-blue-500/25">{billing.billing_cycle}</span>
-          </div>
-          
-          <div className="flex items-end space-x-2 mb-2">
-            <span className="text-5xl font-bold tracking-tighter text-[var(--ink)]">{billing.price}</span>
-            <span className="text-[var(--ink-2)] mb-1">/ mo</span>
-          </div>
-          <p className="text-sm font-medium text-blue-600 dark:text-blue-400 mb-8 bg-blue-50 dark:bg-blue-500/10 w-fit px-3 py-1 rounded-md">Normally $99/mo — Waived for Beta Users</p>
-
-          <div className="flex space-x-4">
-            <button className="bg-[var(--ink)] text-[var(--page)] px-6 py-3 rounded-xl font-medium shadow-md hover:scale-105 transition-transform active:scale-95">Upgrade Plan</button>
-            <button className="bg-[var(--page)] text-[var(--ink-2)] px-6 py-3 rounded-xl font-medium border border-[var(--line)] hover:bg-[var(--page)] transition-colors active:bg-[var(--line)]">Cancel</button>
-          </div>
-        </div>
-
-        <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-8 rounded-3xl text-white shadow-lg relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
-          <p className="text-xs font-bold text-blue-200 uppercase tracking-widest mb-4">Workspace Usage</p>
-          <h3 className="text-3xl font-semibold mb-2">{Math.floor(billing.usage.current / 1000)}k <span className="text-lg font-normal text-blue-200">/ {Math.floor(billing.usage.limit / 1000)}k</span></h3>
-          <p className="text-sm text-blue-100 mb-6">Pageviews tracked this cycle</p>
-          
-          <div className="w-full bg-black/20 rounded-full h-2 mb-2">
-            <div className="bg-white h-2 rounded-full" style={{ width: `${billing.usage.percentage}%` }}></div>
-          </div>
-          <p className="text-xs text-blue-200 text-right">{billing.usage.percentage}% used</p>
-        </div>
-      </div>
-
-      <h3 className="text-xl font-medium mb-6">Billing History</h3>
-      <div className="bg-[var(--surface)] rounded-3xl border border-[var(--line)] shadow-sm overflow-hidden">
-        <table className="w-full text-left">
-          <thead className="bg-[var(--page)] text-xs text-[var(--ink-2)] uppercase tracking-wider">
-            <tr>
-              <th className="px-6 py-4">Date</th>
-              <th className="px-6 py-4">Amount</th>
-              <th className="px-6 py-4">Status</th>
-              <th className="px-6 py-4 text-right">Invoice</th>
-            </tr>
-          </thead>
-          <tbody>
-            {billing.invoices.map((invoice: any, i: number) => (
-              <tr key={i} className="border-t border-[var(--line)]">
-                <td className="px-6 py-4 text-sm font-medium">{invoice.date}</td>
-                <td className="px-6 py-4 text-sm text-[var(--ink-2)]">{invoice.amount}</td>
-                <td className="px-6 py-4">
-                  <span className={`px-2.5 py-1 rounded-md text-xs font-medium ${invoice.status.includes('Waived') ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400' : 'bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-400'}`}>
-                    {invoice.status}
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <button className="text-blue-500 dark:text-blue-400 hover:underline text-sm font-medium">Download</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <Card padding="lg" className="rounded-[var(--radius-xl)]">
+        <h2 className="mb-4 text-base font-semibold text-[var(--ink)]">Billing history</h2>
+        {loading ? (
+          <Skeleton className="h-24 w-full" />
+        ) : invoices.length === 0 ? (
+          <EmptyState
+            icon={<Receipt className="size-5" />}
+            title="Nothing has been billed"
+            description="Invoices will appear here once paid plans arrive. During the beta there's nothing to charge."
+          />
+        ) : (
+          <DataTable
+            rows={invoices}
+            getKey={(inv, i) => `${inv.date}-${i}`}
+            columns={[
+              { key: "date", header: "Date", cell: (i) => <span className="font-medium text-[var(--ink)]">{i.date}</span>, sortBy: (i) => i.date },
+              { key: "amount", header: "Amount", align: "right", cell: (i) => i.amount },
+              { key: "status", header: "Status", align: "right", cell: (i) => <Badge tone="success" size="sm">{i.status}</Badge> },
+            ]}
+          />
+        )}
+      </Card>
     </div>
   );
 }
