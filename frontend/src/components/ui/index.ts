@@ -2,6 +2,7 @@
 export { Button, buttonVariants, type ButtonProps } from "./button";
 export { Card, CardHeader, CardTitle, CardDescription, CardContent, cardVariants } from "./card";
 export { Skeleton } from "./skeleton";
+export { CountUp } from "./count-up";
 export { Input, Label, Field, type InputProps } from "./input";
 export { Badge, badgeVariants, type BadgeProps } from "./badge";
 export { Tabs, TabsList, TabsTrigger, TabsContent } from "./tabs";

@@ -6,7 +6,7 @@ import { Activity, Check, Download, Plus, Settings2, Trash2 } from "lucide-react
 import {
   Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle,
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
-  Field, Hint, Input, Skeleton, Switch, Tabs, TabsContent, TabsList, TabsTrigger,
+  CountUp, Field, Hint, Input, Skeleton, Switch, Tabs, TabsContent, TabsList, TabsTrigger,
 } from "../../../components/ui";
 
 /**
@@ -17,6 +17,7 @@ import {
 export default function DesignSystemPage() {
   const [on, setOn] = useState(true);
   const [invalid, setInvalid] = useState(false);
+  const [figure, setFigure] = useState(48120);
 
   return (
     <div className="min-h-screen bg-[var(--page)] px-6 py-16">
@@ -147,6 +148,26 @@ export default function DesignSystemPage() {
             </Button>
             <Button variant="ghost" onClick={() => toast.error("Couldn't reach Google Analytics", { description: "Check the connection and retry." })}>
               <Trash2 />Error toast
+            </Button>
+          </div>
+        </Section>
+
+        <Section title="Numbers" desc="Counts up between values, not from zero every time.">
+          <div className="flex flex-wrap items-end gap-8">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--ink-3)]">Active users</p>
+              <CountUp value={figure} className="text-4xl font-semibold tracking-[-0.02em] text-[var(--ink)]" />
+            </div>
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--ink-3)]">Revenue</p>
+              <CountUp
+                value={figure * 1.7}
+                format={(n) => "$" + Math.round(n).toLocaleString()}
+                className="text-4xl font-semibold tracking-[-0.02em] text-[var(--ink)]"
+              />
+            </div>
+            <Button variant="outline" size="sm" onClick={() => setFigure((v) => Math.round(v * (0.7 + Math.random() * 0.8)))}>
+              New figure
             </Button>
           </div>
         </Section>
