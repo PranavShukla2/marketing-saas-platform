@@ -31,11 +31,11 @@ export function AudienceSection({ view }: { view: Ga4View }) {
   const selectedRow = country ? geo.find((g) => g.country === country) : undefined;
 
   const ranked = React.useMemo(() => {
-    const rows = geo.slice(0, 10);
+    const rows = geo.slice(0, 8);
     if (!selectedRow || rows.some((r) => r.country === selectedRow.country)) return rows;
     // A country picked off the long tail wouldn't otherwise appear in a top-10
     // list — surface it rather than letting the click look like it did nothing.
-    return [selectedRow, ...rows.slice(0, 9)];
+    return [selectedRow, ...rows.slice(0, 7)];
   }, [geo, selectedRow]);
 
   return (
@@ -69,7 +69,7 @@ export function AudienceSection({ view }: { view: Ga4View }) {
             description="Once Google Analytics has recorded visits, this map shades each country by its share of your visitors."
           />
         ) : (
-          <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.7fr)_minmax(240px,1fr)]">
+          <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(0,1.75fr)_minmax(230px,1fr)]">
             <GeoMap rows={geo} selected={country} onSelect={setCountry} />
             <div>
               <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--ink-3)]">

@@ -61,24 +61,33 @@ export function GeoMap({
         if (!res.ok) throw new Error(`atlas ${res.status}`);
         const topology = await res.json();
         const collection = feature(topology, topology.objects.countries) as unknown as {
+          type: string;
           features: { properties: { name: string } }[];
+        };
+
+        // Antarctica is dropped before the projection is fitted, not after.
+        // Fitting with it included reserves a band across the bottom of the
+        // box for a continent that carries no traffic and is then not drawn —
+        // which squeezes the populated world into the top two thirds and
+        // leaves a strip of dead space under the map.
+        const drawn = {
+          type: "FeatureCollection",
+          features: collection.features.filter((f) => f.properties.name !== "Antarctica"),
         };
 
         // Natural Earth 1 keeps continents recognisable without Mercator's
         // habit of making Greenland the size of Africa — which matters when
         // area is doing the visual work of "how much traffic".
         const projection = geoNaturalEarth1().fitExtent(
-          [[8, 8], [WIDTH - 8, HEIGHT - 8]],
-          collection as never
+          [[4, 4], [WIDTH - 4, HEIGHT - 4]],
+          drawn as never
         );
         const path = geoPath(projection);
 
         const built: Shape[] = [];
-        for (const f of collection.features) {
+        for (const f of drawn.features) {
           const d = path(f as never);
-          // Antarctica projects to a band across the bottom and carries no
-          // traffic; dropping it gives the populated world more room.
-          if (!d || f.properties.name === "Antarctica") continue;
+          if (!d) continue;
           built.push({ name: f.properties.name, d });
         }
         if (!cancelled) setShapes(built);
