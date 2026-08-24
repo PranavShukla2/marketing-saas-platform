@@ -101,8 +101,10 @@ The page users actually live in.
 ## Phase 3 — Workspace secondary
 Campaigns, Reports, Team, Billing, Integrations, Settings.
 - One page per commit (or a few), each fully converted.
-- Tables → a shared `DataTable` with sorting and empty states.
-- Settings tabs → Radix Tabs; forms → Input/Label/Switch primitives.
+- Tables → the shared `DataTable` (built in Phase 2 — sorting, `aria-sort`,
+  right-aligned numerics, its own horizontal scroll container).
+- Settings tabs → Radix Tabs; forms → Input/Label/Switch primitives; native
+  `<select>`s → the `Select` primitive.
 - Replaces the ad-hoc toast with `sonner`.
 
 ## Phase 4 — Auth pages
@@ -139,8 +141,15 @@ Landing, pricing, about, legal.
 
 - [x] **Phase 0** — foundation (tokens, motion, primitives, `/design`) ✅ *verified in both themes*
 - [x] **Phase 1** — app shell (glass rail, status island, Cmd-K) ✅ *verified signed-in*
-- [ ] **Phase 2 — workspace core** ← next
-- [ ] Phase 3 — workspace secondary
+      — topbar breadcrumbs + account menu were missed at the time and landed
+      during Phase 2. The workspace switcher and theme control live in the rail
+      rather than the topbar, deliberately.
+- [x] **Phase 2** — workspace core (bento board, themed charts, the world map,
+      count-up KPIs, skeletons, one connection state in the island)
+      ✅ *verified signed-in, both themes, 1440 + 390, and under reduced motion*
+- [ ] **Phase 3 — workspace secondary** ← next
+      (`DataTable` and the `Select` / `DropdownMenu` primitives were built
+      during Phase 2, so the page conversions start with the kit in place)
 - [ ] Phase 4 — auth
 - [ ] Phase 5 — marketing
 - [ ] Phase 6 — motion & polish
