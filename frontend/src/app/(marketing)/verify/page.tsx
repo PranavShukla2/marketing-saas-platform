@@ -11,17 +11,17 @@ type State = "verifying" | "success" | "error";
 
 function VerifyInner() {
   const token = useSearchParams().get("token");
-  const [state, setState] = useState<State>("verifying");
+  const [fetched, setState] = useState<State>("verifying");
+  // No token means the link is broken; don't spend a render pretending to check.
+  const state: State = token ? fetched : "error";
   const ran = useRef(false); // guard React's double-invoke; the token is single-use
 
   useEffect(() => {
-    if (ran.current) return;
+    // A missing token is knowable at render (see `state` below), so there is
+    // nothing for the effect to do — and nothing to verify.
+    if (!token || ran.current) return;
     ran.current = true;
 
-    if (!token) {
-      setState("error");
-      return;
-    }
     (async () => {
       try {
         const res = await fetch(`${getApiUrl()}/api/v1/auth/verify`, {
