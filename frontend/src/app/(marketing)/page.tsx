@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Button } from "../../components/ui";
 import { motion } from "framer-motion";
 import { useReducedMotionSafe } from "../../lib/useReducedMotionSafe";
 import Flo from "../../components/landing/Flo";
@@ -65,7 +66,7 @@ export default function Home() {
             className="absolute top-[96px] left-[calc(50%-220px)] items-end"
           />
           <Annotation
-            text="free forever"
+            text="free in beta"
             arrow="curl-down-right"
             color="var(--coral)"
             rotate={-8}
@@ -115,16 +116,15 @@ export default function Home() {
           </motion.p>
 
           <motion.div variants={fadeUp} className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Link href="/register">
-              <button className="px-7 py-3.5 rounded-[11px] text-white font-medium shadow-[0_10px_30px_rgba(139,92,246,0.35)] bg-[linear-gradient(100deg,var(--indigo),var(--violet),var(--coral))] animate-shimmer">
-                Get started free
-              </button>
-            </Link>
-            <a href="#features">
-              <button className="px-7 py-3.5 rounded-[11px] bg-[var(--surface)] border border-[var(--line)] text-[var(--ink)] font-medium hover:bg-[var(--page)] transition-colors">
-                See features ↓
-              </button>
-            </a>
+            {/* asChild rather than <Link><button>: the old markup nested one
+                interactive element inside another, which screen readers and
+                keyboard users both have to untangle. */}
+            <Button asChild size="lg" className="px-7 shadow-[0_10px_30px_rgba(139,92,246,0.35)] bg-[linear-gradient(100deg,var(--indigo),var(--violet),var(--coral))] animate-shimmer">
+              <Link href="/register">Get started free</Link>
+            </Button>
+            <Button asChild variant="outline" size="lg" className="px-7">
+              <a href="#features">See features ↓</a>
+            </Button>
           </motion.div>
         </motion.div>
       </section>
