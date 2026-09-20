@@ -1,10 +1,14 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { motion } from "framer-motion";
+import { AuthAlert, AuthCard, AuthLink, AuthResult } from "../../../components/auth/AuthCard";
+import { PasswordInput } from "../../../components/auth/PasswordInput";
+import { Button, Field } from "../../../components/ui";
 import { getApiUrl } from "../../../lib/auth";
+import { friendlyError, messageFromResponse } from "../../../lib/apiError";
+
+const MIN_PASSWORD = 8;
 
 function ResetInner() {
   const params = useSearchParams();
@@ -13,20 +17,23 @@ function ResetInner() {
 
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [touched, setTouched] = useState({ password: false, confirm: false });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
 
+  const tooShort = password.length > 0 && password.length < MIN_PASSWORD;
+  const mismatch = confirm.length > 0 && password !== confirm;
+  const passwordError = touched.password && tooShort
+    ? `At least ${MIN_PASSWORD} characters — ${MIN_PASSWORD - password.length} to go.`
+    : undefined;
+  const confirmError = touched.confirm && mismatch ? "These don't match." : undefined;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters.");
-      return;
-    }
-    if (password !== confirm) {
-      setError("Passwords don't match.");
+    if (tooShort || mismatch || !password) {
+      setTouched({ password: true, confirm: true });
       return;
     }
 
@@ -37,88 +44,86 @@ function ResetInner() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token, password }),
       });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.detail || "This reset link is invalid or has expired.");
-      }
+      if (!res.ok) throw new Error(await messageFromResponse(res, "This reset link is invalid or has expired."));
       setDone(true);
       setTimeout(() => router.push("/login"), 2000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong.");
-    } finally {
+      setError(friendlyError(err, "Something went wrong. Please try again."));
       setLoading(false);
     }
   };
 
-  const shell = (children: React.ReactNode) => (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-[var(--page)] p-6 font-sans text-[var(--ink)]">
-      <motion.div
-        initial={{ opacity: 0, y: 20, scale: 0.98 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className="w-full max-w-md bg-[var(--surface)] p-10 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-[var(--line)]"
-      >
-        {children}
-      </motion.div>
-    </div>
-  );
-
   if (!token) {
-    return shell(
-      <div className="text-center">
-        <h1 className="text-2xl font-semibold tracking-tight mb-2">Invalid reset link</h1>
-        <p className="text-[var(--ink-2)] text-sm mb-8">This link is missing or malformed. Request a new one from the sign-in page.</p>
-        <Link href="/forgot-password" className="text-blue-600 dark:text-blue-400 text-sm font-medium hover:underline">Request a new link</Link>
-      </div>
+    return (
+      <AuthResult
+        tone="error"
+        title="Invalid reset link"
+        description="This link is missing or malformed. Request a fresh one and we'll email it over."
+      >
+        <AuthLink href="/forgot-password">Request a new link</AuthLink>
+      </AuthResult>
     );
   }
 
   if (done) {
-    return shell(
-      <div className="text-center">
-        <div className="w-14 h-14 rounded-2xl bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-400 flex items-center justify-center mx-auto mb-6">
-          <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-        </div>
-        <h1 className="text-2xl font-semibold tracking-tight mb-2">Password updated</h1>
-        <p className="text-[var(--ink-2)] text-sm">Taking you to sign in…</p>
-      </div>
+    return (
+      <AuthResult
+        tone="success"
+        title="Password updated"
+        description="Taking you to sign in…"
+      >
+        <AuthLink href="/login">Go now</AuthLink>
+      </AuthResult>
     );
   }
 
-  return shell(
-    <>
-      <div className="text-center mb-8">
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-md flex items-center justify-center text-white font-bold text-xl mx-auto mb-4">A</div>
-        <h1 className="text-3xl font-semibold tracking-tight mb-2">Set a new password</h1>
-        <p className="text-[var(--ink-2)] text-sm">Choose a strong password you don&apos;t use elsewhere.</p>
-      </div>
-
-      {error && (
-        <div className="mb-4 p-3 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 text-sm rounded-xl border border-red-100 dark:border-red-500/25 text-center">{error}</div>
-      )}
+  return (
+    <AuthCard
+      title="Set a new password"
+      description="Choose a strong password you don't use anywhere else."
+      footer={<>Changed your mind? <AuthLink href="/login">Back to sign in</AuthLink></>}
+    >
+      {error && <AuthAlert tone="error">{error}</AuthAlert>}
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-[var(--ink-2)] mb-1.5">New password</label>
-          <input
-            type="password" required value={password} onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl border border-[var(--line)] focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-sm bg-[var(--page)]/50"
-            placeholder="At least 8 characters"
+        <Field
+          label="New password"
+          htmlFor="password"
+          hint={`At least ${MIN_PASSWORD} characters.`}
+          error={passwordError}
+        >
+          <PasswordInput
+            id="password"
+            required
+            autoFocus
+            minLength={MIN_PASSWORD}
+            autoComplete="new-password"
+            invalid={!!passwordError}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            onBlur={() => setTouched((t) => ({ ...t, password: true }))}
+            placeholder="••••••••"
           />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-[var(--ink-2)] mb-1.5">Confirm password</label>
-          <input
-            type="password" required value={confirm} onChange={(e) => setConfirm(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl border border-[var(--line)] focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-sm bg-[var(--page)]/50"
+        </Field>
+
+        <Field label="Confirm password" htmlFor="confirm" error={confirmError}>
+          <PasswordInput
+            id="confirm"
+            required
+            autoComplete="new-password"
+            invalid={!!confirmError}
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+            onBlur={() => setTouched((t) => ({ ...t, confirm: true }))}
             placeholder="Re-enter your password"
           />
-        </div>
-        <button type="submit" disabled={loading} className="w-full py-3.5 mt-2 rounded-xl bg-[var(--ink)] text-[var(--page)] text-sm font-medium hover:bg-[var(--ink)] active:scale-[0.98] transition-all duration-200 disabled:opacity-50 shadow-sm">
+        </Field>
+
+        <Button type="submit" size="lg" className="w-full" loading={loading}>
           {loading ? "Updating…" : "Update password"}
-        </button>
+        </Button>
       </form>
-    </>
+    </AuthCard>
   );
 }
 
