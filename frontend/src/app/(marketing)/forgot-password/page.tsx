@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { motion } from "framer-motion";
+import { AuthCard, AuthLink, AuthResult } from "../../../components/auth/AuthCard";
+import { Button, Field, Input } from "../../../components/ui";
 import { getApiUrl } from "../../../lib/auth";
 
 export default function ForgotPasswordPage() {
@@ -20,61 +20,56 @@ export default function ForgotPasswordPage() {
         body: JSON.stringify({ email }),
       });
     } catch {
-      // Even on network error we show the same generic confirmation — the
-      // backend never reveals whether the address exists, and neither do we.
+      // Even on a network error we show the same confirmation. The backend
+      // never reveals whether an address has an account, and a page that said
+      // "couldn't send" for one address and "sent" for another would leak
+      // exactly what the endpoint is careful not to.
     } finally {
       setLoading(false);
       setSent(true);
     }
   };
 
-  return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-[var(--page)] p-6 font-sans text-[var(--ink)]">
-      <motion.div
-        initial={{ opacity: 0, y: 20, scale: 0.98 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className="w-full max-w-md bg-[var(--surface)] p-10 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-[var(--line)]"
-      >
-        {sent ? (
-          <div className="text-center">
-            <div className="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto mb-6">
-              <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-            </div>
-            <h1 className="text-2xl font-semibold tracking-tight mb-2">Check your inbox</h1>
-            <p className="text-[var(--ink-2)] text-sm mb-8">
-              If an account exists for <span className="font-medium text-[var(--ink-2)]">{email}</span>, a password-reset link is on its way. The link expires in 1 hour.
-            </p>
-            <Link href="/login" className="text-blue-600 dark:text-blue-400 text-sm font-medium hover:underline">Back to sign in</Link>
-          </div>
-        ) : (
+  if (sent) {
+    return (
+      <AuthResult
+        tone="info"
+        title="Check your inbox"
+        description={
           <>
-            <div className="text-center mb-8">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-md flex items-center justify-center text-white font-bold text-xl mx-auto mb-4">A</div>
-              <h1 className="text-3xl font-semibold tracking-tight mb-2">Forgot password?</h1>
-              <p className="text-[var(--ink-2)] text-sm">Enter your email and we&apos;ll send you a reset link.</p>
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-[var(--ink-2)] mb-1.5">Email</label>
-                <input
-                  type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-[var(--line)] focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-sm bg-[var(--page)]/50"
-                  placeholder="name@company.com"
-                />
-              </div>
-              <button type="submit" disabled={loading} className="w-full py-3.5 mt-2 rounded-xl bg-[var(--ink)] text-[var(--page)] text-sm font-medium hover:bg-[var(--ink)] active:scale-[0.98] transition-all duration-200 disabled:opacity-50 shadow-sm">
-                {loading ? "Sending…" : "Send reset link"}
-              </button>
-            </form>
-
-            <div className="mt-8 text-center text-sm text-[var(--ink-2)]">
-              Remembered it? <Link href="/login" className="text-blue-600 dark:text-blue-400 font-medium hover:underline">Sign in</Link>
-            </div>
+            If an account exists for <span className="font-medium text-[var(--ink)]">{email}</span>, a
+            password-reset link is on its way. It expires in an hour.
           </>
-        )}
-      </motion.div>
-    </div>
+        }
+      >
+        <AuthLink href="/login">Back to sign in</AuthLink>
+      </AuthResult>
+    );
+  }
+
+  return (
+    <AuthCard
+      title="Forgot password?"
+      description="Enter your email and we'll send you a reset link."
+      footer={<>Remembered it? <AuthLink href="/login">Sign in</AuthLink></>}
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <Field label="Email" htmlFor="email">
+          <Input
+            id="email"
+            type="email"
+            required
+            autoFocus
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="name@company.com"
+          />
+        </Field>
+        <Button type="submit" size="lg" className="w-full" loading={loading}>
+          {loading ? "Sending…" : "Send reset link"}
+        </Button>
+      </form>
+    </AuthCard>
   );
 }
