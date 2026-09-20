@@ -128,6 +128,27 @@ export function AuthResult({
   );
 }
 
+/**
+ * A form-level message. Success uses role="status" and failure role="alert",
+ * so a screen reader hears the outcome without the user hunting for it —
+ * these pages previously announced neither.
+ */
+export function AuthAlert({ tone, children }: { tone: "success" | "error"; children: React.ReactNode }) {
+  return (
+    <p
+      role={tone === "error" ? "alert" : "status"}
+      className={cn(
+        "mb-5 rounded-[var(--radius-md)] border px-4 py-3 text-sm",
+        tone === "error"
+          ? "border-red-500/25 bg-red-500/10 text-red-700 dark:text-red-400"
+          : "border-green-500/25 bg-green-500/10 text-green-700 dark:text-green-400"
+      )}
+    >
+      {children}
+    </p>
+  );
+}
+
 /** A plain text link in the auth footer — used by every page. */
 export function AuthLink({ href, children }: { href: string; children: React.ReactNode }) {
   return (
