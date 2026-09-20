@@ -140,3 +140,38 @@ and the Resend dashboard for domain verification.
 - Free-tier Render sleeps: background sync/digests/reports fire on next wake.
 - Rate limiter is in-memory unless `REDIS_URL` is set (fine at 1 instance).
 - bcrypt caps logins ≈20/s/worker; the per-IP limiter sheds floods as 429s.
+
+## Regenerating `frontend/package-lock.json`
+
+**Use `npx npm@10`, not the local `npm`.**
+
+```sh
+cd frontend && npx --yes npm@10 install --package-lock-only
+```
+
+Tailwind ships `@tailwindcss/oxide-wasm32-wasi` as a fallback for platforms
+with no native binary, and it depends on `@emnapi/core` and `@emnapi/runtime`.
+Resolving on macOS arm64 with npm 11 decides that fallback is unreachable and
+prunes its subtree; resolving on Linux x64 keeps it. `npm ci` is strict about
+*missing* packages, so a lockfile written by npm 11 on a Mac fails in CI with:
+
+```
+npm error code EUSAGE
+npm error Missing: @emnapi/core@1.11.3 from lock file
+```
+
+npm 10 keeps the subtree, and npm 11 installs an npm-10 lockfile without
+complaint — so generating with npm 10 works for everyone.
+
+This bites whenever *anything* touches the lockfile locally, including
+installing and removing a throwaway tool (`npm i -D playwright` … `npm
+uninstall playwright`). After any such round-trip, regenerate with the command
+above and check `@emnapi/core` is still present:
+
+```sh
+grep -c '"node_modules/@emnapi/core"' frontend/package-lock.json   # expect >= 1
+```
+
+If CI does go red on `Install dependencies`, the reason is in the run's
+**annotations**, not the log — reading a job log over the API needs repo-admin
+rights, so the workflow re-emits npm's error lines as `::error::` annotations.
