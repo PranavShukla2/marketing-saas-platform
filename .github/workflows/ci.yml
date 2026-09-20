@@ -72,7 +72,7 @@ jobs:
         run: |
           set -o pipefail
           for attempt in 1 2 3; do
-            if npm ci --no-audit --no-fund; then
+            if npm ci --no-audit --no-fund 2>&1 | tee /tmp/npm-ci.log; then
               exit 0
             fi
             echo "::warning::npm ci failed (attempt $attempt/3)"
@@ -83,9 +83,13 @@ jobs:
             if [ "$attempt" = "2" ]; then npm cache clean --force || true; fi
             sleep $((attempt * 10))
           done
-          echo "::group::npm debug log"
-          cat "$(npm config get cache)"/_logs/*.log 2>/dev/null | tail -120 || echo "(no npm log found)"
-          echo "::endgroup::"
+          # Re-emit npm's own error lines as workflow annotations. Reading a
+          # job's log over the API needs repo-admin rights; annotations do not,
+          # so this is the difference between "Install dependencies: failure"
+          # and knowing what actually went wrong.
+          grep -iE "^npm (error|warn)" /tmp/npm-ci.log | head -20 | while IFS= read -r line; do
+            echo "::error::${line}"
+          done
           exit 1
       - name: Lint
         working-directory: frontend
