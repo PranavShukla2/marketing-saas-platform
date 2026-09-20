@@ -46,13 +46,13 @@ function NavLinks({ pathname, onNavigate }: { pathname: string; onNavigate?: () 
                 cross-fading in place. */}
             {active &&
               (reduce ? (
-                <span aria-hidden="true" className="absolute inset-0 rounded-full bg-[var(--accent)]/12" />
+                <span aria-hidden="true" className="absolute inset-0 rounded-full bg-[var(--accent)]/15 ring-1 ring-inset ring-[var(--accent)]/20" />
               ) : (
                 <motion.span
                   aria-hidden="true"
                   layoutId="nav-active"
                   transition={EASE_SPRING}
-                  className="absolute inset-0 rounded-full bg-[var(--accent)]/12"
+                  className="absolute inset-0 rounded-full bg-[var(--accent)]/15 ring-1 ring-inset ring-[var(--accent)]/20"
                 />
               ))}
             <span className="relative z-10">{link.label}</span>

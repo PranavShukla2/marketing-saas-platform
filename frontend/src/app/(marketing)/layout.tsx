@@ -7,7 +7,10 @@ export default function MarketingLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="pt-20 sm:pt-24">
+    // bg-[var(--page)], not transparent: the wrapper's top padding is what
+    // clears the floating pill, and without a background it exposed the body's
+    // white straight above a --page hero as a hard horizontal seam.
+    <div className="bg-[var(--page)] pt-20 sm:pt-24">
       <a href="#main" className="skip-link">Skip to content</a>
       <NavPill />
       <main id="main">{children}</main>
