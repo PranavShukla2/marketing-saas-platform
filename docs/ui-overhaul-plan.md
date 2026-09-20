@@ -158,6 +158,16 @@ Landing, pricing, about, legal.
       shared `PasswordInput`, `GoogleButton` and API-error helpers; inline
       field validation) ✅ *verified in both themes at 1280 + 390, including
       every result state and both invalid-field paths*
-- [ ] **Phase 5 — marketing** ← next
-- [ ] Phase 6 — motion & polish
+- [x] **Phase 5** — marketing: floating nav pill (top on desktop, bottom on
+      phones) with a sliding active indicator, pricing rebuilt on the
+      primitives with the monthly/annual switch, legal pages on a shared prose
+      layout with anchors ✅ *verified in both themes at 1280 + 390 and under
+      reduced motion*
+      — **deliberately not done:** the landing hero and feature sections were
+      already rebuilt and polished in an earlier session, so they were left
+      alone apart from the CTAs and one false claim. A wholesale re-do would
+      have risked regression for no user-visible gain. The "live product
+      preview in the hero" is also unbuilt — `PinnedShowcase` already renders
+      real dashboard components further down the page, which covers the intent.
+- [ ] **Phase 6 — motion & polish** ← next
 - [ ] Phase 7 — quality gate
