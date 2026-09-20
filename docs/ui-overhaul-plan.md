@@ -154,7 +154,10 @@ Landing, pricing, about, legal.
       "Enterprise plan" with a saved VISA card, Settings' invented API keys,
       Reports' four made-up report rows, and Campaigns' Pause/Delete controls
       for GA4 traffic sources that nothing can pause or delete.
-- [ ] **Phase 4 — auth** ← next
-- [ ] Phase 5 — marketing
+- [x] **Phase 4** — auth (one `AuthCard`/`AuthResult` behind all six pages;
+      shared `PasswordInput`, `GoogleButton` and API-error helpers; inline
+      field validation) ✅ *verified in both themes at 1280 + 390, including
+      every result state and both invalid-field paths*
+- [ ] **Phase 5 — marketing** ← next
 - [ ] Phase 6 — motion & polish
 - [ ] Phase 7 — quality gate
