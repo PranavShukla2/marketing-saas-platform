@@ -117,7 +117,10 @@ export default function FloatingFlo() {
 
   return (
     <motion.div
-      className="fixed bottom-6 right-6 z-50"
+      // Lifted clear of the bottom nav pill on phones, which occupies roughly
+      // the bottom 60px; back to its usual corner from `sm` up, where the nav
+      // is the top pill instead.
+      className="fixed bottom-24 right-5 z-50 sm:bottom-6 sm:right-6"
       style={reduceMotion ? undefined : { rotate: sway }}
     >
       {showBubble && (
