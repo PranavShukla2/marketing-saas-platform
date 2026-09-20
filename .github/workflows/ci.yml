@@ -38,9 +38,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # node-version-file, not a literal: npm 10 (Node 20) and npm 11 (Node 22+)
+      # disagree about whether sharp's WASM runtime belongs in the tree, so a
+      # lockfile written by one is rejected outright by the other. Pinning CI
+      # to the .nvmrc the project is developed on removes the skew instead of
+      # requiring everyone to remember which npm wrote it last.
       - uses: actions/setup-node@v6
         with:
-          node-version: "20"
+          node-version-file: .nvmrc
           cache: npm
           cache-dependency-path: frontend/package-lock.json
       # npm ci reaches the registry ~700 times and has no retry of its own, so
@@ -107,7 +112,7 @@ jobs:
           GITLEAKS_CONFIG: .gitleaks.toml
       - uses: actions/setup-node@v6
         with:
-          node-version: "20"
+          node-version-file: .nvmrc
           cache: npm
           cache-dependency-path: frontend/package-lock.json
       - name: npm audit (frontend)
