@@ -5,13 +5,16 @@ import { motion, type Variants } from "framer-motion";
 import { DURATION, EASE_OUT } from "../../lib/motion";
 import { useReducedMotionSafe } from "../../lib/useReducedMotionSafe";
 
-type Direction = "up" | "down" | "left" | "right" | "none";
+type Direction = "up" | "down" | "left" | "right" | "scale" | "none";
 
-const OFFSET: Record<Direction, { x?: number; y?: number }> = {
+const OFFSET: Record<Direction, { x?: number; y?: number; scale?: number }> = {
   up: { y: 20 },
   down: { y: -20 },
   left: { x: 20 },
   right: { x: -20 },
+  // For a single object that should arrive rather than travel (an avatar, a
+  // badge) — sliding it in reads as layout shifting.
+  scale: { scale: 0.92 },
   none: {},
 };
 
@@ -59,7 +62,7 @@ export function Reveal({
     <Motion
       className={className}
       initial={{ opacity: 0, ...OFFSET[direction] }}
-      whileInView={{ opacity: 1, x: 0, y: 0 }}
+      whileInView={{ opacity: 1, x: 0, y: 0, scale: 1 }}
       viewport={{ once, amount }}
       transition={{ duration, delay, ease: EASE_OUT }}
     >

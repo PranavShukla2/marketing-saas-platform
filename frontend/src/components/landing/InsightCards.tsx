@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useReducedMotionSafe } from "../../lib/useReducedMotionSafe";
+import Reveal from "../motion/Reveal";
 
 const ICONS: Record<string, React.ReactNode> = {
   "trending-up": (
@@ -67,14 +68,10 @@ export default function InsightCards() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 max-w-5xl mx-auto px-6">
       {CARDS.map((card, i) => (
+        <Reveal key={card.label} delay={i * 0.12}>
         <motion.div
-          key={card.label}
-          initial={{ opacity: 0, y: 26 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: i * 0.12, ease: "easeOut" }}
-          whileHover={{ y: -5 }}
-          className={`rounded-2xl bg-[var(--surface)] border p-5 transition-shadow duration-300 ${!reduceMotion ? "animate-float-y" : ""}`}
+          whileHover={reduceMotion ? undefined : { y: -5 }}
+          className={`h-full rounded-2xl bg-[var(--surface)] border p-5 transition-shadow duration-300 ${!reduceMotion ? "animate-float-y" : ""}`}
           style={{
             animationDelay: `${i * 0.4}s`,
             borderColor: highlighted === i ? "var(--violet)" : "var(--line)",
@@ -96,6 +93,7 @@ export default function InsightCards() {
           <p className="font-mono text-[11px] uppercase tracking-wide text-[var(--ink-3)] mb-2">{card.label}</p>
           <p className="text-sm text-[var(--ink-2)] leading-relaxed">{card.text}</p>
         </motion.div>
+        </Reveal>
       ))}
     </div>
   );

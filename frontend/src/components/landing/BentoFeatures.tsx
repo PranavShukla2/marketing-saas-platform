@@ -181,7 +181,7 @@ export default function BentoFeatures() {
             whileInView="visible"
             viewport={{ once: true, amount: 0.3 }}
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: i * 0.08 }}
-            whileHover={{ y: -4 }}
+            whileHover={reduceMotion ? undefined : { y: -4 }}
             className={`relative rounded-2xl bg-[var(--surface)] border border-[var(--line)] p-5 shadow-[0_1px_2px_rgba(20,18,46,.04),0_10px_30px_rgba(20,18,46,.07)] transition-shadow overflow-hidden flex flex-col ${tile.span}`}
           >
             <div className="flex items-center justify-between mb-1">

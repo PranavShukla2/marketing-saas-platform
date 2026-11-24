@@ -18,6 +18,7 @@ import Annotation from "../../components/landing/Annotation";
 import AboutSection from "../../components/landing/AboutSection";
 import FaqSection from "../../components/landing/FaqSection";
 import FinalCta from "../../components/landing/FinalCta";
+import Reveal from "../../components/motion/Reveal";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 26 },
@@ -135,15 +136,12 @@ export default function Home() {
       </section>
 
       {/* ---------- Integrations marquee ---------- */}
-      <motion.section
-        initial={{ opacity: 0, y: 26 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
+      <Reveal
+        as="section"
         className="py-20"
       >
         <IntegrationsMarquee />
-      </motion.section>
+      </Reveal>
 
       {/* ---------- Phone + tagline ---------- */}
       <section className="relative py-24">
@@ -152,18 +150,12 @@ export default function Home() {
 
       {/* ---------- Features ---------- */}
       <section id="features" className="relative py-24 px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 26 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
-          className="text-center max-w-2xl mx-auto mb-12"
-        >
+        <Reveal className="text-center max-w-2xl mx-auto mb-12">
           <p className="font-mono text-xs text-[var(--ink-3)] tracking-wide mb-4">── engineered for scale</p>
           <h2 className="text-4xl sm:text-5xl font-semibold tracking-[-0.025em] text-[var(--ink)] leading-[1.05]">
             Everything to run a thousand dashboards.
           </h2>
-        </motion.div>
+        </Reveal>
 
         <BentoFeatures />
       </section>
@@ -171,15 +163,12 @@ export default function Home() {
       <PinnedShowcase />
 
       {/* ---------- Stats strip ---------- */}
-      <motion.section
-        initial={{ opacity: 0, y: 26 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
+      <Reveal
+        as="section"
         className="py-20 border-y border-[var(--line)]"
       >
         <StatsStrip />
-      </motion.section>
+      </Reveal>
 
       {/* ---------- About ---------- */}
       <section className="relative py-24">
