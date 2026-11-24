@@ -51,19 +51,22 @@ export default function PricingPage() {
   return (
     <div className="min-h-screen bg-[var(--page)] px-6 py-16 text-[var(--ink)] sm:py-24">
       <motion.div
-        variants={reduce ? undefined : stagger(0.08)}
-        initial={reduce ? undefined : "hidden"}
-        animate={reduce ? undefined : "show"}
+        // No reduced-motion branch here on purpose: the hook resolves a frame
+        // after mount, and swapping these props to undefined mid-entrance froze
+        // the header at opacity 0. MotionProvider settles the movement instead.
+        variants={stagger(0.08)}
+        initial="hidden"
+        animate="show"
         className="mx-auto mb-10 max-w-2xl text-center"
       >
         <motion.h1
-          variants={reduce ? undefined : fadeUp}
+          variants={fadeUp}
           className="text-4xl font-semibold tracking-[-0.03em] sm:text-6xl"
         >
           Simple, transparent pricing.
         </motion.h1>
         <motion.p
-          variants={reduce ? undefined : fadeUp}
+          variants={fadeUp}
           className="mt-4 text-lg font-light text-[var(--ink-2)] sm:text-xl"
         >
           One price per agency, however many clients you report on.
