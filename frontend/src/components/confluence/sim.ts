@@ -28,7 +28,14 @@ export type Geometry = { w: number; h: number };
 export type Pointer = { x: number; y: number; active: boolean };
 
 // Where each tributary enters, as a fraction of height.
-const ENTRY = [0.22, 0.52, 0.84];
+// Kept clear of the hero's bottom fade, where the page surfaces.
+export const ENTRY = [0.18, 0.46, 0.74];
+
+/** Half-width of the narrows, then of the calm river, as fractions of height.
+ *  The spike aimed every particle at one point, which pinched the streams to a
+ *  pin; aiming each at its own lane in a band reads as water through a throat. */
+export const THROAT = 0.055;
+export const RIVER = 0.035;
 
 export function narrows(g: Geometry) {
   return { x: g.w * 0.42, y: g.h * 0.56 };
@@ -68,7 +75,7 @@ export function createField(n: number, g: Geometry, seed = 7): Field {
     f.x[i] = r() * g.w;
     respawnY(f, i, g, r);
     if (f.x[i] > narrows(g).x) {
-      f.y[i] = lineY(f.x[i], g) + f.lane[i] * g.h * 0.03;
+      f.y[i] = lineY(f.x[i], g) + f.lane[i] * g.h * RIVER;
       f.mix[i] = 1;
     }
   }
@@ -81,6 +88,28 @@ function respawnY(f: Field, i: number, g: Geometry, r: () => number) {
 }
 
 const reseed = rand(99);
+
+/**
+ * Upstream flow direction (unit vector) at a point: toward this lane's place
+ * in the narrows, churned by noise that calms on approach. Shared by step()
+ * and the poster's streamline tracer, so the static poster is drawn by the
+ * same field the live scene moves through.
+ */
+export function upstreamDir(x: number, y: number, lane: number, g: Geometry, t: number): [number, number] {
+  const nar = narrows(g);
+  const dx = nar.x - x, dy = nar.y + lane * g.h * THROAT - y;
+  const d = Math.hypot(dx, dy) || 1;
+  const calm = Math.max(0, x / nar.x); // 0 at entry, 1 at the narrows
+  const a = Math.sin(x * 0.011 + t * 0.7) * Math.cos(y * 0.013 - t * 0.5) * Math.PI * 1.6;
+  const turb = (1 - calm) * 0.9;
+  let vx = (dx / d) * (1 - turb) + Math.cos(a) * turb;
+  let vy = (dy / d) * (1 - turb) + Math.sin(a) * turb;
+  const vl = Math.hypot(vx, vy) || 1;
+  vx /= vl;
+  vy /= vl;
+  // Never let a stream flow backwards: water keeps heading downstream.
+  return [Math.max(0.15, vx), vy];
+}
 
 /**
  * Advance every particle by `dt` seconds. `t` is scene time, used to move the
@@ -97,20 +126,13 @@ export function step(f: Field, g: Geometry, dt: number, t: number, pointer: Poin
     let vx: number, vy: number;
 
     if (x < nar.x) {
-      // Upstream: head for the narrows, churned by noise that calms on approach.
-      const dx = nar.x - x, dy = nar.y - y;
-      const d = Math.hypot(dx, dy) || 1;
-      const calm = x / nar.x; // 0 at entry, 1 at the narrows
-      const a = Math.sin(x * 0.011 + t * 0.7) * Math.cos(y * 0.013 - t * 0.5) * Math.PI * 1.6;
-      const turb = (1 - calm) * 0.9;
-      vx = (dx / d) * (1 - turb) + Math.cos(a) * turb;
-      vy = (dy / d) * (1 - turb) + Math.sin(a) * turb;
-      const vl = Math.hypot(vx, vy) || 1;
-      vx = Math.max(0.15, vx / vl) * sp;
-      vy = (vy / vl) * sp;
+      const [ux, uy] = upstreamDir(x, y, f.lane[i], g, t);
+      vx = ux * sp;
+      vy = uy * sp;
     } else {
-      // Downstream: ride the line, relaxing onto this particle's lane.
-      const target = lineY(x, g) + f.lane[i] * g.h * 0.03;
+      // Downstream: ride the line, the lane tapering from throat to river width.
+      const taper = Math.min(1, (x - nar.x) / (g.w * 0.12));
+      const target = lineY(x, g) + f.lane[i] * g.h * (THROAT + (RIVER - THROAT) * taper);
       vx = sp * 1.15;
       vy = (target - y) * 4;
       f.mix[i] = Math.min(1, f.mix[i] + dt * 1.6);
