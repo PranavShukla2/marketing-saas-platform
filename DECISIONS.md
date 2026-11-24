@@ -142,3 +142,37 @@ Implemented as theme-aware CSS variables (`--glass-bg`, `--glass-border`,
 
 Applied deliberately — chrome, overlays and floating panels — not to every
 card, which is what makes glass designs look muddy and hurt readability.
+
+---
+
+## Hero scene ("Confluence") — raw WebGL2, no three.js ✅ *Phase 7 spike*
+
+Decided by measurement, not taste. The same simulation (`components/confluence/sim.ts`)
+was run through two renderers at `/design/confluence`, and three.js + React Three
+Fiber was bundled for size. Chrome, Apple M1 GPU via Metal, 1440×900:
+
+| Renderer | gzip | Main thread per frame, 8k particles, 4× CPU throttle |
+|---|---|---|
+| **Raw WebGL2** | **2.3 KB** | **2.4 ms** |
+| Canvas 2D | 1.4 KB | 5.4 ms |
+| three.js + R3F | ~251 KB (320 KB incl. React, which the page already ships) | — |
+
+All three hold 60fps at every count we tried, so frame rate doesn't decide it.
+What does is **main-thread time** — the hero shares that thread with scrolling and
+React, and WebGL2 does the same frame in under half Canvas's time — and **weight**:
+R3F alone is 3.6× the whole 70 KB budget for the scene before drawing a particle.
+
+**Why not R3F, given the animated portfolio uses it:** that site *is* the scene; a
+SaaS landing page has to stay light for the people who only came to sign in. The
+particle work here is a few hundred lines of plain WebGL2; a scene graph buys us
+nothing we'd use.
+
+**No-WebGL2 fallback is the static poster, not the Canvas 2D renderer.** A canvas
+that has handed out a WebGL context can't give a 2D one, so a live fallback means a
+second element and a second code path for ~3% of browsers. The poster is already
+required for reduced motion, `saveData` and first paint, so it covers this too.
+
+**Spike findings carried into Phase 8:** the narrows is a pinpoint and should be a
+throat; the trail fade leaves faint ghost streaks (8-bit alpha never reaches the
+background exactly — clear fully every N frames or fade in a float target); and the
+measurements are from an M1 — re-check on a low-end Android in the Phase 12 gate.
