@@ -11,8 +11,8 @@ jobs:
     name: Backend tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip
@@ -37,13 +37,13 @@ jobs:
     name: Frontend build & lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # node-version-file, not a literal: npm 10 (Node 20) and npm 11 (Node 22+)
       # disagree about whether sharp's WASM runtime belongs in the tree, so a
       # lockfile written by one is rejected outright by the other. Pinning CI
       # to the .nvmrc the project is developed on removes the skew instead of
       # requiring everyone to remember which npm wrote it last.
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -102,7 +102,7 @@ jobs:
     name: Dependency & secret scan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0 # gitleaks scans full history
       # Blocking: the backlog was triaged (python-jose/ecdsa dropped, Next
@@ -114,7 +114,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_CONFIG: .gitleaks.toml
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -122,7 +122,7 @@ jobs:
       - name: npm audit (frontend)
         working-directory: frontend
         run: npm audit --audit-level=high
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - name: pip-audit (backend)
