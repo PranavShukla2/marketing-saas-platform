@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion, useMotionValueEvent, useScroll, useTransform } from "framer-motion";
 import { useReducedMotionSafe } from "../../lib/useReducedMotionSafe";
+import { DURATION, EASE_OUT } from "../../lib/motion";
 import { useRouter } from "next/navigation";
 
 const LINES = [
@@ -33,6 +34,18 @@ export default function FloatingFlo() {
   const [stars, setStars] = useState<Star[]>([]);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const spinningRef = useRef(false);
+
+  // A handoff with the hero, not two Flos at once: in the hero Flo rides the
+  // river, and this companion only appears once you've scrolled past it.
+  // Hidden on both server and first client render, so hydration matches.
+  const [pastHero, setPastHero] = useState(false);
+  useMotionValueEvent(scrollY, "change", (v) => setPastHero(v > window.innerHeight * 0.6));
+  useEffect(() => {
+    // A reload can land mid-page, where no scroll event will fire.
+    const check = () => setPastHero(window.scrollY > window.innerHeight * 0.6);
+    const id = requestAnimationFrame(check);
+    return () => cancelAnimationFrame(id);
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -120,8 +133,14 @@ export default function FloatingFlo() {
       // Lifted clear of the bottom nav pill on phones, which occupies roughly
       // the bottom 60px; back to its usual corner from `sm` up, where the nav
       // is the top pill instead.
-      className="fixed bottom-24 right-5 z-50 sm:bottom-6 sm:right-6"
+      className={`fixed bottom-24 right-5 z-50 sm:bottom-6 sm:right-6 ${pastHero ? "" : "pointer-events-none"}`}
       style={reduceMotion ? undefined : { rotate: sway }}
+      initial={false}
+      animate={pastHero ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.6 }}
+      transition={{ duration: DURATION.step, ease: EASE_OUT }}
+      // inert, not just aria-hidden: hidden Flo is still a button, and
+      // aria-hidden alone would leave it in the tab order.
+      inert={!pastHero}
     >
       {showBubble && (
         <div className="absolute bottom-[calc(100%+10px)] right-0 max-w-[220px] rounded-2xl bg-[var(--surface)] border border-[var(--line)] shadow-[0_10px_30px_rgba(20,18,46,0.12)] px-4 py-2.5 text-sm text-[var(--ink)]">
