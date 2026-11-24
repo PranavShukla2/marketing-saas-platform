@@ -169,5 +169,18 @@ Landing, pricing, about, legal.
       have risked regression for no user-visible gain. The "live product
       preview in the hero" is also unbuilt — `PinnedShowcase` already renders
       real dashboard components further down the page, which covers the intent.
-- [ ] **Phase 6 — motion & polish** ← next
+- [ ] **Phase 6 — motion & polish** ← in progress
+      — done: route transitions (`template.tsx`); one gated `Reveal` that every
+      hand-rolled scroll entrance now uses; a root `MotionProvider`
+      (`reducedMotion="user"`) so Framer settles every transform itself under
+      reduced motion; Button/Card press and lift respect reduced motion.
+      ✅ *landing, pricing and about verified at 1440 + 390 under both motion
+      settings*
+      — the pass found two headers that were **invisible** under reduced
+      motion: `PageHeader` (every workspace page title) and the pricing hero.
+      Both swapped their Framer props to `undefined` once the hydration-safe
+      hook resolved, a frame after mount, which froze the entrance at
+      opacity 0. Entrances no longer branch on reduced motion at all.
+      — left: shared-element continuity, and the about page still uses
+      off-palette blues rather than the tokens.
 - [ ] Phase 7 — quality gate
