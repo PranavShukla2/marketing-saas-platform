@@ -387,7 +387,18 @@ product the workspace doesn't look like.
       are now part of Phase 9.)
 
 **Part II — identity**
-- [ ] Phase 7 — identity foundation (type, Tidewater tokens, motion v2, hero spike)
+- [x] **Phase 7 — identity foundation** ✅ *verified in both themes; contrast
+      checked on 70 token pairs and live on `/design`*
+      — Geist / Geist Mono / Instrument Serif wired (the landing's SF Pro
+      override removed); Tidewater tokens with semantic source, unified and
+      anomaly colours, old names aliased onto them; motion scale v2; `/design`
+      shows all of it with contrast computed live.
+      — **hero spike decided: raw WebGL2** (2.3 KB gzip, 2.4 ms/frame at 8k
+      particles on a 4×-throttled CPU) over Canvas 2D (5.4 ms) and R3F
+      (~251 KB). Evidence and Phase 8 notes in `DECISIONS.md`; the lab stays
+      at `/design/confluence`.
+      — the "Turbopack font error" was a stale `.next/dev` cache from the
+      16.2 → 16.3 upgrade, not a Next bug: `rm -rf frontend/.next/dev`.
 - [ ] Phase 8 — hero: the Confluence
 - [ ] Phase 9 — the story in six acts, plus the honesty fixes
 - [ ] Phase 10 — identity into the app
