@@ -4,6 +4,7 @@ import "./globals.css";
 import { themeScript } from "../lib/theme";
 import { Toaster } from "../components/ui/toaster";
 import { TooltipProvider } from "../components/ui/tooltip";
+import { MotionProvider } from "../components/motion/MotionProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 const caveat = Caveat({ subsets: ["latin"], weight: ["500", "600", "700"], variable: "--font-hand" });
@@ -25,7 +26,9 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className={`${inter.className} ${caveat.variable} bg-[var(--page)] text-[var(--ink)] antialiased`}>
-        <TooltipProvider delayDuration={200}>{children}</TooltipProvider>
+        <MotionProvider>
+          <TooltipProvider delayDuration={200}>{children}</TooltipProvider>
+        </MotionProvider>
         <Toaster />
       </body>
     </html>

@@ -21,7 +21,7 @@ const cardVariants = cva(
           "ring-1 ring-[var(--accent)]/10",
       },
       interactive: {
-        true: "hover:shadow-[var(--shadow-raised)] hover:-translate-y-0.5 cursor-pointer",
+        true: "hover:shadow-[var(--shadow-raised)] hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 cursor-pointer",
         false: "",
       },
       padding: { none: "p-0", sm: "p-4", md: "p-5 sm:p-6", lg: "p-6 sm:p-8" },

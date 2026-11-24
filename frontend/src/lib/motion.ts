@@ -7,9 +7,10 @@ import type { Transition, Variants } from "framer-motion";
  * component borrows from the same easings and durations, so pages import
  * these rather than inventing their own numbers.
  *
- * Nothing here checks reduced motion — components gate on
- * `useReducedMotionSafe()` at the call site, because whether an animation is
- * decorative or load-bearing is a per-component decision.
+ * Nothing here checks reduced motion. `MotionProvider` (root layout) makes
+ * Framer settle every transform instantly when the user asks for less motion;
+ * components additionally gate on `useReducedMotionSafe()` for what that can't
+ * reach — hover/tap feedback, opacity-only loops, and CSS-class animation.
  */
 
 /** Gentle deceleration — the house curve for entrances. */
