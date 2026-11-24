@@ -11,7 +11,7 @@ jobs:
     name: Backend tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
@@ -37,7 +37,7 @@ jobs:
     name: Frontend build & lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # node-version-file, not a literal: npm 10 (Node 20) and npm 11 (Node 22+)
       # disagree about whether sharp's WASM runtime belongs in the tree, so a
       # lockfile written by one is rejected outright by the other. Pinning CI
@@ -102,7 +102,7 @@ jobs:
     name: Dependency & secret scan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0 # gitleaks scans full history
       # Blocking: the backlog was triaged (python-jose/ecdsa dropped, Next
