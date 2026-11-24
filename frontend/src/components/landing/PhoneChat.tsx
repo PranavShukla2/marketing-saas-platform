@@ -6,6 +6,8 @@ import { useReducedMotionSafe } from "../../lib/useReducedMotionSafe";
 import Flo from "./Flo";
 import Sticker from "./Sticker";
 import Annotation from "./Annotation";
+import Reveal from "../motion/Reveal";
+import { DURATION } from "../../lib/motion";
 
 const FEATURES = [
   { color: "var(--teal)", text: "Daily digest, not a data dump" },
@@ -50,13 +52,7 @@ export default function PhoneChat() {
 
   return (
     <div className="max-w-5xl mx-auto px-6 flex flex-col md:flex-row items-center justify-center gap-10 lg:gap-24">
-      <motion.div
-        initial={{ opacity: 0, y: 26 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
-        className="w-full md:w-[420px] md:flex-shrink-0"
-      >
+      <Reveal className="w-full md:w-[420px] md:flex-shrink-0">
         <p className="font-mono text-xs text-[var(--ink-3)] tracking-wide mb-4">── straight to your phone</p>
         <h2 className="text-4xl sm:text-5xl font-semibold tracking-[-0.025em] text-[var(--ink)] mb-2 leading-[1.05]">
           You build.
@@ -71,12 +67,12 @@ export default function PhoneChat() {
 
         <ul className="space-y-3 mb-8">
           {FEATURES.map((f, i) => (
-            <motion.li
+            <Reveal
               key={f.text}
-              initial={{ opacity: 0, x: -12 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.45, delay: 0.15 + i * 0.12, ease: "easeOut" }}
+              as="li"
+              direction="right"
+              delay={0.15 + i * 0.12}
+              duration={DURATION.base}
               className="flex items-center gap-3 text-[15px] text-[var(--ink)]"
             >
               <span
@@ -88,21 +84,18 @@ export default function PhoneChat() {
                 </svg>
               </span>
               {f.text}
-            </motion.li>
+            </Reveal>
           ))}
         </ul>
 
         <button className="px-6 py-3 rounded-xl bg-[var(--ink)] text-[var(--page)] text-sm font-medium hover:opacity-90 transition-opacity">
           Get the digest →
         </button>
-      </motion.div>
+      </Reveal>
 
-      <motion.div
-        initial={{ opacity: 0, y: 26 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
-        className="relative flex-shrink-0 flex justify-center"
+      <Reveal delay={0.1} className="flex-shrink-0">
+      <div
+        className="relative flex justify-center"
         style={{ perspective: 1200 }}
         ref={stageRef}
         onPointerMove={handlePointerMove}
@@ -179,12 +172,10 @@ export default function PhoneChat() {
 
               <div className="px-2.5 py-3 space-y-[9px] bg-[var(--page)]" style={{ minHeight: "calc(100% - 80px)" }}>
                 {BUBBLES.map((bubble, i) => (
-                  <motion.div
+                  <Reveal
                     key={i}
-                    initial={{ opacity: 0, y: 16 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.45, delay: 0.15 + i * 0.18, ease: "easeOut" }}
+                    delay={0.15 + i * 0.18}
+                    duration={DURATION.base}
                     className={`flex ${bubble.from === "out" ? "justify-end" : "justify-start"}`}
                   >
                     <div
@@ -196,13 +187,14 @@ export default function PhoneChat() {
                     >
                       {bubble.text}
                     </div>
-                  </motion.div>
+                  </Reveal>
                 ))}
               </div>
             </div>
           </motion.div>
         </motion.div>
-      </motion.div>
+      </div>
+      </Reveal>
     </div>
   );
 }

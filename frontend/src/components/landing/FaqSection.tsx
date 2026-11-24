@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useReducedMotionSafe } from "../../lib/useReducedMotionSafe";
+import Reveal from "../motion/Reveal";
 
 const FAQS = [
   {
@@ -52,7 +53,7 @@ function FaqItem({
           {q}
         </span>
         <span
-          className="flex-shrink-0 w-8 h-8 rounded-full border border-[var(--line)] flex items-center justify-center text-[var(--ink-2)] transition-transform duration-300"
+          className="flex-shrink-0 w-8 h-8 rounded-full border border-[var(--line)] flex items-center justify-center text-[var(--ink-2)] transition-transform duration-300 motion-reduce:transition-none"
           style={{ transform: isOpen ? "rotate(45deg)" : "rotate(0deg)" }}
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true">
@@ -85,13 +86,7 @@ export default function FaqSection() {
 
   return (
     <div className="max-w-3xl mx-auto px-6">
-      <motion.div
-        initial={{ opacity: 0, y: 26 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
-        className="text-center mb-12"
-      >
+      <Reveal className="text-center mb-12">
         <p className="font-mono text-xs text-[var(--ink-3)] tracking-wide mb-4">── good questions</p>
         <h2 className="text-4xl sm:text-5xl font-semibold tracking-[-0.025em] text-[var(--ink)] leading-[1.05]">
           Frequently asked.
@@ -99,15 +94,9 @@ export default function FaqSection() {
         <p className="text-lg text-[var(--ink-2)] mt-4">
           Everything you need to know about the product and billing.
         </p>
-      </motion.div>
+      </Reveal>
 
-      <motion.div
-        initial={{ opacity: 0, y: 26 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
-        className="border-t border-[var(--line)]"
-      >
+      <Reveal delay={0.1} className="border-t border-[var(--line)]">
         {FAQS.map((item, i) => (
           <FaqItem
             key={item.q}
@@ -118,7 +107,7 @@ export default function FaqSection() {
             reduceMotion={reduceMotion}
           />
         ))}
-      </motion.div>
+      </Reveal>
     </div>
   );
 }

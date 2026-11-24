@@ -8,40 +8,65 @@ html {
   scroll-behavior: smooth;
 }
 
-:root {
-  --background: #ffffff;
-  --foreground: #1d1d1f;
-  --color-muted: #6e6e73;
-  --color-accent: #0071e3;
-  --color-border: #e5e5e5;
-  --color-surface: #f5f5f7;
+/* ---------------- Tidewater (Part II, Phase 7) ----------------
+   Every value below was checked with WCAG 2.x contrast in both themes before
+   it shipped: body text ≥ 4.5:1 on page and surface, chart marks ≥ 3:1, and
+   white button text ≥ 4.5:1 at both ends of the primary gradient.
 
-  /* Landing page (Flo / ArbFlow) design tokens */
-  --ink: #15132e;
-  --ink-2: #5b5f7a;
-  --ink-3: #6e7389; /* was #9499b0 — darkened to pass WCAG AA 4.5:1 on white */
-  --line: #edecf6;
-  --page: #fbfaff;
+   The colours have meanings, not just a look (see docs/ui-overhaul-plan.md):
+   each source keeps its own hue everywhere, violet means ArbFlow's unified
+   view, and coral is the anomaly colour — nothing decorative uses it. */
+:root {
+  --background: #f7f8fb;
+  --foreground: #0b1020;
+  --color-muted: #4b5470;
+  --color-accent: #5b45f0;
+  --color-border: #e4e7ee;
+  --color-surface: #ffffff;
+
+  /* Neutrals: cool paper instead of lavender, ink with a blue-black cast. */
+  --ink: #0b1020;
+  --ink-2: #4b5470;
+  --ink-3: #5f6782; /* 5.3:1 on page, 5.6:1 on white */
+  --line: #e4e7ee;
+  --page: #f7f8fb;
   --surface: #ffffff;
 
-  --indigo: #5b5bd6;
-  --violet: #8b5cf6;
-  --coral: #ff6b5e;
-  --amber: #f5a623;
-  --teal: #14b8a6;
+  /* Deep water — the hero in BOTH themes, and the dark theme's base. */
+  --deep: #070b16;
+  --deep-2: #0e1424;
+
+  /* Meaning. -ink variants are for text and pass 4.5:1; the base values are
+     for marks (chart series, dots, stream particles) and pass 3:1. */
+  --unified: #7756ff;
+  --source-ga4: #c77f09;
+  --source-ga4-ink: #a15c07;
+  --source-meta: #3d8bff;
+  --source-meta-ink: #1f62d6;
+  --source-linkedin: #11a090;
+  --source-linkedin-ink: #0d7d72;
+  --anomaly: #ff4e53;
+  --anomaly-ink: #d12f3a;
+
+  /* Brand pair for the primary gradient. Fixed across themes: white text
+     reads 5.9:1 on indigo and 4.6:1 on violet. */
+  --indigo: #5b45f0;
+  --violet: #7756ff;
+
+  /* Legacy names, kept as aliases so existing components re-skin onto the
+     semantic tokens. New code should use the semantic names. */
+  --amber: var(--source-ga4);
+  --teal: var(--source-linkedin);
+  --coral: var(--anomaly);
   --pink: #ec4899;
 
-  /* Brand colour used as text/icons. Indigo only reaches 3.3:1 on a dark
-     surface, so dark mode brightens this while buttons keep the real indigo
-     (white-on-indigo is 5.4:1 either way). */
-  --accent: #5b5bd6;
+  /* Brand colour as text/icons. */
+  --accent: #5b45f0;
 
-  /* Elevation. Three steps, not a dozen: resting cards, raised/hovered, and
-     overlays. Tinted with the brand ink rather than pure black so shadows
-     don't look grey-brown on a warm page. */
-  --shadow-rest: 0 1px 2px rgba(20,18,46,.05), 0 1px 3px rgba(20,18,46,.04);
-  --shadow-raised: 0 8px 24px rgba(20,18,46,.10), 0 2px 6px rgba(20,18,46,.05);
-  --shadow-overlay: 0 24px 60px rgba(20,18,46,.20), 0 8px 20px rgba(20,18,46,.10);
+  /* Elevation, tinted with the ink. */
+  --shadow-rest: 0 1px 2px rgba(11,16,32,.05), 0 1px 3px rgba(11,16,32,.04);
+  --shadow-raised: 0 8px 24px rgba(11,16,32,.10), 0 2px 6px rgba(11,16,32,.05);
+  --shadow-overlay: 0 24px 60px rgba(11,16,32,.20), 0 8px 20px rgba(11,16,32,.10);
 
   /* Glass — chrome and overlays only. Opaque enough that text on top still
      passes contrast; see DECISIONS.md. */
@@ -51,7 +76,7 @@ html {
      3xl numerals read straight through it, and backdrop-filter is a hint the
      browser is allowed to skip (it does, without GPU compositing). */
   --glass-bg-strong: rgba(255,255,255,.94);
-  --glass-border: rgba(20,18,46,.08);
+  --glass-border: rgba(11,16,32,.08);
   --glass-blur: 16px;
 
   --radius-sm: 10px;
@@ -59,28 +84,47 @@ html {
   --radius-lg: 20px;
   --radius-xl: 28px;
 
+  /* Motion scale v2, for CSS transitions. Mirrors DURATION in lib/motion.ts. */
+  --dur-hover: 120ms;
+  --dur-panel: 180ms;
+  --dur-step: 280ms;
+  --dur-merge: 420ms;
+  --dur-reveal: 620ms;
+  --ease-house: cubic-bezier(.22, 1, .36, 1);
+
   color-scheme: light;
 }
 
 /* ---------------- Dark theme ----------------
-   Only the semantic tokens change; every component reads through them.
-   Contrast on the dark surface: ink 16.2:1, ink-2 9.2:1, ink-3 5.9:1 — all
-   comfortably past WCAG AA. */
+   Only the semantic tokens change; every component reads through them. The
+   dark theme sits on the same deep water as the hero, so the two read as one
+   place rather than a dark page with a darker banner on it. */
 .dark {
-  --background: #0e0d18;
-  --foreground: #f4f3fa;
-  --color-muted: #9491ad;
-  --color-border: #292741;
-  --color-surface: #16152a;
+  --background: #0a0f1c;
+  --foreground: #eef1f8;
+  --color-muted: #8f98b3;
+  --color-border: #222b3f;
+  --color-surface: #121a2b;
 
-  --ink: #f4f3fa;
-  --ink-2: #b9b7d0;
-  --ink-3: #9491ad;
-  --line: #292741;
-  --page: #0e0d18;
-  --surface: #16152a;
+  --ink: #eef1f8;
+  --ink-2: #b3bad0;
+  --ink-3: #8f98b3; /* 6.7:1 on page, 6.1:1 on surface */
+  --line: #222b3f;
+  --page: #0a0f1c;
+  --surface: #121a2b;
 
-  --accent: #9b9bf5;
+  /* Marks brighten on dark; the -ink text variants brighten further. */
+  --unified: #8b6dff;
+  --source-ga4: #f5a524;
+  --source-ga4-ink: #f5b544;
+  --source-meta: #5b9bff;
+  --source-meta-ink: #7db0ff;
+  --source-linkedin: #2dd4bf;
+  --source-linkedin-ink: #3fe0cb;
+  --anomaly: #ff6b70;
+  --anomaly-ink: #ff8a8e;
+
+  --accent: #a594ff;
 
   /* Dark elevation leans on lighter surfaces more than shadow (a shadow on a
      dark background is nearly invisible), so these stay subtle and the
@@ -89,8 +133,8 @@ html {
   --shadow-raised: 0 10px 28px rgba(0,0,0,.55), 0 2px 6px rgba(0,0,0,.35);
   --shadow-overlay: 0 28px 70px rgba(0,0,0,.70), 0 10px 24px rgba(0,0,0,.45);
 
-  --glass-bg: rgba(22,21,42,.72);
-  --glass-bg-strong: rgba(22,21,42,.94);
+  --glass-bg: rgba(18,26,43,.72);
+  --glass-bg-strong: rgba(18,26,43,.94);
   --glass-border: rgba(255,255,255,.08);
   --glass-blur: 16px;
 
@@ -100,8 +144,10 @@ html {
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* The accent voice: Instrument Serif, set italic via the .accent utility. */
+  --font-serif: var(--font-instrument-serif), ui-serif, Georgia, serif;
 
   --color-ink: var(--ink);
   --color-ink-2: var(--ink-2);
@@ -117,6 +163,31 @@ html {
   --color-teal: var(--teal);
   --color-pink: var(--pink);
   --color-accent: var(--accent);
+
+  /* Tidewater semantics as utilities: text-source-ga4-ink, bg-unified, … */
+  --color-deep: var(--deep);
+  --color-deep-2: var(--deep-2);
+  --color-unified: var(--unified);
+  --color-anomaly: var(--anomaly);
+  --color-anomaly-ink: var(--anomaly-ink);
+  --color-source-ga4: var(--source-ga4);
+  --color-source-ga4-ink: var(--source-ga4-ink);
+  --color-source-meta: var(--source-meta);
+  --color-source-meta-ink: var(--source-meta-ink);
+  --color-source-linkedin: var(--source-linkedin);
+  --color-source-linkedin-ink: var(--source-linkedin-ink);
+}
+
+/* The accent voice: Instrument Serif italic, for one phrase per heading. It's
+   optically smaller than Geist at the same size, so it's nudged up to match. */
+.accent-serif {
+  /* The next/font variable directly: `@theme inline` folds --font-serif into
+     the font-serif utility and never emits it as a real custom property. */
+  font-family: var(--font-instrument-serif), ui-serif, Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1.08em;
+  letter-spacing: -0.01em;
 }
 
 /* Glass surface. A utility rather than a component so chrome, overlays and the
@@ -177,8 +248,10 @@ body {
   color: var(--foreground);
 }
 
+/* The landing used to override the whole app's type with the SF Pro system
+   stack, so it never looked like the product it was selling. It now inherits
+   Geist from <body> like every other page. */
 .landing {
-  font-family: -apple-system, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
   letter-spacing: -0.012em;
   background: var(--page);
   color: var(--ink);

@@ -20,3 +20,13 @@ venv/
 
 # Local-only project notes (kept off GitHub)
 CLAUDE.md
+
+# Local-only production roadmap (kept off GitHub) — both name variants
+PRODUCTION-ROADMAP.md
+PRODUCTION_ROADMAP.md
+
+# Local-only blog draft (kept off GitHub)
+why-i-dont-put-jwts-in-redirect-urls.md
+
+# Local-only leftovers tracker (kept off GitHub)
+LEFTOVERS.md

@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useReducedMotionSafe } from "../../lib/useReducedMotionSafe";
 
 interface StickerProps {
   children: React.ReactNode;
@@ -25,13 +26,16 @@ export default function Sticker({
   float = true,
   solid = false,
 }: StickerProps) {
+  const reduce = useReducedMotionSafe();
   return (
     <motion.div
+      // The pop-in is a transform, which MotionProvider settles instantly under
+      // reduced motion; the gentle float is a CSS class globals.css switches off.
       initial={{ opacity: 0, scale: 0.6, rotate: rotate - 8 }}
       whileInView={{ opacity: 1, scale: 1, rotate }}
       viewport={{ once: true, amount: 0.5 }}
       transition={{ type: "spring", stiffness: 260, damping: 18, delay }}
-      whileHover={{ scale: 1.08, rotate: 0 }}
+      whileHover={reduce ? undefined : { scale: 1.08, rotate: 0 }}
       className={`pointer-events-auto select-none ${className}`}
       style={{ ["--rot" as string]: `${rotate}deg` }}
     >

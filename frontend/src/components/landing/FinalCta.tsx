@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "framer-motion";
+import Reveal from "../motion/Reveal";
 import Flo from "./Flo";
 
 export default function FinalCta() {
@@ -13,12 +13,7 @@ export default function FinalCta() {
         style={{ background: "radial-gradient(circle, rgba(139,92,246,0.16), transparent 70%)" }}
       />
 
-      <motion.div
-        initial={{ opacity: 0, y: 26 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
-      >
+      <Reveal>
         <Flo size={72} className="mx-auto mb-6" />
 
         <p className="font-mono text-xs text-[var(--ink-3)] tracking-wide mb-4">── 2-minute setup</p>
@@ -43,7 +38,7 @@ export default function FinalCta() {
         <p className="text-xs text-[var(--ink-3)] mt-12">
           © 2026 ArbFlow Systems · built by Pranav Shukla
         </p>
-      </motion.div>
+      </Reveal>
     </div>
   );
 }

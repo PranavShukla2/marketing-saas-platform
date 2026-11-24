@@ -1,8 +1,8 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { useReducedMotionSafe } from "../../lib/useReducedMotionSafe";
 import Flo from "./Flo";
+import Reveal from "../motion/Reveal";
 import GlowBlobs from "./GlowBlobs";
 
 const TECH = [
@@ -21,13 +21,7 @@ export default function AboutSection() {
       <p className="font-mono text-xs text-[var(--ink-3)] tracking-wide mb-10 text-center sm:text-left">── about</p>
 
       <div className="grid md:grid-cols-[auto_1fr] gap-10 items-center">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
-          className="relative w-[140px] h-[140px] mx-auto"
-        >
+        <Reveal direction="scale" className="relative w-[140px] h-[140px] mx-auto">
           <div
             className={`absolute inset-0 rounded-full ${!reduceMotion ? "animate-conic-spin" : ""}`}
             style={{
@@ -41,14 +35,9 @@ export default function AboutSection() {
           <div className="absolute -bottom-1 -right-1 rounded-full bg-[var(--surface)] p-1 shadow-[0_4px_12px_rgba(20,18,46,0.15)]">
             <Flo variant="mark" size={28} />
           </div>
-        </motion.div>
+        </Reveal>
 
-        <motion.div
-          initial={{ opacity: 0, y: 26 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.1, ease: "easeOut" }}
-        >
+        <Reveal delay={0.1}>
           <h2 className="text-3xl sm:text-[2.6rem] font-semibold tracking-[-0.02em] text-[var(--ink)] mb-4 leading-[1.1]">
             Built by a founder tired of GA4 tabs.
           </h2>
@@ -67,7 +56,7 @@ export default function AboutSection() {
               </span>
             ))}
           </div>
-        </motion.div>
+        </Reveal>
       </div>
     </div>
   );

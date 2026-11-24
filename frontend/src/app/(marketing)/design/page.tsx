@@ -12,6 +12,7 @@ import {
   Field, Hint, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
   Skeleton, Switch, Tabs, TabsContent, TabsList, TabsTrigger,
 } from "../../../components/ui";
+import Foundation from "./Foundation";
 
 const ChartShowcase = dynamic(() => import("./ChartShowcase"), {
   ssr: false,
@@ -33,11 +34,13 @@ export default function DesignSystemPage() {
       <div className="mx-auto max-w-5xl space-y-12">
         <header>
           <Badge tone="accent" dot>Design system</Badge>
-          <h1 className="mt-3 text-4xl font-semibold tracking-[-0.02em] text-[var(--ink)]">Primitives</h1>
+          <h1 className="mt-3 text-4xl font-semibold tracking-[-0.02em] text-[var(--ink)]">Foundation &amp; primitives</h1>
           <p className="mt-2 text-[var(--ink-2)]">
-            Every component, in the theme you&apos;re using. Switch themes in the navbar to check both.
+            Every token and component, in the theme you&apos;re using. Switch themes in the navbar to check both.
           </p>
         </header>
+
+        <Foundation />
 
         <Section title="Buttons" desc="Seven variants, four sizes, loading and disabled states.">
           <div className="flex flex-wrap gap-3">

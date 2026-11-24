@@ -31,7 +31,7 @@ curl -L -o ne_ind.geojson \
 npx mapshaper ne_ind.geojson \
   -filter-fields NAME \
   -rename-fields name=NAME \
-  -simplify 1.5% keep-shapes \
+  -simplify variable percentage="name == 'India' ? '20%' : '1.5%'" keep-shapes \
   -rename-layers countries \
   -o countries-ind-110m.json format=topojson quantization=1e5
 ```
@@ -39,6 +39,27 @@ npx mapshaper ne_ind.geojson \
 Only a 1:10m POV file is published, hence the simplify step. `keep-shapes` is
 what stops small island nations being simplified out of existence — without it
 the Bahamas, Singapore and Hong Kong disappear.
+
+### Why India is simplified less than everywhere else
+
+A single 1.5% pass got the boundary wrong in exactly the place this file exists
+to get right. Simplification moves shared arcs, and it moved the Bhutan–India
+arc ~0.25° east — enough to put **Tawang inside Bhutan**. It also reduced India
+to one polygon, so **Andaman & Nicobar were dropped** (`keep-shapes` keeps only
+the largest part of each country). Raising detail globally doesn't fix it
+cheaply: at 2–3% Muzaffarabad, ~0.1° from the boundary, falls out instead, and
+only 5% passes — at 272KB.
+
+So India's arcs (which are shared, so its neighbours' borders with India get the
+same detail) are kept at 20%, and the rest of the world stays at 1.5%: 129KB,
+and India's outline drifts from the 1:10m source by ~0.2% of its area, mostly
+coastline.
+
+Checked by point-in-polygon against the source, and any regeneration should
+re-check the same places: Muzaffarabad, Mirpur, Gilgit, Skardu, the Khunjerab
+tip, Siachen, Aksai Chin (centre and north-east), the Shaksgam valley, Tawang,
+Itanagar and Port Blair must all fall in India; Islamabad in Pakistan; Kashgar
+in China; and no point in South Asia may fall in two countries.
 
 ## Why it lives in public/ rather than being imported
 

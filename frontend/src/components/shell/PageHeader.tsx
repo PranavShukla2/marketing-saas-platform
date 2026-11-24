@@ -3,7 +3,6 @@
 import { motion } from "framer-motion";
 import { cn } from "../../lib/cn";
 import { fadeUp } from "../../lib/motion";
-import { useReducedMotionSafe } from "../../lib/useReducedMotionSafe";
 
 /**
  * One header for every workspace page. Pages were each hand-rolling their own
@@ -19,12 +18,14 @@ export function PageHeader({
   badge?: React.ReactNode;
   className?: string;
 }) {
-  const reduce = useReducedMotionSafe();
   return (
     <motion.header
-      variants={reduce ? undefined : fadeUp}
-      initial={reduce ? undefined : "hidden"}
-      animate={reduce ? undefined : "show"}
+      // No reduced-motion branch here on purpose: the hook resolves a frame
+      // after mount, and swapping these props to undefined mid-entrance froze
+      // the header at opacity 0. MotionProvider settles the movement instead.
+      variants={fadeUp}
+      initial="hidden"
+      animate="show"
       className={cn(
         "flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between mb-8",
         className
