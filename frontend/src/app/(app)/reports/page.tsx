@@ -11,6 +11,9 @@ import {
 import { EmptyState } from "../../../components/workspace/primitives";
 import { apiFetch, getApiUrl } from "../../../lib/auth";
 import { withWorkspace } from "../../../lib/workspace";
+import BrandPreview from "../../../components/brand/BrandPreview";
+import { demoData } from "../../../lib/demoData";
+import { downloadReportPdf, reportFromWorkspace, type ReportModel } from "../../../lib/report";
 
 type Schedule = { recipients: string; frequency: string; enabled: boolean; last_sent_at: string | null };
 
@@ -21,6 +24,33 @@ export default function ReportsPage() {
   });
   const [schedAllowed, setSchedAllowed] = useState(true);
   const [schedSaving, setSchedSaving] = useState(false);
+  // The report this page exports, shown before it's exported. Sample figures
+  // (and no download) until GA4 is connected — a sample PDF must never be one
+  // click from a client's inbox.
+  const [report, setReport] = useState<ReportModel | null>(null);
+  const [isSample, setIsSample] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const api = getApiUrl();
+        const [dashRes, brandRes] = await Promise.all([
+          apiFetch(withWorkspace(`${api}/api/v1/analytics/dashboard`)),
+          apiFetch(withWorkspace(`${api}/api/v1/workspace/branding`)),
+        ]);
+        const d = dashRes.ok ? (await dashRes.json()).data : null;
+        const brand = brandRes.ok ? await brandRes.json() : {};
+        if (cancelled) return;
+        const live = d?.status === "active";
+        setIsSample(!live);
+        setReport(reportFromWorkspace(live ? d : demoData, brand));
+      } catch {
+        if (!cancelled) { setIsSample(true); setReport(reportFromWorkspace(demoData, {})); }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -67,86 +97,35 @@ export default function ReportsPage() {
   };
 
   const generatePDF = async () => {
+    if (!report || isSample) return;
     setGenerating(true);
     try {
-      const backendUrl = getApiUrl();
-      const [dashRes, campRes] = await Promise.all([
-        apiFetch(withWorkspace(`${backendUrl}/api/v1/analytics/dashboard`)),
-        apiFetch(withWorkspace(`${backendUrl}/api/v1/workspace/campaigns`)),
-      ]);
-      const d = (await dashRes.json()).data;
-      const channels = (await campRes.json()).campaigns || [];
-
-      // Loaded on click so the PDF toolchain never rides the initial bundle.
-      const { default: jsPDF } = await import("jspdf");
-      const doc = new jsPDF();
-      doc.setFont("helvetica");
-
-      doc.setFontSize(22);
-      doc.text("Workspace Analytics Report", 20, 30);
-      doc.setFontSize(12);
-      doc.setTextColor(100);
-      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 20, 40);
-      if (d?.company_name) doc.text(`Workspace: ${d.company_name}`, 20, 47);
-
-      doc.setTextColor(0);
-      doc.setFontSize(16);
-      doc.text("Executive Summary", 20, 65);
-      doc.setFontSize(12);
-      doc.text(`Active Users: ${Number(d?.summary?.active_users || 0).toLocaleString()}`, 20, 80);
-      doc.text(`Page Views: ${Number(d?.summary?.page_views || 0).toLocaleString()}`, 20, 90);
-      doc.text(`Average Session Duration: ${d?.summary?.avg_duration || "0s"}`, 20, 100);
-      doc.text(`Bounce Rate: ${d?.summary?.bounce_rate || "0%"}`, 20, 110);
-
-      doc.setLineWidth(0.5);
-      doc.line(20, 122, 190, 122);
-
-      doc.setFontSize(16);
-      doc.text("Top Traffic Channels", 20, 137);
-      doc.setFontSize(12);
-      // The channels endpoint returns users/views/ctr — it has never returned
-      // `roi`, so the old line printed "ROI: undefined" on every report.
-      channels.slice(0, 5).forEach((c: { name: string; users: number; views: number }, i: number) => {
-        doc.text(`${i + 1}. ${c.name} — ${Number(c.users).toLocaleString()} users, ${Number(c.views).toLocaleString()} views`, 20, 152 + i * 10);
-      });
-
-      const sources = d?.post_level || [];
-      if (sources.length > 0) {
-        const startY = 152 + Math.min(channels.length, 5) * 10 + 15;
-        doc.setFontSize(16);
-        doc.text("Traffic Sources", 20, startY);
-        doc.setFontSize(12);
-        sources.slice(0, 5).forEach((s: { source: string; views: number; users: number }, i: number) => {
-          doc.text(`${s.source}: ${s.views} views, ${s.users} users`, 20, startY + 15 + i * 10);
-        });
-      }
-
-      doc.setFontSize(10);
-      doc.setTextColor(150);
-      doc.text("ArbFlow Intelligence Systems", 20, 280);
-      doc.save(`ArbFlow_Report_${new Date().toISOString().split("T")[0]}.pdf`);
+      // Fresh date at the moment of export; everything else is what's previewed.
+      await downloadReportPdf({ ...report, generated: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) }, `${report.client}_Report.pdf`);
       toast.success("Report downloaded");
     } catch (err) {
       console.error("Failed to generate report", err);
-      toast.error("Couldn't build the report", { description: "We couldn't reach your analytics data." });
+      toast.error("Couldn't build the report");
     } finally {
       setGenerating(false);
     }
   };
 
   return (
-    <div className="mx-auto max-w-5xl pb-16">
+    <div className="mx-auto max-w-6xl pb-16">
       <PageHeader
         title="Reports"
         description="Download a snapshot now, or have a branded one emailed to your client on a schedule."
         actions={
-          <Button onClick={generatePDF} loading={generating}>
+          <Button onClick={generatePDF} loading={generating} disabled={!report || isSample} title={isSample ? "Connect Google Analytics to export a report" : undefined}>
             {!generating && <FileDown />}
             {generating ? "Building…" : "Download report"}
           </Button>
         }
       />
 
+      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_22rem]">
+      <div className="min-w-0">
       <Card padding="lg" className="mb-5 rounded-[var(--radius-xl)]">
         <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
           <div className="flex items-start gap-3">
@@ -224,6 +203,35 @@ export default function ReportsPage() {
           description="Reports are built when you ask for one and emailed when scheduled — we don't keep copies. Once we store sent reports, they'll be listed here to re-download."
         />
       </Card>
+      </div>
+
+      {/* What the client receives — the exact report Download builds. */}
+      <aside className="lg:sticky lg:top-24">
+        <div className="mb-2 flex items-center justify-between">
+          <p className="text-sm font-medium text-[var(--ink-2)]">Preview</p>
+          {isSample && <Badge tone="warning">Sample figures</Badge>}
+        </div>
+        {report ? (
+          <BrandPreview
+            accent={report.accent}
+            agencyName={report.agencyName}
+            logoUrl={report.logoUrl}
+            footer={report.footer}
+            client={report.client}
+            generated={report.generated}
+            kpis={report.kpis}
+            rows={report.rows.length ? report.rows : undefined}
+          />
+        ) : (
+          <div className="aspect-[1/1.41] w-full animate-pulse rounded-[var(--radius-md)] bg-[var(--line)] motion-reduce:animate-none" />
+        )}
+        <p className="mt-2 text-xs leading-relaxed text-[var(--ink-3)]">
+          {isSample
+            ? "Connect Google Analytics and this fills with the client's live figures."
+            : "Your logo, colour and footer come from Settings → Branding."}
+        </p>
+      </aside>
+      </div>
     </div>
   );
 }
