@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Instrument_Serif, Caveat } from "next/font/google";
+import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 import { themeScript } from "../lib/theme";
 import { Toaster } from "../components/ui/toaster";
@@ -8,11 +8,15 @@ import { MotionProvider } from "../components/motion/MotionProvider";
 
 // Type v2 (Part II, Phase 7). Geist carries UI, body and display; Geist Mono
 // every number and label (tabular); Instrument Serif italic is the accent voice,
-// at most one phrase per heading. Caveat is kept only for Flo's own speech.
+// at most one phrase per heading.
+//
+// Trimmed in Phase 12 for LCP on slow connections: Caveat had no users left
+// but was still preloaded in three weights; the serif is only ever italic; and
+// mono is small, used for labels, and needn't compete with Geist for the
+// first bytes — it isn't preloaded.
 const geist = Geist({ subsets: ["latin"], variable: "--font-geist-sans" });
-const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" });
-const serif = Instrument_Serif({ subsets: ["latin"], weight: "400", style: ["normal", "italic"], variable: "--font-instrument-serif" });
-const caveat = Caveat({ subsets: ["latin"], weight: ["500", "600", "700"], variable: "--font-hand" });
+const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono", preload: false });
+const serif = Instrument_Serif({ subsets: ["latin"], weight: "400", style: "italic", variable: "--font-instrument-serif" });
 
 const DESCRIPTION =
   "One calm, white-labeled analytics workspace per client — and a plain-English sentence when something changes.";
@@ -43,7 +47,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body
-        className={`${geist.variable} ${geistMono.variable} ${serif.variable} ${caveat.variable} font-sans bg-[var(--page)] text-[var(--ink)] antialiased`}
+        className={`${geist.variable} ${geistMono.variable} ${serif.variable} font-sans bg-[var(--page)] text-[var(--ink)] antialiased`}
       >
         <MotionProvider>
           <TooltipProvider delayDuration={200}>{children}</TooltipProvider>

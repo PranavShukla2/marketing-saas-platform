@@ -38,7 +38,7 @@ export default function MetaDashboard({ data }: { data?: MetaData }) {
       <div className="flex items-center gap-3 flex-wrap sm:justify-between">
         {/* The shared Tabs, as on the LinkedIn tab: the old pills put white
             text on brand colours that missed 4.5:1. */}
-        <Tabs group="meta" value={sub} onValueChange={setSub}>
+        <Tabs panels={false} group="meta" value={sub} onValueChange={setSub}>
           <TabsList>
             {SUBTABS.map((t) => (
               <TabsTrigger key={t.id} value={t.id}>{t.label}</TabsTrigger>

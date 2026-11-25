@@ -74,7 +74,11 @@ export default function FloAssistant() {
       };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3 pointer-events-none">
+    // The panel is absolutely positioned over the same corner as the droplet,
+    // so opening one and closing the other never moves anything. In a flex
+    // column, the panel dropped into the droplet's space once it had exited —
+    // a layout shift on every first visit (Phase 12 Lighthouse).
+    <div className="pointer-events-none fixed bottom-6 right-6 z-50">
       <AnimatePresence mode="wait">
         {open && (
           <motion.div
@@ -83,7 +87,7 @@ export default function FloAssistant() {
             animate={{ opacity: 1, scale: 1, y: 0, borderRadius: "24px" }}
             exit={dropExit}
             transition={{ type: "spring", stiffness: 320, damping: 26 }}
-            className="pointer-events-auto w-[300px] bg-[var(--surface)] border border-[var(--line)] shadow-[0_20px_60px_rgba(20,18,46,0.18)] p-5 origin-bottom-right"
+            className="pointer-events-auto absolute bottom-0 right-0 w-[300px] bg-[var(--surface)] border border-[var(--line)] shadow-[0_20px_60px_rgba(20,18,46,0.18)] p-5 origin-bottom-right"
             style={{ borderRadius: 24 }}
           >
             <div className="flex items-start gap-3">

@@ -43,7 +43,7 @@ function SourcesVisual() {
       <div className="rounded-[var(--radius-lg)] border border-[var(--line)] bg-[var(--surface)] p-5 shadow-[var(--shadow-raised)]">
         {/* On phones the status drops under the name rather than squeezing it. */}
         <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
-          <Mark text="GA4" color="var(--source-ga4)" />
+          <Mark text="GA4" color="var(--mark-ga4)" />
           {/* The min width is what makes the status wrap instead of the name. */}
           <div className="min-w-[11rem] flex-1">
             <p className="font-medium text-[var(--ink)]">Google Analytics</p>
@@ -54,7 +54,7 @@ function SourcesVisual() {
             className={cn(
               "ml-14 inline-flex h-8 shrink-0 items-center gap-2 rounded-full px-3 text-xs font-medium transition-colors duration-[var(--dur-step)] sm:ml-0",
               phase === "connected"
-                ? "bg-[var(--source-linkedin)]/12 text-[var(--source-linkedin-ink)]"
+                ? "bg-[var(--success)]/12 text-[var(--success)]"
                 : "border border-[var(--line)] text-[var(--ink)]"
             )}
           >
@@ -89,11 +89,11 @@ function SourcesVisual() {
       </div>
 
       {[
-        { mark: "M", color: "var(--source-meta)", name: "Meta Ads", sub: "Facebook & Instagram campaigns" },
-        { mark: "in", color: "var(--source-linkedin)", name: "LinkedIn Ads", sub: "Campaign Manager" },
+        { mark: "M", color: "var(--mark-meta)", name: "Meta Ads", sub: "Facebook & Instagram campaigns" },
+        { mark: "in", color: "var(--mark-linkedin)", name: "LinkedIn Ads", sub: "Campaign Manager" },
       ].map((s) => (
         <div key={s.name} className="flex items-center gap-4 rounded-[var(--radius-lg)] border border-dashed border-[var(--line)] p-5">
-          <span className="opacity-60"><Mark text={s.mark} color={s.color} /></span>
+          <Mark text={s.mark} color={s.color} />
           <div className="min-w-0 flex-1">
             <p className="font-medium text-[var(--ink-2)]">{s.name}</p>
             <p className="text-sm text-[var(--ink-3)]">{s.sub}</p>

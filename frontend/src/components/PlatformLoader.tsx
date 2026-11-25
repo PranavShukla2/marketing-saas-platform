@@ -10,9 +10,9 @@ import { DURATION, EASE_OUT } from "../lib/motion";
  * collage of other companies' branding.
  */
 const SOURCES: Record<string, { name: string; mark: string; color: string }> = {
-  google: { name: "Google Analytics", mark: "GA4", color: "var(--source-ga4)" },
-  meta: { name: "Meta Ads", mark: "M", color: "var(--source-meta)" },
-  linkedin: { name: "LinkedIn Ads", mark: "in", color: "var(--source-linkedin)" },
+  google: { name: "Google Analytics", mark: "GA4", color: "var(--mark-ga4)" },
+  meta: { name: "Meta Ads", mark: "M", color: "var(--mark-meta)" },
+  linkedin: { name: "LinkedIn Ads", mark: "in", color: "var(--mark-linkedin)" },
 };
 
 export default function PlatformLoader({ platform }: { platform: string }) {

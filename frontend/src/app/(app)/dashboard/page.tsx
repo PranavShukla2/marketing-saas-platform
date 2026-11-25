@@ -47,6 +47,12 @@ export default function Dashboard() {
   const [syncing, setSyncing] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState("");
   const [agencyLogo, setAgencyLogo] = useState<string | null>(null);
+  const [checklistSettled, setChecklistSettled] = useState(false);
+  // Never let a slow onboarding request hold the dashboard back for long.
+  useEffect(() => {
+    const id = setTimeout(() => setChecklistSettled(true), 2500);
+    return () => clearTimeout(id);
+  }, []);
   const [brand, setBrand] = useState<Brand>({ logo_url: null, accent_color: "#5b5bd6", report_footer: null });
   const [isPlatformLoading, setIsPlatformLoading] = useState(false);
   const [targetPlatform, setTargetPlatform] = useState<string | null>(null);
@@ -266,10 +272,14 @@ export default function Dashboard() {
 
       </div>
 
-      <OnboardingChecklist onConnectGoogle={handleConnectGoogle} />
+      <OnboardingChecklist onConnectGoogle={handleConnectGoogle} onSettled={() => setChecklistSettled(true)} />
+
+      {/* Held until the checklist above has settled, so it can't push an
+          already-painted page down. The skeleton stands in meanwhile. */}
+      {!checklistSettled ? <DashboardSkeleton /> : <>
 
       <div className="mb-6">
-        <Tabs group="source" value={targetPlatform ?? activePlatform} onValueChange={handlePlatformChange}>
+        <Tabs panels={false} group="source" value={targetPlatform ?? activePlatform} onValueChange={handlePlatformChange}>
           <TabsList>
             {SOURCES.map((src) => (
               <TabsTrigger key={src.id} value={src.id} className="gap-2">
@@ -284,7 +294,7 @@ export default function Dashboard() {
 
       {activePlatform === "google" && (
         <div className="mb-7">
-          <Tabs
+          <Tabs panels={false}
             group="section"
             value={activeSection}
             onValueChange={(v) => setActiveSection(v as Ga4SectionId)}
@@ -331,6 +341,8 @@ export default function Dashboard() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      </>}
 
       <FloAssistant />
     </div>

@@ -183,7 +183,7 @@ export async function buildReportPdf(m: ReportModel) {
   doc.setDrawColor("#e4e7ee");
   doc.line(M, H - 16, W - M, H - 16);
   doc.setFontSize(8.5);
-  doc.setTextColor("#8a90a6");
+  doc.setTextColor("#626880"); // 5.5:1 on white — the old grey was 3.2:1
   doc.text(m.footer || "Generated with ArbFlow", M, H - 10);
 
   return doc;

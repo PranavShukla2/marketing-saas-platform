@@ -13,19 +13,31 @@ const DISMISS_KEY = "arbflow_onboarding_dismissed";
 /** First-run checklist. Steps come from the backend's real state (so they
  * check themselves off), it only shows on your OWN workspace, disappears
  * forever once everything's done, and can be dismissed early. */
-export default function OnboardingChecklist({ onConnectGoogle }: { onConnectGoogle: () => void }) {
+export default function OnboardingChecklist({
+  onConnectGoogle,
+  onSettled,
+}: {
+  onConnectGoogle: () => void;
+  /** Called once it knows whether it will show. The dashboard holds its body
+   *  until then: this card renders above the tabs, and appearing after them
+   *  pushed the whole page down (CLS 0.09 in the Phase 12 Lighthouse run). */
+  onSettled?: () => void;
+}) {
   const [steps, setSteps] = useState<Steps | null>(null);
   const [complete, setComplete] = useState(true); // assume done until told otherwise (no flash)
   const [dismissed, setDismissed] = useState(true);
 
   useEffect(() => {
     // Onboarding is about YOUR account — hide it while viewing a teammate's workspace.
-    if (getActiveWorkspace()) return;
+    if (getActiveWorkspace()) { onSettled?.(); return; }
+    let wasDismissed = false;
     try {
-      setDismissed(localStorage.getItem(DISMISS_KEY) === "1");
+      wasDismissed = localStorage.getItem(DISMISS_KEY) === "1";
+      setDismissed(wasDismissed);
     } catch {
       setDismissed(false);
     }
+    if (wasDismissed) { onSettled?.(); return; }
     (async () => {
       try {
         const res = await apiFetch(`${getApiUrl()}/api/v1/workspace/onboarding`);
@@ -35,7 +47,10 @@ export default function OnboardingChecklist({ onConnectGoogle }: { onConnectGoog
           setComplete(!!data.complete);
         }
       } catch {}
+      onSettled?.();
     })();
+    // Mount-only: onSettled is a fire-once signal, not a dependency.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (!steps || complete || dismissed) return null;

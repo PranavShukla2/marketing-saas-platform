@@ -17,12 +17,18 @@ import { useReducedMotionSafe } from "../../lib/useReducedMotionSafe";
  * context. (Radix exposes `data-state="active"` for styling, but a CSS-only
  * marker can't be a single shared element, so it can't slide.)
  */
-type Ctx = { value?: string; group: string };
-const TabsCtx = React.createContext<Ctx>({ group: "tabs" });
+type Ctx = { value?: string; group: string; panels: boolean };
+const TabsCtx = React.createContext<Ctx>({ group: "tabs", panels: true });
 
 export function Tabs({
-  value, defaultValue, onValueChange, group = "tabs", children, ...props
-}: React.ComponentPropsWithoutRef<typeof TabsPrimitive.Root> & { group?: string }) {
+  value, defaultValue, onValueChange, group = "tabs", panels = true, children, ...props
+}: React.ComponentPropsWithoutRef<typeof TabsPrimitive.Root> & {
+  group?: string;
+  /** False when the tabs switch something outside them (a period, a data
+   *  source) and render no TabsContent: Radix would otherwise point every
+   *  trigger's aria-controls at a panel that doesn't exist. */
+  panels?: boolean;
+}) {
   // Support both controlled and uncontrolled use without forcing callers to
   // manage state just to get the animation.
   const [internal, setInternal] = React.useState(defaultValue);
@@ -37,7 +43,7 @@ export function Tabs({
   );
 
   return (
-    <TabsCtx.Provider value={{ value: active, group }}>
+    <TabsCtx.Provider value={{ value: active, group, panels }}>
       <TabsPrimitive.Root value={value} defaultValue={defaultValue} onValueChange={handleChange} {...props}>
         {children}
       </TabsPrimitive.Root>
@@ -67,7 +73,7 @@ export const TabsTrigger = React.forwardRef<
   React.ComponentRef<typeof TabsPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger> & { variant?: "segmented" | "underline" }
 >(({ className, children, variant = "segmented", value, ...props }, ref) => {
-  const { value: active, group } = React.useContext(TabsCtx);
+  const { value: active, group, panels } = React.useContext(TabsCtx);
   const reduce = useReducedMotionSafe();
   const isActive = active === value;
 
@@ -91,6 +97,9 @@ export const TabsTrigger = React.forwardRef<
         className
       )}
       {...props}
+      // Radix spreads caller props after its own, so this wins when there's
+      // no panel to point at.
+      {...(panels ? {} : { "aria-controls": undefined })}
     >
       {isActive &&
         (reduce ? (

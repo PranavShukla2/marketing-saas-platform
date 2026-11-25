@@ -24,7 +24,9 @@ export function PageHeader({
       // after mount, and swapping these props to undefined mid-entrance froze
       // the header at opacity 0. MotionProvider settles the movement instead.
       variants={fadeUp}
-      initial="hidden"
+      // initial={false}: page titles paint with the server HTML; the route
+      // transition already gives navigations their entrance.
+      initial={false}
       animate="show"
       className={cn(
         "flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between mb-8",
