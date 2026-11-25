@@ -13,7 +13,7 @@ export function AcquisitionSection({ view }: { view: Ga4View }) {
         <KpiCard index={0} label="Sessions" value={toNum(s.sessions)} delta={delta(sessionsSeries)} spark={sessionsSeries} color="var(--indigo)" />
         <KpiCard index={1} label="New Users" value={toNum(s.new_users)} color="var(--violet)" />
         <KpiCard index={2} label="Channels" value={(view.channel_data ?? []).length} color="var(--teal)" hint="Distinct channel groupings" />
-        <KpiCard index={3} label="Top Source" value={view.post_level?.[0]?.source ?? "—"} color="var(--coral)" />
+        <KpiCard index={3} label="Top Source" value={view.post_level?.[0]?.source ?? "—"} color="var(--pink)" />
       </div>
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">

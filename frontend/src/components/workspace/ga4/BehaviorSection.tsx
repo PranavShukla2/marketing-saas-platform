@@ -14,7 +14,7 @@ export function BehaviorSection({ view }: { view: Ga4View }) {
         <KpiCard index={0} label="Page Views" value={toNum(s.page_views)} delta={delta(viewsSeries)} spark={viewsSeries} color="var(--indigo)" />
         <KpiCard index={1} label="Views / Session" value={s.views_per_session || "—"} color="var(--violet)" />
         <KpiCard index={2} label="Total Events" value={toNum(s.events)} color="var(--teal)" />
-        <KpiCard index={3} label="Avg. Duration" value={s.avg_duration || "—"} color="var(--coral)" />
+        <KpiCard index={3} label="Avg. Duration" value={s.avg_duration || "—"} color="var(--pink)" />
       </div>
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">

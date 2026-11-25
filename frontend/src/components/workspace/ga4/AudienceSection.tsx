@@ -44,7 +44,7 @@ export function AudienceSection({ view }: { view: Ga4View }) {
         <KpiCard index={0} label="Active Users" value={toNum(s.active_users)} delta={delta(ts.map((d) => d.users))} spark={ts.map((d) => d.users)} color="var(--indigo)" />
         <KpiCard index={1} label="New Users" value={toNum(s.new_users)} color="var(--violet)" hint="First-time visitors" />
         <KpiCard index={2} label="Engaged Sessions" value={toNum(s.engaged_sessions)} color="var(--teal)" />
-        <KpiCard index={3} label="Engagement Rate" value={s.engagement_rate || "—"} color="var(--coral)" />
+        <KpiCard index={3} label="Engagement Rate" value={s.engagement_rate || "—"} color="var(--pink)" />
       </div>
 
       <SectionCard

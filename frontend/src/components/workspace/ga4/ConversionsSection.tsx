@@ -19,7 +19,7 @@ export function ConversionsSection({ view }: { view: Ga4View }) {
         <KpiCard index={0} label="Conversions" value={toNum(s.conversions)} color="var(--indigo)" />
         <KpiCard index={1} label="Transactions" value={toNum(s.transactions)} color="var(--violet)" />
         <KpiCard index={2} label="Revenue" value={toNum(s.total_revenue)} format={fmtMoney} color="var(--teal)" />
-        <KpiCard index={3} label="Engaged Sessions" value={toNum(s.engaged_sessions)} color="var(--coral)" />
+        <KpiCard index={3} label="Engaged Sessions" value={toNum(s.engaged_sessions)} color="var(--pink)" />
       </div>
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">

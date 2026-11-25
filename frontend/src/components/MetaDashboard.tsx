@@ -49,8 +49,8 @@ export default function MetaDashboard({ data }: { data?: MetaData }) {
           })}
         </div>
         {isDemo && (
-          <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-[rgba(245,166,35,.14)] text-[var(--amber)]">
-            Sample data · connect Meta for live numbers
+          <span className="rounded-full bg-[var(--warning)]/12 px-2.5 py-1 text-[11px] font-semibold text-[var(--warning)]">
+            Sample data · Meta Ads integration coming soon
           </span>
         )}
       </div>
@@ -67,7 +67,7 @@ export default function MetaDashboard({ data }: { data?: MetaData }) {
                 <KpiCard index={2} label="Impressions" value={fb.summary.impressions} color="var(--indigo)" spark={fb.trend.map((t) => t.impressions)} />
                 <KpiCard index={3} label="Engagement Rate" value={fb.summary.engagement_rate} color="var(--teal)" />
                 <KpiCard index={4} label="Post Reach" value={fb.summary.post_reach} color="var(--violet)" />
-                <KpiCard index={5} label="Video Views" value={fb.summary.video_views} color="var(--coral)" />
+                <KpiCard index={5} label="Video Views" value={fb.summary.video_views} color="var(--pink)" />
                 <KpiCard index={6} label="Page Views" value={fb.summary.page_views} color="var(--amber)" />
                 <KpiCard index={7} label="Net New Followers" value={fb.summary.net_new_followers} color="var(--teal)" />
               </div>
@@ -127,7 +127,7 @@ export default function MetaDashboard({ data }: { data?: MetaData }) {
                 <KpiCard index={1} label="Reach" value={ig.summary.reach} color={IG} spark={ig.trend.map((t) => t.reach)} />
                 <KpiCard index={2} label="Profile Views" value={ig.summary.profile_views} color="var(--violet)" />
                 <KpiCard index={3} label="Engagement" value={ig.summary.engagement} color="var(--teal)" />
-                <KpiCard index={4} label="Saves" value={ig.summary.saves} color="var(--coral)" />
+                <KpiCard index={4} label="Saves" value={ig.summary.saves} color="var(--pink)" />
                 <KpiCard index={5} label="Reels Plays" value={ig.summary.reels_plays} color={IG} spark={ig.trend.map((t) => t.engagement)} />
                 <KpiCard index={6} label="Website Taps" value={ig.summary.website_taps} color="var(--amber)" />
                 <KpiCard index={7} label="Accounts Engaged" value={ig.summary.accounts_engaged} color="var(--indigo)" />
@@ -182,7 +182,7 @@ export default function MetaDashboard({ data }: { data?: MetaData }) {
                 <KpiCard index={0} label="Spend" value={ads.summary.spend} color="var(--violet)" spark={ads.trend.map((t) => t.spend)} />
                 <KpiCard index={1} label="Impressions" value={ads.summary.impressions} color="var(--indigo)" />
                 <KpiCard index={2} label="Clicks" value={ads.summary.clicks} color="var(--teal)" />
-                <KpiCard index={3} label="ROAS" value={ads.summary.roas} color="var(--coral)" />
+                <KpiCard index={3} label="ROAS" value={ads.summary.roas} color="var(--pink)" />
                 <KpiCard index={4} label="CTR" value={ads.summary.ctr} color="var(--indigo)" />
                 <KpiCard index={5} label="CPC" value={ads.summary.cpc} color="var(--violet)" />
                 <KpiCard index={6} label="Conversions" value={ads.summary.conversions} color="var(--teal)" spark={ads.trend.map((t) => t.conversions)} />
