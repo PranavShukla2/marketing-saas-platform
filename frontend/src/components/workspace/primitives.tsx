@@ -117,8 +117,8 @@ export function KpiCard({
                 // Tinted chips need a per-theme foreground: the AA-safe dark
                 // teal that works on a light tint is illegible on a dark page.
                 up
-                  ? "bg-teal-500/12 text-teal-700 dark:text-teal-300"
-                  : "bg-red-500/12 text-red-700 dark:text-red-300"
+                  ? "bg-[var(--success)]/12 text-[var(--success)]"
+                  : "bg-[var(--danger)]/12 text-[var(--danger)]"
               )}
             >
               {up ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}
@@ -213,9 +213,11 @@ export function SectionCardSkeleton({ height = 240 }: { height?: number }) {
 
 /* ---------------- Ranked horizontal bar list ---------------- */
 
+// Categorical series within one source. Never coral: coral means anomaly, and
+// a channel drawn in it would read as an alert. Unified violet leads.
 const PALETTE = [
-  "var(--indigo)", "var(--violet)", "var(--teal)", "var(--amber)",
-  "var(--coral)", "var(--pink)", "var(--indigo)", "var(--violet)",
+  "var(--unified)", "var(--indigo)", "var(--teal)", "var(--amber)",
+  "var(--pink)", "var(--ink-3)", "var(--violet)", "var(--unified)",
 ];
 
 export function BarList({

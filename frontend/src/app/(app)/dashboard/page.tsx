@@ -28,10 +28,12 @@ import { getActiveWorkspace, withWorkspace } from "../../../lib/workspace";
 const MetaDashboard = dynamic(() => import("../../../components/MetaDashboard"), { ssr: false });
 const LinkedInDashboard = dynamic(() => import("../../../components/LinkedInDashboard"), { ssr: false });
 
+// Each source carries its own colour everywhere it appears. Meta and LinkedIn
+// aren't integrated yet — their tabs preview sample data, and say "soon".
 const SOURCES = [
-  { id: "google", label: "Google Analytics" },
-  { id: "meta", label: "Meta" },
-  { id: "linkedin", label: "LinkedIn" },
+  { id: "google", label: "Google Analytics", color: "var(--source-ga4)", soon: false },
+  { id: "meta", label: "Meta Ads", color: "var(--source-meta)", soon: true },
+  { id: "linkedin", label: "LinkedIn", color: "var(--source-linkedin)", soon: true },
 ];
 
 type Brand = { logo_url: string | null; accent_color: string; report_footer: string | null };
@@ -298,7 +300,11 @@ export default function Dashboard() {
         <Tabs group="source" value={targetPlatform ?? activePlatform} onValueChange={handlePlatformChange}>
           <TabsList>
             {SOURCES.map((src) => (
-              <TabsTrigger key={src.id} value={src.id}>{src.label}</TabsTrigger>
+              <TabsTrigger key={src.id} value={src.id} className="gap-2">
+                <span className="size-1.5 shrink-0 rounded-full" style={{ background: src.color }} aria-hidden="true" />
+                {src.label}
+                {src.soon && <span className="font-mono text-[10px] font-normal text-[var(--ink-3)]">soon</span>}
+              </TabsTrigger>
             ))}
           </TabsList>
         </Tabs>

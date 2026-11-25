@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import LegalPage from "../../../components/marketing/LegalPage";
 
 export const metadata: Metadata = {
-  title: "Terms of Service · ArbFlow",
+  title: "Terms of Service",
   description: "The terms that govern your use of ArbFlow.",
 };
 

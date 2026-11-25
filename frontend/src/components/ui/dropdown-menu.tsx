@@ -49,7 +49,7 @@ export const DropdownMenuItem = React.forwardRef<
       "data-[highlighted]:bg-[var(--accent)]/10 data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
       "[&_svg]:size-4 [&_svg]:shrink-0",
       tone === "danger"
-        ? "text-red-600 dark:text-red-400 data-[highlighted]:bg-red-500/10"
+        ? "text-[var(--danger)] data-[highlighted]:bg-[var(--danger)]/10"
         : "text-[var(--ink-2)] data-[highlighted]:text-[var(--ink)]",
       className
     )}

@@ -27,7 +27,9 @@ const buttonVariants = cva(
           "hover:bg-[var(--page)] hover:border-[var(--ink-3)]",
         ghost: "text-[var(--ink-2)] hover:bg-[var(--page)] hover:text-[var(--ink)]",
         glass: "glass text-[var(--ink)] hover:brightness-105 shadow-[var(--shadow-rest)]",
-        danger: "bg-red-600 text-white hover:bg-red-700 shadow-[var(--shadow-rest)]",
+        // Fixed across themes: dark mode's --danger is a light red for text on
+        // dark surfaces, which white button text can't sit on.
+        danger: "bg-[#b42433] text-white hover:bg-[#9c1f2c] shadow-[var(--shadow-rest)]",
         link: "text-[var(--accent)] underline-offset-4 hover:underline p-0 h-auto",
       },
       size: {

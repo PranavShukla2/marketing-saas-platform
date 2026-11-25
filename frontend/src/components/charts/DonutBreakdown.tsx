@@ -6,9 +6,10 @@ import { ChartTooltip } from "./ChartTooltip";
 import { cn } from "../../lib/cn";
 import { useReducedMotionSafe } from "../../lib/useReducedMotionSafe";
 
+// Same rule as the workspace palette: no coral, which means anomaly.
 export const CATEGORY_COLORS = [
-  "var(--indigo)", "var(--violet)", "var(--teal)", "var(--amber)",
-  "var(--coral)", "var(--pink)",
+  "var(--unified)", "var(--indigo)", "var(--teal)", "var(--amber)",
+  "var(--pink)", "var(--ink-3)",
 ];
 
 /**

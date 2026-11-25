@@ -17,6 +17,8 @@ import { Dialog, DialogContent } from "../ui/dialog";
 import { Hint } from "../ui/tooltip";
 import ThemeToggle from "../ThemeToggle";
 
+import Flo from "../landing/Flo";
+
 const NAV = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Campaigns", href: "/campaigns", icon: BarChart3 },
@@ -33,18 +35,11 @@ const COLLAPSE_KEY = "arbflow_sidebar_collapsed";
 function Logo({ collapsed }: { collapsed: boolean }) {
   return (
     <Link href="/" className="flex items-center gap-3 px-2 hover:opacity-80 transition-opacity">
-      <svg width="30" height="30" viewBox="0 0 32 32" fill="none" aria-hidden="true" className="shrink-0">
-        <rect width="32" height="32" rx="10" fill="url(#af-sb)" />
-        <path d="M9 21V16" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
-        <path d="M16 21V10" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
-        <path d="M23 21V13" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
-        <circle cx="16" cy="10" r="2.5" fill="white" />
-        <defs>
-          <linearGradient id="af-sb" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
-            <stop stopColor="var(--indigo)" /><stop offset="1" stopColor="var(--violet)" />
-          </linearGradient>
-        </defs>
-      </svg>
+      {/* Flo's mark, as on the nav pill and auth card. The old inline logo used
+          a fixed gradient id, and the sidebar renders twice (rail + mobile
+          drawer): the logo resolved to the copy inside the hidden drawer, and
+          a gradient in a display:none subtree doesn't paint — so it was blank. */}
+      <Flo variant="mark" size={30} className="shrink-0" />
       {!collapsed && (
         <span className="text-lg font-semibold tracking-[-0.02em] text-[var(--ink)]">ArbFlow</span>
       )}

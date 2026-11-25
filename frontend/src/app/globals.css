@@ -53,6 +53,14 @@ html {
   --anomaly: #ff4e53;
   --anomaly-ink: #d12f3a;
 
+  /* Status, for UI state rather than data (badges, deltas, field errors, the
+     status island). Each is text that passes 4.5:1 on a 12% tint of itself,
+     over both page and surface. Use as color + a /12 background. */
+  --success: #03694d;
+  --warning: #934a00;
+  --danger: #b42433;
+  --info: #1b57c0;
+
   /* Brand pair for the primary gradient. Fixed across themes: white text
      reads 5.9:1 on indigo and 4.6:1 on violet. */
   --indigo: #5b45f0;
@@ -129,6 +137,11 @@ html {
   --anomaly: #ff6b70;
   --anomaly-ink: #ff8a8e;
 
+  --success: #34d399;
+  --warning: #fbbf24;
+  --danger: #ff8a8e;
+  --info: #7db0ff;
+
   --accent: #a594ff;
 
   /* Dark elevation leans on lighter surfaces more than shadow (a shadow on a
@@ -181,6 +194,10 @@ html {
   --color-source-meta-ink: var(--source-meta-ink);
   --color-source-linkedin: var(--source-linkedin);
   --color-source-linkedin-ink: var(--source-linkedin-ink);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-info: var(--info);
 }
 
 /* Deep water: the hero in BOTH themes. Its marks always use the bright,
@@ -422,7 +439,29 @@ body {
   animation: draw-arrow 1s ease-out forwards;
 }
 
+/* An anomaly's ripple on a chart point. Transform-box so the ring scales
+   around the point it sits on, not the SVG's origin. */
+@keyframes af-ripple {
+  from { transform: scale(1); opacity: .7; }
+  to   { transform: scale(4.2); opacity: 0; }
+}
+.af-ripple {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: af-ripple 1.8s cubic-bezier(.22,1,.36,1) infinite;
+}
+
+/* The status island's ribbon. */
+.af-stream {
+  background: linear-gradient(90deg, var(--source-ga4), var(--source-meta), var(--source-linkedin), var(--unified), var(--source-ga4));
+  background-size: 200% 100%;
+}
+@keyframes af-stream { from { background-position: 0% 0; } to { background-position: -200% 0; } }
+.af-stream-run { animation: af-stream 1.6s linear infinite; }
+
 @media (prefers-reduced-motion: reduce) {
+  .af-stream-run,
+  .af-ripple,
   .flo-bob,
   .flo-eyes,
   .flo-spark,

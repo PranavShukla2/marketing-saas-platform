@@ -13,6 +13,7 @@ import {
 import { apiFetch, getApiUrl, logout } from "../../../lib/auth";
 import { withWorkspace } from "../../../lib/workspace";
 
+import BrandPreview from "../../../components/brand/BrandPreview";
 type Profile = { email: string; company_name: string };
 type Brand = { logo_url: string | null; accent_color: string; report_footer: string };
 type Notif = { slack_webhook_url: string; digest_enabled: boolean };
@@ -198,7 +199,7 @@ export default function SettingsPage() {
             </div>
           </Card>
 
-          <Card padding="lg" className="rounded-[var(--radius-xl)] border-red-500/25">
+          <Card padding="lg" className="rounded-[var(--radius-xl)] border-[var(--danger)]/25">
             <h2 className="text-base font-semibold text-[var(--ink)]">Danger zone</h2>
             <div className="mt-4">
               <Row
@@ -222,7 +223,10 @@ export default function SettingsPage() {
               Applied to client dashboards and every report you send.
             </p>
 
-            <div className="mt-6 space-y-6">
+            {/* Form beside a live preview of what a client receives — the same
+                BrandPreview the landing page uses, mirroring the PDF export. */}
+            <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_minmax(0,22rem)]">
+            <div className="space-y-6">
               <div>
                 <p className="mb-2 text-sm font-medium text-[var(--ink-2)]">Logo</p>
                 <div className="flex items-center gap-4">
@@ -278,6 +282,19 @@ export default function SettingsPage() {
               </Field>
 
               <Button onClick={saveBranding} loading={brandSaving}>Save branding</Button>
+            </div>
+            <div>
+              <p className="mb-2 text-sm font-medium text-[var(--ink-2)]">Preview</p>
+              <BrandPreview
+                accent={/^#[0-9a-f]{6}$/i.test(brand.accent_color) ? brand.accent_color : "#5b5bd6"}
+                agencyName={profile?.company_name || "Your agency"}
+                logoUrl={brand.logo_url}
+                // The export's own fallback, so the preview never shows a
+                // footer the PDF wouldn't.
+                footer={brand.report_footer || "Generated with ArbFlow"}
+              />
+              <p className="mt-2 text-xs text-[var(--ink-3)]">Sample figures. Your reports use each client&apos;s live data.</p>
+            </div>
             </div>
           </Card>
         </TabsContent>

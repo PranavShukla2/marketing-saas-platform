@@ -102,10 +102,10 @@ export default function OnboardingChecklist({ onConnectGoogle }: { onConnectGoog
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {items.map((item) => (
-              <div key={item.key} className={`rounded-xl border p-3.5 ${item.done ? "border-teal-100 dark:border-teal-500/25 bg-teal-50/40 dark:bg-teal-500/10" : "border-[var(--line)] bg-[var(--page)]/40"}`}>
+              <div key={item.key} className={`rounded-xl border p-3.5 ${item.done ? "border-[var(--success)]/25 bg-[var(--success)]/[0.06]" : "border-[var(--line)] bg-[var(--page)]/40"}`}>
                 <div className="flex items-center gap-2 mb-1.5">
-                  <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${item.done ? "bg-[var(--teal)] text-white" : "border border-[var(--line)] text-transparent"}`}>✓</span>
-                  <p className={`text-xs font-semibold ${item.done ? "text-[var(--ink-2)] line-through decoration-[var(--teal)]/40" : "text-[var(--ink)]"}`}>{item.title}</p>
+                  <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${item.done ? "bg-[var(--success)] text-[var(--surface)]" : "border border-[var(--line)] text-transparent"}`}>✓</span>
+                  <p className={`text-xs font-semibold ${item.done ? "text-[var(--ink-2)] line-through decoration-[var(--success)]/40" : "text-[var(--ink)]"}`}>{item.title}</p>
                 </div>
                 <p className="text-[11px] text-[var(--ink-3)] leading-relaxed mb-1.5 pl-7">{item.desc}</p>
                 {!item.done && <div className="pl-7">{item.cta}</div>}

@@ -436,6 +436,32 @@ product the workspace doesn't look like.
       showcase…).
       — About rebuilt as a company page (status, principles, who builds it);
       the broken `mailto:` is gone. Pricing hero on the v2 voice.
-- [ ] Phase 10 — identity into the app
+- [x] **Phase 10 — identity into the app** ✅ *signed-in sweep of all seven
+      workspace pages, both themes, no console errors*
+      — **status tokens:** `--success/--warning/--danger/--info`, contrast-
+      checked on their own 12% tints over page and surface; every hard-coded
+      green/amber/red/blue in badges, deltas, inputs, menus, the island, auth
+      notices and onboarding now reads through them.
+      — **colour rules applied:** coral left every categorical palette and
+      decorative KPI (it means anomaly); Meta's azure left GA4 charts; source
+      tabs carry their colour dot and Meta/LinkedIn say "soon"; Meta's banner
+      no longer asks people to connect something that can't be connected.
+      — **anomalies on the chart:** `AreaTrend` takes a `marker` — a coral
+      ripple on the flagged day (the second-to-last point, as the detector
+      tests the last complete day) with the detector's sentence anchored
+      under the chart. Shown on `/design` with a series it would flag.
+      — **status island ribbon:** the three sources running into violet
+      along the pill's edge; flows while syncing.
+      — **Settings → Branding** shows the live `BrandPreview` beside the form,
+      with the export's own footer fallback.
+      — **auth split layout:** the Confluence beside the form on wide screens.
+      — **fixed along the way:** the sidebar logo was invisible (a fixed
+      gradient id resolved into the hidden mobile drawer's copy); every tab
+      and shared link said "Multi-Tenant Analytics SaaS" — now real titles on
+      all 16 client routes; the source-switch loader used Google's, Meta's and
+      LinkedIn's own logos.
+      — **kept, deliberately:** a never-connected workspace shows *labelled*
+      sample data with the onboarding checklist rather than an empty "dry
+      riverbed" — it teaches more than an empty state would.
 - [ ] Phase 11 — LinkedIn and Reports to standard
 - [ ] Phase 12 — quality gate

@@ -43,7 +43,7 @@ export default function BillingPage() {
   const pct = usage?.percentage ?? 0;
   // Amber past 80%, red at the cap — a bar that is the same colour at 12% and
   // 99% isn't telling anyone anything.
-  const usageTone = pct >= 100 ? "var(--coral)" : pct >= 80 ? "var(--amber)" : "var(--accent)";
+  const usageTone = pct >= 100 ? "var(--danger)" : pct >= 80 ? "var(--warning)" : "var(--accent)";
 
   return (
     <div className="mx-auto max-w-4xl pb-16">
