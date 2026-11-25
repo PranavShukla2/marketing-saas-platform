@@ -119,7 +119,7 @@ export default function BrandPreview({
           </tbody>
         </table>
 
-        <p className="mt-auto border-t border-[#e4e7ee] pt-[0.8em] text-[0.8em] text-[#8a90a6]">
+        <p className="mt-auto border-t border-[#e4e7ee] pt-[0.8em] text-[0.8em] text-[#626880]">
           {footer || `Prepared by ${agencyName}`}
         </p>
       </div>

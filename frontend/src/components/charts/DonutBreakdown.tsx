@@ -48,8 +48,13 @@ export function DonutBreakdown({
     <figure className={cn("flex flex-wrap items-center gap-6", className)}>
       <div aria-hidden="true" className="shrink-0" style={{ width: size, height: size }}>
         <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
+          {/* The ring is aria-hidden — the legend is its accessible reading — so
+              its segments mustn't take keyboard focus either. */}
+          <PieChart accessibilityLayer={false}>
             <Pie
+              // The Pie layer takes tabIndex 0 by default, separately from the
+              // chart's accessibilityLayer.
+              rootTabIndex={-1}
               data={rows}
               dataKey={valueKey}
               nameKey={nameKey}

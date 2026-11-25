@@ -61,6 +61,13 @@ html {
   --danger: #b42433;
   --info: #1b57c0;
 
+  /* Source marks — initials on a filled square. Fixed across themes and deep
+     enough that white initials pass 4.5:1 (GA4 5.1, Meta 5.6, LinkedIn 4.9);
+     the bright source colours are for marks without text. */
+  --mark-ga4: #a15c07;
+  --mark-meta: #1f62d6;
+  --mark-linkedin: #0d7d72;
+
   /* Brand pair for the primary gradient. Fixed across themes: white text
      reads 5.9:1 on indigo and 4.6:1 on violet. */
   --indigo: #5b45f0;
@@ -380,11 +387,6 @@ body {
   100% { transform: translateX(220%) skewX(-18deg); }
 }
 
-/* Handwritten marker annotations (revnu-style) */
-.font-hand {
-  font-family: var(--font-hand), "Comic Sans MS", cursive;
-  letter-spacing: 0;
-}
 
 .flo-bob {
   animation: flo-bob 4.5s ease-in-out infinite;

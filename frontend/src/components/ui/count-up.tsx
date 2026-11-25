@@ -64,9 +64,11 @@ export function CountUp({
   }, [value, duration, reduce, inView]);
 
   return (
-    // Screen readers get the settled figure, not every intermediate frame.
-    <span ref={ref} className={className} aria-label={format(value)}>
+    // Screen readers get the settled figure, not every intermediate frame —
+    // as visually hidden text: aria-label isn't allowed on a plain span.
+    <span ref={ref} className={className}>
       <span aria-hidden="true" className="tabular-nums">{format(reduce ? value : shown)}</span>
+      <span className="sr-only">{format(value)}</span>
     </span>
   );
 }

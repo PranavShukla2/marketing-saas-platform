@@ -109,9 +109,12 @@ export function ActRail() {
   return (
     <nav
       aria-label="Story"
+      // Out of view, it's out of the tab order and the accessibility tree too —
+      // opacity alone left invisible links focusable.
+      inert={active < 0}
       className={cn(
-        "fixed right-6 top-1/2 z-40 hidden -translate-y-1/2 transition-opacity duration-[var(--dur-step)] xl:block",
-        active < 0 ? "pointer-events-none opacity-0" : "opacity-100"
+        "fixed right-6 top-1/2 z-40 hidden -translate-y-1/2 transition-[opacity,visibility] duration-[var(--dur-step)] xl:block",
+        active < 0 ? "invisible opacity-0" : "visible opacity-100"
       )}
     >
       <ol className="space-y-1">

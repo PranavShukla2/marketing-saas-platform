@@ -30,7 +30,7 @@ export default function LinkedInDashboard({ data }: { data?: LinkedInData }) {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-3 sm:justify-between">
-        <Tabs group="linkedin" value={sub} onValueChange={(v) => setSub(v as "page" | "ads")}>
+        <Tabs panels={false} group="linkedin" value={sub} onValueChange={(v) => setSub(v as "page" | "ads")}>
           <TabsList>
             <TabsTrigger value="page">Company Page</TabsTrigger>
             <TabsTrigger value="ads">Ads</TabsTrigger>
