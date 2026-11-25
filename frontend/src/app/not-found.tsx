@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import NotFoundScene from "../components/NotFoundScene";
+import NotFoundCalm from "../components/NotFoundCalm";
 
-// The scene needs hooks (physics, reduced-motion), so it's a client component —
-// and client components can't export metadata. Keeping this wrapper on the
+// The page is a client component (the water scene needs the browser), and
+// client components can't export metadata. Keeping this wrapper on the
 // server is what lets a 404 set its own title instead of inheriting the app's.
 export const metadata: Metadata = {
     title: "Page not found",
@@ -10,5 +10,5 @@ export const metadata: Metadata = {
 };
 
 export default function NotFound() {
-    return <NotFoundScene />;
+    return <NotFoundCalm />;
 }
