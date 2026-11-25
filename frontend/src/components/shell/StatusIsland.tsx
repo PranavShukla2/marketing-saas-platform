@@ -89,9 +89,10 @@ export function useStatusIsland(): Ctx {
 const TONE: Record<IslandStatus["kind"], string> = {
   idle: "text-[var(--ink-2)]",
   busy: "text-[var(--accent)]",
-  success: "text-teal-600 dark:text-teal-400",
-  alert: "text-amber-600 dark:text-amber-400",
-  error: "text-red-600 dark:text-red-400",
+  success: "text-[var(--success)]",
+  // The island's only alert is an anomaly, and coral means exactly that.
+  alert: "text-[var(--anomaly-ink)]",
+  error: "text-[var(--danger)]",
 };
 
 function Icon({ kind }: { kind: IslandStatus["kind"] }) {
@@ -116,7 +117,7 @@ export function StatusIsland({ className }: { className?: string }) {
       layout={!reduce}
       transition={reduce ? { duration: 0 } : EASE_SPRING}
       className={cn(
-        "glass inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 shadow-[var(--shadow-rest)]",
+        "glass relative inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 shadow-[var(--shadow-rest)]",
         "max-w-[min(92vw,36rem)] overflow-hidden",
         className
       )}
@@ -142,6 +143,16 @@ export function StatusIsland({ className }: { className?: string }) {
           {status.label}
         </motion.span>
       </AnimatePresence>
+
+      {/* The ribbon: the three sources running into unified violet along the
+          pill's edge — at rest when idle, flowing while a sync is running. */}
+      <span
+        aria-hidden="true"
+        className={cn(
+          "af-stream pointer-events-none absolute inset-x-4 bottom-0 h-px rounded-full transition-opacity duration-[var(--dur-step)]",
+          status.kind === "busy" ? "af-stream-run opacity-100" : "opacity-40"
+        )}
+      />
 
       {action && (
         <motion.button
