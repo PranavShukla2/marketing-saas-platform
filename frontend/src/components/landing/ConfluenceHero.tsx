@@ -19,10 +19,12 @@ import Flo from "./Flo";
  * lines up server-side with no measuring and no layout shift.
  */
 
+// Status is part of the label: only GA4 is live today, and the hero must not
+// imply otherwise.
 const SOURCES = [
-  { label: "GA4", color: "var(--hero-ga4)" },
-  { label: "Meta Ads", color: "var(--hero-meta)" },
-  { label: "LinkedIn", color: "var(--hero-linkedin)" },
+  { label: "GA4", color: "var(--hero-ga4)", soon: false },
+  { label: "Meta Ads", color: "var(--hero-meta)", soon: true },
+  { label: "LinkedIn", color: "var(--hero-linkedin)", soon: true },
 ];
 
 const TAG = riverPoint(0.86);
@@ -56,14 +58,14 @@ export default function ConfluenceHero() {
           variants={rise}
           className="mt-5 text-[2.6rem] font-semibold leading-[1.02] tracking-[-0.04em] text-[#eef1f8] sm:text-[4.25rem]"
         >
-          Three platforms.
+          Every client.
           <br />
           <span className="accent-serif text-[#b9a8ff]">One calm current.</span>
         </motion.h1>
 
         <motion.p variants={rise} className="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-[var(--hero-ink-2)] sm:text-xl">
-          ArbFlow pulls every client&apos;s GA4, Meta and LinkedIn into one white-labeled workspace — and tells you, in a
-          sentence, when something changes.
+          ArbFlow brings each client&apos;s Google Analytics into one white-labeled workspace — and tells you, in a
+          sentence, when something changes. Meta Ads and LinkedIn are next.
         </motion.p>
 
         <motion.div variants={rise} className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -77,7 +79,7 @@ export default function ConfluenceHero() {
             pill
             className="border border-white/15 bg-white/[0.04] px-7 text-[#eef1f8] hover:bg-white/10 hover:text-white"
           >
-            <a href="#features">See how it works</a>
+            <a href="#connect">See how it works</a>
           </Button>
         </motion.div>
         <motion.p variants={rise} className="mt-4 font-mono text-[11px] text-[var(--hero-ink-3)]">
@@ -99,6 +101,7 @@ export default function ConfluenceHero() {
             >
               <span className="h-1.5 w-1.5 rounded-full" style={{ background: s.color }} />
               {s.label}
+              {s.soon && <span className="text-[var(--hero-ink-3)]">· soon</span>}
             </li>
           ))}
         </ul>
@@ -118,7 +121,7 @@ export default function ConfluenceHero() {
           style={{ left: `${TAG.x * 100}%`, top: `${TAG.y * 100}%` }}
         >
           <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--hero-ink-3)]">
-            sessions · all sources <span className="ml-1 rounded bg-white/10 px-1 normal-case tracking-normal">sample</span>
+            sessions · all clients <span className="ml-1 rounded bg-white/10 px-1 normal-case tracking-normal">sample</span>
           </p>
           <p className="mt-0.5 font-mono text-lg tabular-nums text-[#eef1f8]">
             48,167 <span className="text-sm text-[var(--hero-linkedin)]">▲ 12.4%</span>
