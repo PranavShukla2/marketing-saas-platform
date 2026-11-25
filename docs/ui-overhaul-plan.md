@@ -463,5 +463,22 @@ product the workspace doesn't look like.
       — **kept, deliberately:** a never-connected workspace shows *labelled*
       sample data with the onboarding checklist rather than an empty "dry
       riverbed" — it teaches more than an empty state would.
-- [ ] Phase 11 — LinkedIn and Reports to standard
+- [x] **Phase 11 — LinkedIn and Reports to standard** ✅ *signed in, no
+      console errors; PDFs built from the real module and rasterised*
+      — **LinkedIn** rebuilt to the GA4/Meta standard on the shared
+      primitives and `AreaTrend`: Company Page (KPIs, impressions trend, top
+      posts, job function / seniority / industry) and Ads (spend, leads, CPL,
+      campaign table), in LinkedIn's source colour. Deterministic, labelled
+      sample data (`lib/linkedinDemoData.ts`), with a `data` prop for live.
+      — **Meta** onto the shared Tabs and palette tokens (its pills put white
+      on Facebook/Instagram brand colours that missed 4.5:1).
+      — **one report:** there were two PDF exports, and the Reports page's
+      ignored branding entirely ("ArbFlow Intelligence Systems") under a
+      heading promising a branded report. Now `lib/report.ts` defines one
+      `ReportModel`; the dashboard export, the Reports export and
+      `BrandPreview` all render it. The PDF picks header text by contrast and
+      drops a too-pale accent title to ink.
+      — Reports shows the exact report beside the schedule; exports (PDF and
+      CSV, Reports and dashboard) are disabled on sample data, so a demo
+      report is never one click from a client.
 - [ ] Phase 12 — quality gate

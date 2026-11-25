@@ -25,6 +25,7 @@ import { demoData } from "../../../lib/demoData";
 import { getActiveWorkspace, withWorkspace } from "../../../lib/workspace";
 
 // Most sessions never open Meta or LinkedIn, so those tabs load on demand.
+import { downloadReportPdf, reportFromWorkspace } from "../../../lib/report";
 const MetaDashboard = dynamic(() => import("../../../components/MetaDashboard"), { ssr: false });
 const LinkedInDashboard = dynamic(() => import("../../../components/LinkedInDashboard"), { ssr: false });
 
@@ -185,44 +186,13 @@ export default function Dashboard() {
     window.URL.revokeObjectURL(url);
   };
 
+  // The same report the Reports page exports and the branding preview shows —
+  // one definition in lib/report.ts, so they can't drift apart.
   const downloadPDF = async () => {
-    // Loaded on click so the PDF toolchain never rides the initial bundle.
-    const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
-      import("jspdf"),
-      import("jspdf-autotable"),
-    ]);
-    const doc = new jsPDF();
-    const accent = brand.accent_color || "#5b5bd6";
-    const logo = brand.logo_url || agencyLogo;
-    let y = 20;
-    if (logo) {
-      try {
-        const p = doc.getImageProperties(logo);
-        const w = 40;
-        const h = (p.height * w) / p.width;
-        doc.addImage(logo, 14, 10, w, h);
-        y = 10 + h + 15;
-      } catch {}
-    }
-    doc.setTextColor(accent);
-    doc.setFontSize(22);
-    doc.text("Agency Performance Report", 14, y);
-    doc.setTextColor(100, 100, 100);
-    doc.setFontSize(12);
-    doc.text(`Client Workspace: ${view.company_name}`, 14, y + 8);
-    doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, y + 14);
-    autoTable(doc, {
-      head: [["Source", "Users", "Views"]],
-      body: (view.post_level ?? []).map((r) => [r.source, r.users, r.views]),
-      startY: y + 25,
-      theme: "grid",
-      headStyles: { fillColor: accent },
-    });
-    // White-label footer (falls back to a neutral ArbFlow line when unset).
-    doc.setFontSize(9);
-    doc.setTextColor(150, 150, 150);
-    doc.text(brand.report_footer || "Generated with ArbFlow", 14, doc.internal.pageSize.getHeight() - 10);
-    doc.save(`${view.company_name}_Report.pdf`);
+    await downloadReportPdf(
+      reportFromWorkspace(view, brand, { logoUrl: agencyLogo }),
+      `${view.company_name}_Report.pdf`
+    );
   };
 
   const updated = freshness(data?.cached_at);
@@ -248,10 +218,12 @@ export default function Dashboard() {
               {!syncing && <RefreshCw />}
               {syncing ? "Syncing…" : "Sync"}
             </Button>
-            <Button variant="outline" size="sm" onClick={downloadCSV}>
+            {/* No exporting sample figures: a demo PDF or CSV must never be one
+                click from a client's inbox. Same rule as the Reports page. */}
+            <Button variant="outline" size="sm" onClick={downloadCSV} disabled={!connected} title={connected ? undefined : "Connect Google Analytics to export"}>
               <Download />CSV
             </Button>
-            <Button size="sm" onClick={downloadPDF}>
+            <Button size="sm" onClick={downloadPDF} disabled={!connected} title={connected ? undefined : "Connect Google Analytics to export"}>
               <FileText />PDF
             </Button>
           </>

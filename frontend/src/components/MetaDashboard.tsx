@@ -7,17 +7,20 @@ import {
   PieChart, Pie, Cell,
 } from "recharts";
 import { KpiCard, SectionCard, BarList } from "./workspace/primitives";
+import { Tabs, TabsList, TabsTrigger } from "./ui";
 import { metaDemo, type MetaData } from "../lib/metaDemoData";
 
-const FB = "#1877F2";
-const IG = "#E1306C";
+// Palette tokens, not Facebook's and Instagram's own brand colours: Meta as a
+// source is azure everywhere in ArbFlow, with Instagram told apart in pink.
+const FB = "var(--source-meta)";
+const IG = "var(--pink)";
 const cardTip = { borderRadius: 14, border: "1px solid var(--line)", boxShadow: "0 10px 30px rgba(20,18,46,.1)", fontSize: 12 };
 const GENDER_COLORS = ["var(--violet)", "var(--indigo)", "var(--teal)"];
 
 const SUBTABS = [
   { id: "facebook", label: "Facebook", color: FB },
   { id: "instagram", label: "Instagram", color: IG },
-  { id: "ads", label: "Ads", color: "var(--violet)" },
+  { id: "ads", label: "Ads", color: "var(--unified)" },
 ];
 
 export default function MetaDashboard({ data }: { data?: MetaData }) {
@@ -33,21 +36,15 @@ export default function MetaDashboard({ data }: { data?: MetaData }) {
     <div className="space-y-6">
       {/* sub-tab switcher */}
       <div className="flex items-center gap-3 flex-wrap sm:justify-between">
-        <div className="inline-flex gap-1 bg-[var(--surface)] border border-[var(--line)] p-1 rounded-2xl shadow-sm">
-          {SUBTABS.map((t) => {
-            const active = sub === t.id;
-            return (
-              <button
-                key={t.id}
-                onClick={() => setSub(t.id)}
-                className={`relative px-4 py-2 rounded-xl text-sm font-medium transition-colors ${active ? "text-white" : "text-[var(--ink-2)] hover:text-[var(--ink)]"}`}
-              >
-                {active && <motion.div layoutId="meta-subtab" className="absolute inset-0 rounded-xl" style={{ background: t.color }} transition={{ type: "spring", stiffness: 400, damping: 32 }} />}
-                <span className="relative z-10">{t.label}</span>
-              </button>
-            );
-          })}
-        </div>
+        {/* The shared Tabs, as on the LinkedIn tab: the old pills put white
+            text on brand colours that missed 4.5:1. */}
+        <Tabs group="meta" value={sub} onValueChange={setSub}>
+          <TabsList>
+            {SUBTABS.map((t) => (
+              <TabsTrigger key={t.id} value={t.id}>{t.label}</TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
         {isDemo && (
           <span className="rounded-full bg-[var(--warning)]/12 px-2.5 py-1 text-[11px] font-semibold text-[var(--warning)]">
             Sample data · Meta Ads integration coming soon
