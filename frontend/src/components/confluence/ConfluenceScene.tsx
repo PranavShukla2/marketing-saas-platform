@@ -77,14 +77,23 @@ export default function ConfluenceScene({ className = "" }: { className?: string
       const ro = new ResizeObserver(fit);
       ro.observe(canvas);
 
-      let raf = 0, last = performance.now(), t = 0, frames = 0, visible = true;
+      let raf = 0, last = performance.now(), t = 0, frames = 0, visible = true, work = 0;
       const frame = (now: number) => {
         const dt = Math.min(0.05, (now - last) / 1000);
         last = now;
         t += dt;
+        const w0 = performance.now();
         step(field, g, dt, t, pointer);
         renderer.draw(field, g.w, g.h);
-        if (++frames === WARMUP_FRAMES) setLive(true);
+        work += performance.now() - w0;
+        if (++frames === WARMUP_FRAMES) {
+          // A frame budget, measured on this device: if warming up cost more
+          // than ~6ms of main thread a frame, the scene would compete with
+          // scrolling and input — stop, and the poster stays. (The canvas is
+          // still invisible at this point, so nobody sees it go.)
+          if (work / WARMUP_FRAMES > 6) { stop?.(); return; }
+          setLive(true);
+        }
         raf = requestAnimationFrame(frame);
       };
       const run = () => {

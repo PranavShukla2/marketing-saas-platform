@@ -71,9 +71,25 @@ function compile(gl: WebGL2RenderingContext, vs: string, fs: string) {
 /** How much of the trail survives each frame. */
 const KEEP = 0.86;
 
+/** Software rasterisers: WebGL runs, but every frame lands on the CPU. */
+const SOFTWARE = /swiftshader|llvmpipe|softpipe|software|basic render|mesa offscreen/i;
+
 export function createWebglRenderer(canvas: HTMLCanvasElement) {
-  const gl = canvas.getContext("webgl2", { alpha: false, antialias: false, powerPreference: "low-power" });
+  const gl = canvas.getContext("webgl2", {
+    alpha: false,
+    antialias: false,
+    powerPreference: "low-power",
+    // Refuse a context the browser would have to software-render. Without a
+    // GPU, the Phase 12 Lighthouse run showed a 9.5s main-thread task from this
+    // scene — machines with blocklisted drivers, VMs and remote desktops get
+    // the same, and should get the poster instead.
+    failIfMajorPerformanceCaveat: true,
+  });
   if (!gl || gl.isContextLost()) return null;
+  // Belt and braces for browsers that hand out a software context anyway.
+  const dbg = gl.getExtension("WEBGL_debug_renderer_info");
+  const renderer = dbg ? String(gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL)) : "";
+  if (SOFTWARE.test(renderer)) return null;
 
   let solid: WebGLProgram, composite: WebGLProgram, points: WebGLProgram;
   try {
