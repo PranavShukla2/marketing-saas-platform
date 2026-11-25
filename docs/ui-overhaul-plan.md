@@ -481,4 +481,32 @@ product the workspace doesn't look like.
       — Reports shows the exact report beside the schedule; exports (PDF and
       CSV, Reports and dashboard) are disabled on sample data, so a demo
       report is never one click from a client.
-- [ ] Phase 12 — quality gate
+- [x] **Phase 12 — quality gate** ✅
+      — **accessibility:** axe-core WCAG 2 A/AA on all 16 pages × both themes
+      = 32 runs, **0 violations** after fixes (count-up labels, tabs with no
+      panels, the act rail focusable while hidden, source marks and the
+      Connected pill under 4.5:1, a colour-only link, the pie layer taking
+      focus inside an aria-hidden chart, the report footer at 3.2:1).
+      — **engines:** WebKit and Firefox at 390 + 1440 — no horizontal
+      overflow, no console errors, live scene runs, sign-in reaches the
+      dashboard. (Local Safari/WebKit needs `COOKIE_SECURE=false`, as
+      config.py documents; production is HTTPS.)
+      — **bundle budget:** JS transferred vs. end of Part I, both production
+      builds: landing 401 → 370 KB, pricing 401 → 367, login 404 → 377,
+      dashboard 571 → 554. Lighter everywhere.
+      — **Lighthouse** (mobile, simulated slow 4G): home 43 → **85–87**,
+      pricing 81 → **90**, dashboard 37 → **47–76**; a11y 98–100, best
+      practices 96–100, SEO 100; CLS 0 / 0 / 0.001 (dashboard was 0.206).
+      Found and fixed on the way: the route transition started *every page*
+      at opacity 0 in the server HTML (LCP waited for hydration); headline
+      entrances did the same; the WebGL scene ran in software without a GPU
+      (a 9.5 s main-thread task) — it now refuses software contexts and stops
+      itself if warm-up exceeds a 6 ms/frame budget; the onboarding card and
+      Flo's guide shifted the dashboard; Caveat was preloaded with no users.
+      — **not met, on purpose:** home LCP is ~4 s under Lighthouse's slow-4G
+      simulation (≈1.4 s on a real mid-range profile). The remaining gap is
+      web-font arrival; `font-display: optional` would close it by showing a
+      fallback font on first visits, which isn't worth it on a brand page.
+      The dashboard renders after a client-side session check, so its LCP
+      depends on the API round-trip — an architecture choice, not polish.
+      — 404 rebuilt as a calm deep-water page; matter-js removed.
