@@ -14,9 +14,21 @@ const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono"
 const serif = Instrument_Serif({ subsets: ["latin"], weight: "400", style: ["normal", "italic"], variable: "--font-instrument-serif" });
 const caveat = Caveat({ subsets: ["latin"], weight: ["500", "600", "700"], variable: "--font-hand" });
 
+const DESCRIPTION =
+  "One calm, white-labeled analytics workspace per client — and a plain-English sentence when something changes.";
+
 export const metadata: Metadata = {
-  title: "Multi-Tenant Analytics SaaS",
-  description: "Secure, scalable marketing dashboards for agencies.",
+  // The tab and every shared link used to say "Multi-Tenant Analytics SaaS".
+  title: { default: "ArbFlow — client analytics for agencies", template: "%s · ArbFlow" },
+  description: DESCRIPTION,
+  applicationName: "ArbFlow",
+  openGraph: {
+    type: "website",
+    siteName: "ArbFlow",
+    title: "ArbFlow — client analytics for agencies",
+    description: DESCRIPTION,
+  },
+  twitter: { card: "summary", title: "ArbFlow — client analytics for agencies", description: DESCRIPTION },
 };
 
 export default function RootLayout({
