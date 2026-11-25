@@ -55,7 +55,9 @@ export default function PricingPage() {
         // after mount, and swapping these props to undefined mid-entrance froze
         // the header at opacity 0. MotionProvider settles the movement instead.
         variants={stagger(0.08)}
-        initial="hidden"
+        // initial={false}: the headline is the page's LCP, and text at opacity 0
+        // doesn't count as painted until JS hydrates and plays the entrance.
+        initial={false}
         animate="show"
         className="mx-auto mb-10 max-w-2xl text-center"
       >
@@ -89,7 +91,7 @@ export default function PricingPage() {
       </div>
 
       <div className="mb-12 flex justify-center">
-        <Tabs group="billing-period" value={annual ? "annual" : "monthly"} onValueChange={(v) => setAnnual(v === "annual")}>
+        <Tabs panels={false} group="billing-period" value={annual ? "annual" : "monthly"} onValueChange={(v) => setAnnual(v === "annual")}>
           <TabsList>
             <TabsTrigger value="monthly">Monthly</TabsTrigger>
             <TabsTrigger value="annual">
@@ -165,7 +167,7 @@ export default function PricingPage() {
 
       <p className="mx-auto mt-10 max-w-xl text-center text-sm text-[var(--ink-3)]">
         Questions about a plan?{" "}
-        <Link href="/about" className="text-[var(--accent)] hover:underline">
+        <Link href="/about" className="text-[var(--accent)] underline underline-offset-2 hover:decoration-2">
           Get in touch
         </Link>{" "}
         — we&apos;d rather talk than have you guess.

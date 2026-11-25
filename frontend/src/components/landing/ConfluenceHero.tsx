@@ -44,7 +44,9 @@ export default function ConfluenceHero() {
       aria-labelledby="hero-title"
     >
       <motion.div
-        initial="hidden"
+        // initial={false}: the headline is the page's LCP, and text at opacity 0
+        // doesn't count as painted until JS hydrates and plays the entrance.
+        initial={false}
         animate="show"
         variants={{ show: { transition: { staggerChildren: 0.06 } } }}
         className="relative z-10 mx-auto max-w-4xl px-6 pt-28 text-center sm:pt-36"
