@@ -59,15 +59,18 @@ export default function PricingPage() {
         animate="show"
         className="mx-auto mb-10 max-w-2xl text-center"
       >
+        <motion.p variants={fadeUp} className="font-mono text-[11px] uppercase tracking-[0.16em] text-[var(--ink-3)]">
+          pricing
+        </motion.p>
         <motion.h1
           variants={fadeUp}
-          className="text-4xl font-semibold tracking-[-0.03em] sm:text-6xl"
+          className="mt-4 text-4xl font-semibold tracking-[-0.035em] sm:text-6xl"
         >
-          Simple, transparent pricing.
+          One price, <span className="accent-serif">every client.</span>
         </motion.h1>
         <motion.p
           variants={fadeUp}
-          className="mt-4 text-lg font-light text-[var(--ink-2)] sm:text-xl"
+          className="mt-5 text-lg text-[var(--ink-2)] sm:text-xl"
         >
           One price per agency, however many clients you report on.
         </motion.p>

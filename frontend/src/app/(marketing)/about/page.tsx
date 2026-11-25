@@ -1,174 +1,140 @@
-"use client";
-
-import { motion, type Variants } from "framer-motion";
 import Link from "next/link";
-import { useReducedMotionSafe } from "../../../lib/useReducedMotionSafe";
+import { ArrowUpRight } from "lucide-react";
+import { Button } from "../../../components/ui";
+
+/**
+ * About ArbFlow — a company page, not a personal one. What it is, where it
+ * stands today (including what isn't built yet), how it's built, and who
+ * builds it. A server component: nothing on it needs the client.
+ */
+
+const STATUS = [
+  {
+    label: "Live",
+    live: true,
+    items: [
+      "Google Analytics 4 — connect, sync every 30 minutes, five workspace sections",
+      "Plain-English anomaly alerts and a weekly digest",
+      "Branding, scheduled client reports and PDF export",
+      "Teams with admin, member and viewer roles",
+    ],
+  },
+  {
+    label: "Next",
+    live: false,
+    items: ["Meta Ads (Facebook & Instagram)", "LinkedIn Ads", "Billing, once the beta ends — with plenty of notice"],
+  },
+];
+
+const PRINCIPLES = [
+  {
+    title: "Honest numbers",
+    body: "Figures come from the source APIs as they are. Sample data is labelled as sample, and an alert only fires on a move that's genuinely out of the ordinary.",
+  },
+  {
+    title: "Your clients' trust",
+    body: "A client's access is the most sensitive thing an agency holds. Tokens are encrypted before they're stored, and every client lives in its own workspace.",
+  },
+  {
+    title: "Calm by design",
+    body: "One consistent view per client and one sentence when something changes — instead of a dozen tabs and a chart to squint at.",
+  },
+];
 
 export default function AboutPage() {
-  // Everything on this page is decorative. MotionProvider already stops the
-  // transform loops (the wave, the bob) under reduced motion; this covers what
-  // it can't — the opacity pulse on the orbs, the sheen, and hover/press.
-  const reduce = useReducedMotionSafe();
-  const press = reduce ? {} : { whileHover: { scale: 1.05, y: -2 }, whileTap: { scale: 0.95 } };
-  const fadeUp: Variants = {
-    hidden: { opacity: 0, y: 30 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] } }
-  };
-
-  const stagger: Variants = {
-    visible: { transition: { staggerChildren: 0.12, delayChildren: 0.2 } }
-  };
-
   return (
-    <div className="flex flex-col items-center bg-[var(--page)] min-h-screen">
-
-      {/* Hero */}
-      <section className="w-full relative py-24 sm:py-32 text-center px-6 overflow-hidden">
-        {/* Background orbs */}
-        <motion.div
-          animate={reduce ? { opacity: 0.15 } : { scale: [1, 1.15, 1], opacity: [0.15, 0.25, 0.15] }}
-          transition={reduce ? { duration: 0 } : { duration: 8, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-blue-200/30 rounded-full blur-[120px] -z-10"
-        />
-        <motion.div
-          animate={reduce ? { opacity: 0.1 } : { scale: [1, 1.1, 1], opacity: [0.1, 0.2, 0.1] }}
-          transition={reduce ? { duration: 0 } : { duration: 10, repeat: Infinity, ease: "easeInOut", delay: 3 }}
-          className="absolute top-[30%] right-[10%] w-[300px] h-[300px] bg-purple-200/20 rounded-full blur-[100px] -z-10"
-        />
-
-        <motion.div initial="hidden" animate="visible" variants={stagger} className="max-w-3xl mx-auto">
-
-          {/* Emoji wave */}
-          <motion.div variants={fadeUp} className="mb-6">
-            <motion.span
-              animate={{ rotate: [0, 20, -10, 20, 0] }}
-              transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 3, ease: "easeInOut" }}
-              className="inline-block text-5xl sm:text-6xl"
-            >
-              👋
-            </motion.span>
-          </motion.div>
-
-          <motion.h1 variants={fadeUp} className="text-4xl sm:text-5xl md:text-6xl font-semibold tracking-tighter text-[var(--ink)] mb-4 leading-tight">
-            Hey, I&apos;m{" "}
-            <span className="bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-500 bg-clip-text text-transparent">
-              Pranav Shukla
-            </span>
-          </motion.h1>
-
-          <motion.p variants={fadeUp} className="text-lg sm:text-xl text-[var(--ink-2)] font-light max-w-xl mx-auto mb-8">
-            Builder, tinkerer, and the person behind ArbFlow — the marketing analytics platform you&apos;re looking at right now. ✨
-          </motion.p>
-
-          {/* Contact pill */}
-          <motion.div variants={fadeUp} className="flex flex-wrap items-center justify-center gap-3">
-            <motion.a
-              href="mailto:pranavmshukla"
-              {...press}
-              className="inline-flex items-center space-x-2 px-5 py-2.5 bg-[var(--surface)] rounded-full border border-[var(--line)] shadow-sm hover:shadow-md transition-shadow text-sm font-medium text-[var(--ink-2)] group"
-            >
-              <span className="text-lg group-hover:animate-bounce motion-reduce:group-hover:animate-none">📧</span>
-              <span>pranavmshukla</span>
-            </motion.a>
-
-            <motion.a
-              href="https://github.com/PranavShukla2"
-              target="_blank"
-              rel="noopener noreferrer"
-              {...press}
-              className="inline-flex items-center space-x-2 px-5 py-2.5 bg-[var(--ink)] rounded-full text-[var(--page)] shadow-sm hover:shadow-md transition-shadow text-sm font-medium group"
-            >
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-              <span>GitHub</span>
-            </motion.a>
-
-            <motion.a
-              href="https://www.linkedin.com/in/pranav-shukla-softwaredeveloper"
-              target="_blank"
-              rel="noopener noreferrer"
-              {...press}
-              className="inline-flex items-center space-x-2 px-5 py-2.5 bg-[#0A66C2] rounded-full text-white shadow-sm hover:shadow-md transition-shadow text-sm font-medium group"
-            >
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
-              <span>LinkedIn</span>
-            </motion.a>
-          </motion.div>
-        </motion.div>
+    <div className="bg-[var(--page)] text-[var(--ink)]">
+      <section className="mx-auto max-w-3xl px-6 pb-20 pt-16 sm:pt-24">
+        <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-[var(--ink-3)]">about</p>
+        <h1 className="mt-4 text-4xl font-semibold leading-[1.05] tracking-[-0.035em] sm:text-6xl">
+          Analytics agencies can <span className="accent-serif">hand to clients.</span>
+        </h1>
+        <p className="mt-6 text-lg leading-relaxed text-[var(--ink-2)] sm:text-xl">
+          ArbFlow gives a marketing agency one calm, white-labeled workspace per client — the client&apos;s analytics in a
+          consistent view, and a plain sentence the moment something changes. It started from a simple frustration:
+          agencies juggling a dozen Google Analytics tabs and still not knowing what had moved, or why.
+        </p>
       </section>
 
-      {/* About Cards */}
-      <section className="w-full max-w-4xl mx-auto px-6 pb-24">
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-50px" }}
-          variants={stagger}
-          className="grid grid-cols-1 md:grid-cols-2 gap-6"
-        >
-          {/* Card 1 - The Mission */}
-          <motion.div variants={fadeUp} className="bg-[var(--surface)] p-8 rounded-3xl border border-[var(--line)] shadow-sm hover:shadow-lg hover:-translate-y-1 motion-reduce:hover:translate-y-0 transition-all duration-500 group">
-            <motion.div whileHover={reduce ? undefined : { rotate: 10 }} className="text-4xl mb-5">🎯</motion.div>
-            <h3 className="text-xl font-semibold mb-3 text-[var(--ink)]">The Mission</h3>
-            <p className="text-[var(--ink-2)] leading-relaxed">
-              ArbFlow was born from a simple frustration — marketing agencies juggling dozens of disconnected analytics dashboards. I wanted to build one beautiful, unified hub that makes data feel effortless.
+      <section className="border-t border-[var(--line)] px-6 py-20">
+        <div className="mx-auto grid max-w-5xl gap-10 md:grid-cols-[0.8fr_1.2fr]">
+          <div>
+            <h2 className="text-2xl font-semibold tracking-[-0.02em]">Where it stands</h2>
+            <p className="mt-3 text-[var(--ink-2)]">
+              ArbFlow is in open beta and free to use. This is exactly what works today, and what&apos;s being built next.
             </p>
-          </motion.div>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {STATUS.map((g) => (
+              <div key={g.label} className="rounded-[var(--radius-lg)] border border-[var(--line)] bg-[var(--surface)] p-5 shadow-[var(--shadow-rest)]">
+                <p className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--ink-3)]">
+                  <span className={`size-1.5 rounded-full ${g.live ? "bg-[var(--source-linkedin)]" : "bg-[var(--ink-3)]"}`} />
+                  {g.label}
+                </p>
+                <ul className="mt-4 space-y-3 text-[15px] leading-snug text-[var(--ink)]">
+                  {g.items.map((i) => (
+                    <li key={i}>{i}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
-          {/* Card 2 - The Stack */}
-          <motion.div variants={fadeUp} className="bg-[var(--ink)] text-[var(--page)] p-8 rounded-3xl shadow-lg hover:shadow-2xl hover:-translate-y-1 motion-reduce:hover:translate-y-0 transition-all duration-500 group relative overflow-hidden">
-            {!reduce && (
-              <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -skew-x-12"
-                initial={{ x: "-200%" }}
-                whileInView={{ x: "200%" }}
-                viewport={{ once: true }}
-                transition={{ duration: 1.5, delay: 0.5, ease: "easeInOut" }}
-              />
-            )}
-            <motion.div whileHover={reduce ? undefined : { rotate: -10 }} className="text-4xl mb-5 relative z-10">⚡</motion.div>
-            <h3 className="text-xl font-semibold mb-3 relative z-10">The Stack</h3>
-            <p className="text-[var(--ink-3)] leading-relaxed relative z-10">
-              Next.js 16 · FastAPI · PostgreSQL · Recharts · Framer Motion · Google Analytics API · Meta Graph API · LinkedIn Marketing API — all woven together into a seamless experience.
+      <section className="border-t border-[var(--line)] px-6 py-20">
+        <div className="mx-auto max-w-5xl">
+          <h2 className="text-2xl font-semibold tracking-[-0.02em]">What we hold ourselves to</h2>
+          <div className="mt-8 grid gap-4 md:grid-cols-3">
+            {PRINCIPLES.map((p, i) => (
+              <div key={p.title} className="rounded-[var(--radius-lg)] border border-[var(--line)] bg-[var(--surface)] p-6">
+                <p className="font-mono text-[11px] text-[var(--ink-3)]">{String(i + 1).padStart(2, "0")}</p>
+                <h3 className="mt-3 text-lg font-semibold tracking-[-0.01em]">{p.title}</h3>
+                <p className="mt-2 leading-relaxed text-[var(--ink-2)]">{p.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="border-t border-[var(--line)] px-6 py-20">
+        <div className="mx-auto grid max-w-5xl gap-10 md:grid-cols-[0.8fr_1.2fr]">
+          <h2 className="text-2xl font-semibold tracking-[-0.02em]">Who builds it</h2>
+          <div>
+            <p className="text-lg leading-relaxed text-[var(--ink-2)]">
+              ArbFlow is designed and built by <span className="font-medium text-[var(--ink)]">Pranav Shukla</span> — Next.js
+              and React in front, FastAPI and PostgreSQL behind it, and the Google Analytics Data and Admin APIs underneath.
+              Feedback and feature requests are genuinely welcome.
             </p>
-          </motion.div>
-
-          {/* Card 3 - The Vision */}
-          <motion.div variants={fadeUp} className="bg-[var(--surface)] p-8 rounded-3xl border border-[var(--line)] shadow-sm hover:shadow-lg hover:-translate-y-1 motion-reduce:hover:translate-y-0 transition-all duration-500 group">
-            <motion.div whileHover={reduce ? undefined : { scale: 1.2 }} className="text-4xl mb-5">🚀</motion.div>
-            <h3 className="text-xl font-semibold mb-3 text-[var(--ink)]">The Vision</h3>
-            <p className="text-[var(--ink-2)] leading-relaxed">
-              Every marketing team deserves enterprise-grade analytics without the enterprise price tag. ArbFlow aims to democratize data intelligence for agencies of all sizes.
-            </p>
-          </motion.div>
-
-          {/* Card 4 - Get in Touch */}
-          <motion.div variants={fadeUp} className="bg-gradient-to-br from-blue-50 to-indigo-50 p-8 rounded-3xl border border-blue-100 dark:border-blue-500/25 shadow-sm hover:shadow-lg hover:-translate-y-1 motion-reduce:hover:translate-y-0 transition-all duration-500 group flex flex-col justify-between">
-            <div>
-              <motion.div
-                animate={{ y: [0, -5, 0] }}
-                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                className="text-4xl mb-5"
-              >
-                💬
-              </motion.div>
-              <h3 className="text-xl font-semibold mb-3 text-[var(--ink)]">Let&apos;s Connect</h3>
-              <p className="text-[var(--ink-2)] leading-relaxed mb-6">
-                Have feedback, ideas, or just want to say hi? I&apos;d love to hear from you. Drop me a line anytime.
-              </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Button asChild variant="outline" pill>
+                <a href="https://github.com/PranavShukla2" target="_blank" rel="noopener noreferrer">
+                  GitHub <ArrowUpRight />
+                </a>
+              </Button>
+              <Button asChild variant="outline" pill>
+                <a href="https://www.linkedin.com/in/pranav-shukla-softwaredeveloper" target="_blank" rel="noopener noreferrer">
+                  LinkedIn <ArrowUpRight />
+                </a>
+              </Button>
             </div>
-            <motion.a
-              href="mailto:pranavmshukla"
-              whileHover={reduce ? undefined : { scale: 1.03 }}
-              whileTap={reduce ? undefined : { scale: 0.97 }}
-              className="inline-flex items-center justify-center space-x-2 w-full px-6 py-3 bg-[var(--ink)] text-[var(--page)] rounded-full font-medium shadow-sm hover:shadow-md transition-all text-sm"
-            >
-              <span>📧</span>
-              <span>Send me an email</span>
-            </motion.a>
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
       </section>
 
+      <section className="border-t border-[var(--line)] px-6 py-20 text-center">
+        <h2 className="text-3xl font-semibold tracking-[-0.03em] sm:text-4xl">
+          See it with <span className="accent-serif">your own clients.</span>
+        </h2>
+        <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <Button asChild size="lg" pill className="px-7">
+            <Link href="/register">Create your workspace</Link>
+          </Button>
+          <Button asChild size="lg" variant="ghost" pill className="px-7">
+            <Link href="/pricing">See pricing</Link>
+          </Button>
+        </div>
+      </section>
     </div>
   );
 }
