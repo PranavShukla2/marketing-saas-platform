@@ -399,7 +399,22 @@ product the workspace doesn't look like.
       at `/design/confluence`.
       — the "Turbopack font error" was a stale `.next/dev` cache from the
       16.2 → 16.3 upgrade, not a Next bug: `rm -rf frontend/.next/dev`.
-- [ ] Phase 8 — hero: the Confluence
+- [x] **Phase 8 — hero: the Confluence** ✅ *verified at 1440 + 390, both
+      themes; every fallback path driven*
+      — one-viewport deep-water hero bleeding under the nav pill: three
+      tributaries in source colours → a throat → one violet line carrying the
+      value tag (labelled *sample*) and Flo; FloatingFlo hands off once you
+      scroll past it.
+      — poster-first: server-rendered SVG traced through the same flow field;
+      the WebGL2 scene loads after idle, warms up hidden and fades in. Poster
+      only under reduced motion (also when switched on mid-visit), Save-Data,
+      ≤2 cores or no WebGL2; pauses off-screen and in hidden tabs. 10/10
+      paths pass.
+      — spike flaws fixed: the narrows is a throat; trails accumulate in a
+      half-float buffer over black, so no ghosts (and clamped, after a
+      negative floor left the scene 3 levels darker than the page).
+      — **LCP 1,948 → 1,424 ms, CLS 0 → 0, JS +7 KB** (both builds on Next
+      16.4.6, 390px, 4× CPU, median of 5).
 - [ ] Phase 9 — the story in six acts, plus the honesty fixes
 - [ ] Phase 10 — identity into the app
 - [ ] Phase 11 — LinkedIn and Reports to standard

@@ -178,6 +178,19 @@ html {
   --color-source-linkedin-ink: var(--source-linkedin-ink);
 }
 
+/* Deep water: the hero in BOTH themes. Its marks always use the bright,
+   on-dark source colours (checked ≥ 3:1 on --deep), whatever the page theme. */
+.deep-water {
+  background: var(--deep);
+  color: #eef1f8;
+  --hero-ga4: #f5a524;
+  --hero-meta: #5b9bff;
+  --hero-linkedin: #2dd4bf;
+  --hero-unified: #8b6dff;
+  --hero-ink-2: #b3bad0;
+  --hero-ink-3: #8f98b3;
+}
+
 /* The accent voice: Instrument Serif italic, for one phrase per heading. It's
    optically smaller than Geist at the same size, so it's nudged up to match. */
 .accent-serif {
