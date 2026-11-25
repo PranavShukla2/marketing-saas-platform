@@ -1,6 +1,6 @@
 "use client";
 
-import { Sparkles } from "lucide-react";
+import { AlertTriangle, Sparkles } from "lucide-react";
 import { AreaTrend, DonutBreakdown } from "../../charts";
 import { BarList, KpiCard, SectionCard } from "../primitives";
 import { delta, fmtMoney, fmtNum, toNum, type Ga4View } from "./shared";
@@ -21,14 +21,20 @@ export function OverviewSection({ view }: { view: Ga4View }) {
   const sessionsSeries = ts.map((d) => d.sessions);
   const viewsSeries = ts.map((d) => d.views);
   const s = view.summary ?? {};
+  // The detector tests the latest *complete* day — the second-to-last point,
+  // since the last is today, still partial. Ring it on the series it's about.
+  const anomaly = view.anomaly?.is_anomaly && view.anomaly.message && ts.length >= 2 ? view.anomaly : null;
+  const marker = anomaly
+    ? { index: ts.length - 2, seriesKey: anomaly.metric === "users" ? "users" : "sessions", label: anomaly.message! }
+    : undefined;
 
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <KpiCard index={0} label="Active Users" value={toNum(s.active_users)} delta={delta(usersSeries)} spark={usersSeries} color="var(--indigo)" hint="Last 30 days" />
+        <KpiCard index={0} label="Active Users" value={toNum(s.active_users)} delta={delta(usersSeries)} spark={usersSeries} color="var(--unified)" hint="Last 30 days" />
         <KpiCard index={1} label="Sessions" value={toNum(s.sessions)} delta={delta(sessionsSeries)} spark={sessionsSeries} color="var(--violet)" hint="Last 30 days" />
         <KpiCard index={2} label="Page Views" value={toNum(s.page_views)} delta={delta(viewsSeries)} spark={viewsSeries} color="var(--teal)" hint="Last 30 days" />
-        <KpiCard index={3} label="Conversions" value={toNum(s.conversions)} color="var(--coral)" hint="Key events, last 30 days" />
+        <KpiCard index={3} label="Conversions" value={toNum(s.conversions)} color="var(--pink)" hint="Key events, last 30 days" />
       </div>
 
       {/* The board: the trend takes two thirds, the rest fills in around it. */}
@@ -43,11 +49,22 @@ export function OverviewSection({ view }: { view: Ga4View }) {
             xKey="date"
             height={272}
             series={[
-              { key: "users", label: "Users", color: "var(--indigo)" },
-              { key: "sessions", label: "Sessions", color: "var(--violet)" },
+              { key: "users", label: "Users", color: "var(--unified)" },
+              { key: "sessions", label: "Sessions", color: "var(--indigo)" },
               { key: "views", label: "Views", color: "var(--teal)" },
             ]}
+            marker={marker}
           />
+          {anomaly && (
+            // The sentence lives with the point it's about, not only in a banner.
+            <p className="mt-3 flex items-start gap-2 rounded-[var(--radius-sm)] bg-[var(--anomaly)]/[0.08] px-3 py-2 text-sm leading-snug text-[var(--ink)]">
+              <AlertTriangle className="mt-0.5 size-4 shrink-0 text-[var(--anomaly-ink)]" aria-hidden="true" />
+              <span>
+                <span className="font-medium text-[var(--anomaly-ink)]">{anomaly.direction === "spike" ? "Unusual spike" : "Unusual dip"} · </span>
+                {anomaly.message}
+              </span>
+            </p>
+          )}
         </SectionCard>
 
         <div className="grid grid-cols-2 gap-5 lg:grid-cols-1">

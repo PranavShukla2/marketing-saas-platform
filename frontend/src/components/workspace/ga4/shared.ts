@@ -12,7 +12,8 @@ export type Ga4View = WorkspaceData & {
   message?: string;
   /** ISO timestamp; present when the payload came from the backend's cache. */
   cached_at?: string;
-  anomaly?: { is_anomaly: boolean; message?: string };
+  // Mirrors backend/app/services/anomaly.py: metric and direction come with it.
+  anomaly?: { is_anomaly: boolean; message?: string; metric?: string; direction?: "spike" | "dip" };
 };
 
 export function fmtNum(v: string | number | undefined): string {

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import {
-  Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis,
+  Area, AreaChart, CartesianGrid, ReferenceDot, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts";
 import { ChartTooltip } from "./ChartTooltip";
 import { cn } from "../../lib/cn";
@@ -34,6 +34,7 @@ export function AreaTrend({
   labelFormat,
   valueFormat,
   className,
+  marker,
 }: {
   data: Record<string, unknown>[];
   xKey: string;
@@ -43,6 +44,8 @@ export function AreaTrend({
   labelFormat?: (label: string | number) => string;
   valueFormat?: (value: number) => string;
   className?: string;
+  /** Ring one point in coral — an anomaly, and only an anomaly. */
+  marker?: { index: number; seriesKey: string; label: string };
 }) {
   const uid = React.useId().replace(/[^a-zA-Z0-9]/g, "");
   const reduce = useReducedMotionSafe();
@@ -108,6 +111,24 @@ export function AreaTrend({
                 activeDot={{ r: 4, strokeWidth: 2, stroke: "var(--surface)" }}
               />
             ))}
+            {marker && data[marker.index] && (
+              <ReferenceDot
+                x={data[marker.index][xKey] as string | number}
+                y={data[marker.index][marker.seriesKey] as number}
+                ifOverflow="extendDomain"
+                shape={(p: { cx?: number; cy?: number }) => (
+                  <g aria-label={marker.label} role="img">
+                    {/* Ripples spread from the day that's off; a CSS class, so
+                        globals.css stops them under reduced motion. */}
+                    {[0, 1].map((i) => (
+                      <circle key={i} cx={p.cx} cy={p.cy} r={6} fill="none" stroke="var(--anomaly)" strokeWidth={1.5}
+                        className="af-ripple" style={{ animationDelay: `${i * 0.9}s` }} />
+                    ))}
+                    <circle cx={p.cx} cy={p.cy} r={5.5} fill="var(--anomaly)" stroke="var(--surface)" strokeWidth={2} />
+                  </g>
+                )}
+              />
+            )}
           </AreaChart>
         </ResponsiveContainer>
       </div>
