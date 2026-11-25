@@ -130,10 +130,9 @@ export default function FloatingFlo() {
 
   return (
     <motion.div
-      // Lifted clear of the bottom nav pill on phones, which occupies roughly
-      // the bottom 60px; back to its usual corner from `sm` up, where the nav
-      // is the top pill instead.
-      className={`fixed bottom-24 right-5 z-50 sm:bottom-6 sm:right-6 ${pastHero ? "" : "pointer-events-none"}`}
+      // Not on phones: there it sat over content, and the bottom nav pill
+      // already holds that corner of the screen.
+      className={`fixed bottom-6 right-6 z-50 hidden sm:block ${pastHero ? "" : "pointer-events-none"}`}
       style={reduceMotion ? undefined : { rotate: sway }}
       initial={false}
       animate={pastHero ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.6 }}
