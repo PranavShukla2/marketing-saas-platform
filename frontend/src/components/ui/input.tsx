@@ -33,7 +33,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
         "placeholder:text-[var(--ink-3)]",
         "focus-visible:border-[var(--accent)] focus-visible:ring-2 focus-visible:ring-[var(--accent)]/25",
         "disabled:opacity-50 disabled:cursor-not-allowed",
-        invalid && "border-red-500 focus-visible:border-red-500 focus-visible:ring-red-500/25",
+        invalid && "border-[var(--danger)] focus-visible:border-[var(--danger)] focus-visible:ring-[var(--danger)]/25",
         className
       )}
       {...props}
@@ -56,7 +56,7 @@ export function Field({
       {children}
       {hint && !error && <p className="text-xs text-[var(--ink-3)]">{hint}</p>}
       {error && (
-        <p id={errorId} role="alert" className="text-xs text-red-600 dark:text-red-400">
+        <p id={errorId} role="alert" className="text-xs text-[var(--danger)]">
           {error}
         </p>
       )}

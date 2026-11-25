@@ -205,7 +205,7 @@ export default function TeamPage() {
                     </div>
                   ) : (
                     <div className="flex items-center gap-3">
-                      <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400">
+                      <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[var(--warning)]/12 text-[var(--warning)]">
                         <Mail className="size-4" />
                       </span>
                       <span className="min-w-0">
