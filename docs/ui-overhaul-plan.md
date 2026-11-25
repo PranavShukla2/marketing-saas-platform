@@ -415,7 +415,27 @@ product the workspace doesn't look like.
       negative floor left the scene 3 levels darker than the page).
       — **LCP 1,948 → 1,424 ms, CLS 0 → 0, JS +7 KB** (both builds on Next
       16.4.6, 390px, 4× CPU, median of 5).
-- [ ] Phase 9 — the story in six acts, plus the honesty fixes
+- [x] **Phase 9 — the story, plus the honesty fixes** ✅ *verified 1440 + 390,
+      both themes, with and without reduced motion*
+      — **five acts, not six:** Connect · One view · Ripples · Your brand ·
+      Vault, with a fixed act rail on wide screens. The planned "Confluence"
+      act (three APIs' payloads normalising into one row) was dropped because
+      only GA4 is real — showing Meta and LinkedIn data merging would have
+      been a demo of something that doesn't exist.
+      — **Meta and LinkedIn aren't integrated** (stub services, mock OAuth
+      tokens). The hero, FAQ and every act now say GA4 today, Meta and
+      LinkedIn next; their hero streams are labelled "soon".
+      — each act shows the real thing: the GA4 connect flow; the workspace's
+      own KpiCard/SectionCard/BarList on demo data; an alert in the anomaly
+      detector's exact sentence, on a series it would really flag (z ≈ −6.2,
+      −31%); a report preview mirroring the PDF export (`BrandPreview`,
+      shared with Settings in Phase 10); Fernet sealing an OAuth token.
+      — removed: the fabricated stats strip, "AES-256 per tenant", "custom
+      URLs", "overage pricing", "v1.0 is now live". Twelve retired landing
+      components deleted (stickers, annotations, phone chat, bento, pinned
+      showcase…).
+      — About rebuilt as a company page (status, principles, who builds it);
+      the broken `mailto:` is gone. Pricing hero on the v2 voice.
 - [ ] Phase 10 — identity into the app
 - [ ] Phase 11 — LinkedIn and Reports to standard
 - [ ] Phase 12 — quality gate

@@ -7,24 +7,28 @@ import Reveal from "../motion/Reveal";
 
 const FAQS = [
   {
-    q: "How do I connect my Google Analytics?",
-    a: "Connect straight from the Integrations tab in your dashboard. We use secure OAuth — one click, no password sharing — and you're syncing GA4 data in under a minute.",
+    q: "How do I connect a client's Google Analytics?",
+    a: "Sign in with Google, or connect from Integrations. Access is granted on Google's own consent screen and is read-only — no passwords change hands — and ArbFlow lists the client's GA4 properties for you to pick from.",
   },
   {
     q: "Is my clients' data secure?",
-    a: "Every workspace is fully isolated, and each client's API keys are encrypted at rest with AES-256. One tenant can never see another's data, and we never store your Google password.",
+    a: "Each client lives in its own workspace, and the OAuth tokens a client grants are encrypted at rest with Fernet (AES-128 with an HMAC-SHA256 signature) before they're stored. Sessions use httpOnly cookies, and sign-ins, password resets and data exports are written to an audit log.",
   },
   {
-    q: "Can I create custom reports for my clients?",
-    a: "Yes. Build white-labeled dashboards with your own branding, colors, and custom URLs — each client sees a report that looks like it came straight from you.",
+    q: "Can I send branded reports to clients?",
+    a: "Yes. Add your logo, accent colour and footer once per workspace; they appear on the dashboard and on every report. Reports can be exported as a PDF at any time or emailed to clients on a schedule.",
   },
   {
-    q: "Do you offer real-time data tracking?",
-    a: "ArbFlow keeps GA4, Meta, and LinkedIn in continuous sync and surfaces anomalies the moment they happen — so you get a plain-English alert instead of finding out days later.",
+    q: "How fresh is the data, and how do alerts work?",
+    a: "GA4 syncs in the background every 30 minutes. Once a day is complete, ArbFlow compares it with that client's own recent baseline; if it's at least 25% off and well outside normal variation, the workspace owner gets a one-sentence email. A weekly digest summarises every client's week.",
   },
   {
-    q: "What happens if I exceed my plan's data limits?",
-    a: "Nothing breaks. We notify you as you approach a limit and you can upgrade anytime — your dashboards keep running while you decide.",
+    q: "Which platforms does ArbFlow support?",
+    a: "Google Analytics 4 today. Meta Ads and LinkedIn Ads are in development, and existing workspaces will be able to add them in place — nothing to migrate.",
+  },
+  {
+    q: "What does it cost?",
+    a: "Nothing while ArbFlow is in beta — every account gets the full product, no card required. The plans on the pricing page are the ones we'll launch with, and you'll get plenty of notice before anything changes.",
   },
 ];
 

@@ -7,6 +7,11 @@
 html {
   scroll-behavior: smooth;
 }
+/* In-page jumps (the act rail, "See how it works") glide — unless the visitor
+   has asked for less motion, in which case they jump. */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
 
 /* ---------------- Tidewater (Part II, Phase 7) ----------------
    Every value below was checked with WCAG 2.x contrast in both themes before

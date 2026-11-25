@@ -1,80 +1,48 @@
 "use client";
 
-import FloatingFlo from "../../components/landing/FloatingFlo";
 import ConfluenceHero from "../../components/landing/ConfluenceHero";
-import InsightCards from "../../components/landing/InsightCards";
-import IntegrationsMarquee from "../../components/landing/IntegrationsMarquee";
-import PhoneChat from "../../components/landing/PhoneChat";
-import BentoFeatures from "../../components/landing/BentoFeatures";
-import PinnedShowcase from "../../components/landing/PinnedShowcase";
-import StatsStrip from "../../components/landing/StatsStrip";
-import AboutSection from "../../components/landing/AboutSection";
+import { ActRail } from "../../components/landing/story/Act";
+import ActConnect from "../../components/landing/story/ActConnect";
+import ActOneView from "../../components/landing/story/ActOneView";
+import ActRipples from "../../components/landing/story/ActRipples";
+import ActBrand from "../../components/landing/story/ActBrand";
+import ActVault from "../../components/landing/story/ActVault";
 import FaqSection from "../../components/landing/FaqSection";
 import FinalCta from "../../components/landing/FinalCta";
-import Reveal from "../../components/motion/Reveal";
+import FloatingFlo from "../../components/landing/FloatingFlo";
 
+/**
+ * The landing, told as a story (Part II, Phase 9): the hero's confluence, then
+ * five acts — each one a thing the product does today, shown working — then
+ * the questions people ask, and back to deep water to close.
+ */
 export default function Home() {
   return (
     <div className="landing min-h-screen overflow-x-clip">
-      {/* ---------- Hero: the Confluence ---------- */}
       <ConfluenceHero />
+      <ActRail />
 
-      {/* ---------- Floating insight cards ---------- */}
-      <section className="relative py-10">
-        <InsightCards />
-      </section>
+      <ActConnect />
+      <Divider />
+      <ActOneView />
+      <Divider />
+      <ActRipples />
+      <Divider />
+      <ActBrand />
+      <Divider />
+      <ActVault />
 
-      {/* ---------- Integrations marquee ---------- */}
-      <Reveal
-        as="section"
-        className="py-20"
-      >
-        <IntegrationsMarquee />
-      </Reveal>
-
-      {/* ---------- Phone + tagline ---------- */}
-      <section className="relative py-24">
-        <PhoneChat />
-      </section>
-
-      {/* ---------- Features ---------- */}
-      <section id="features" className="relative py-24 px-6">
-        <Reveal className="text-center max-w-2xl mx-auto mb-12">
-          <p className="font-mono text-xs text-[var(--ink-3)] tracking-wide mb-4">── engineered for scale</p>
-          <h2 className="text-4xl sm:text-5xl font-semibold tracking-[-0.025em] text-[var(--ink)] leading-[1.05]">
-            Everything to run a thousand dashboards.
-          </h2>
-        </Reveal>
-
-        <BentoFeatures />
-      </section>
-
-      <PinnedShowcase />
-
-      {/* ---------- Stats strip ---------- */}
-      <Reveal
-        as="section"
-        className="py-20 border-y border-[var(--line)]"
-      >
-        <StatsStrip />
-      </Reveal>
-
-      {/* ---------- About ---------- */}
-      <section className="relative py-24">
-        <AboutSection />
-      </section>
-
-      {/* ---------- FAQ ---------- */}
-      <section id="faq" className="relative py-24 border-t border-[var(--line)]">
+      <section id="faq" className="border-t border-[var(--line)] py-24 sm:py-32">
         <FaqSection />
       </section>
 
-      {/* ---------- Final CTA ---------- */}
-      <section className="relative py-28">
-        <FinalCta />
-      </section>
-
+      <FinalCta />
       <FloatingFlo />
     </div>
   );
+}
+
+/** A hairline between acts, inset to the content width. */
+function Divider() {
+  return <div aria-hidden="true" className="mx-auto h-px max-w-6xl bg-[var(--line)]" />;
 }
